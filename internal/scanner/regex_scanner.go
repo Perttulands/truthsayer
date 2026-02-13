@@ -2,6 +2,7 @@ package scanner
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -24,7 +25,7 @@ func (s *RegexScanner) Scan(path string) ([]finding.Finding, error) {
 	ext := filepath.Ext(path)
 	lines, err := readLines(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("read lines from %s: %w", path, err)
 	}
 
 	var findings []finding.Finding
@@ -41,7 +42,7 @@ func (s *RegexScanner) Scan(path string) ([]finding.Finding, error) {
 func readLines(path string) ([]string, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("open %s: %w", path, err)
 	}
 	defer f.Close()
 
@@ -50,7 +51,10 @@ func readLines(path string) ([]string, error) {
 	for sc.Scan() {
 		lines = append(lines, sc.Text())
 	}
-	return lines, sc.Err()
+	if err := sc.Err(); err != nil {
+		return nil, fmt.Errorf("scan lines in %s: %w", path, err)
+	}
+	return lines, nil
 }
 
 func matchesExt(allowed []string, ext string) bool {

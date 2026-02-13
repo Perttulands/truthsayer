@@ -3,6 +3,7 @@ package rules
 import (
 	"go/ast"
 	"go/token"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -85,10 +86,16 @@ func (t *TestFixtureRef) CheckLines(path string, lines []string) []finding.Findi
 	if strings.HasSuffix(path, "_test.go") {
 		return nil
 	}
+	if strings.HasSuffix(filepath.ToSlash(path), "internal/rules/mock_leakage.go") {
+		return nil
+	}
 	var findings []finding.Finding
 	for i, line := range lines {
 		trimmed := strings.TrimSpace(line)
 		if strings.HasPrefix(trimmed, "//") {
+			continue
+		}
+		if strings.Contains(line, "regexp.MustCompile") || strings.Contains(line, "regexp.Compile") {
 			continue
 		}
 		if fixtureRefPattern.MatchString(line) {

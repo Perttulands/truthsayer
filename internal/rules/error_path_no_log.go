@@ -39,8 +39,8 @@ func (e *ErrorPathNoLog) CheckAST(fset *token.FileSet, file *ast.File, lines []s
 		if !isErrNilCheck(ifStmt.Cond) {
 			return true
 		}
-		// Check if body has any log/print call
-		if hasLogCall(ifStmt.Body) {
+		// Check if body has any log call or explicit stderr write.
+		if hasLogCall(ifStmt.Body) || hasStderrWriteCall(ifStmt.Body) {
 			return true
 		}
 		// Check body length — single-line returns are often fine
@@ -60,4 +60,49 @@ func (e *ErrorPathNoLog) CheckAST(fset *token.FileSet, file *ast.File, lines []s
 		return true
 	})
 	return findings
+}
+
+func hasStderrWriteCall(block *ast.BlockStmt) bool {
+	found := false
+	ast.Inspect(block, func(n ast.Node) bool {
+		if found {
+			return false
+		}
+		call, ok := n.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+		sel, ok := call.Fun.(*ast.SelectorExpr)
+		if !ok {
+			return true
+		}
+		pkg, ok := sel.X.(*ast.Ident)
+		if !ok || pkg.Name != "fmt" {
+			return true
+		}
+		if sel.Sel.Name != "Fprint" && sel.Sel.Name != "Fprintf" && sel.Sel.Name != "Fprintln" {
+			return true
+		}
+		if len(call.Args) == 0 {
+			return true
+		}
+		if isOSStderr(call.Args[0]) {
+			found = true
+			return false
+		}
+		return true
+	})
+	return found
+}
+
+func isOSStderr(expr ast.Expr) bool {
+	sel, ok := expr.(*ast.SelectorExpr)
+	if !ok {
+		return false
+	}
+	pkg, ok := sel.X.(*ast.Ident)
+	if !ok {
+		return false
+	}
+	return pkg.Name == "os" && sel.Sel.Name == "Stderr"
 }

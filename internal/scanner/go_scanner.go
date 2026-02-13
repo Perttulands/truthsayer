@@ -2,6 +2,7 @@ package scanner
 
 import (
 	"bufio"
+	"fmt"
 	"go/parser"
 	"go/token"
 	"os"
@@ -25,12 +26,12 @@ func (s *GoScanner) Scan(path string) ([]finding.Finding, error) {
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parse go file %s: %w", path, err)
 	}
 
 	lines, err := readGoLines(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("read go source lines %s: %w", path, err)
 	}
 
 	var findings []finding.Finding
@@ -43,7 +44,7 @@ func (s *GoScanner) Scan(path string) ([]finding.Finding, error) {
 func readGoLines(path string) ([]string, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("open %s: %w", path, err)
 	}
 	defer f.Close()
 
@@ -52,5 +53,8 @@ func readGoLines(path string) ([]string, error) {
 	for sc.Scan() {
 		lines = append(lines, sc.Text())
 	}
-	return lines, sc.Err()
+	if err := sc.Err(); err != nil {
+		return nil, fmt.Errorf("scan lines in %s: %w", path, err)
+	}
+	return lines, nil
 }

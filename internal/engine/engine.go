@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"path/filepath"
 	"runtime"
 	"sync"
@@ -48,7 +49,7 @@ func (e *Engine) SetExcludePatterns(patterns []string) {
 func (e *Engine) Scan(root string) (*Result, error) {
 	files, err := Walk(root, e.excludeDirs, e.excludePatterns)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("walk files under %s: %w", root, err)
 	}
 
 	numWorkers := runtime.NumCPU()
@@ -118,14 +119,14 @@ func (e *Engine) ScanFile(path string) (*Result, error) {
 	if ext == ".go" {
 		results, err := e.goScanner.Scan(path)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scan go file %s: %w", path, err)
 		}
 		allFindings = append(allFindings, results...)
 	}
 
 	results, err := e.regexScanner.Scan(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("scan text rules in %s: %w", path, err)
 	}
 	allFindings = append(allFindings, results...)
 

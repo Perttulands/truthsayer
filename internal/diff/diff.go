@@ -1,6 +1,7 @@
 package diff
 
 import (
+	"fmt"
 	"os"
 	"strings"
 )
@@ -22,7 +23,7 @@ func NewTracker() *Tracker {
 func (t *Tracker) Update(path string) (map[int]bool, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("read file %s: %w", path, err)
 	}
 
 	newLines := splitLines(string(data))

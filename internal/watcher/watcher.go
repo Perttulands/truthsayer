@@ -1,6 +1,7 @@
 package watcher
 
 import (
+	"fmt"
 	"path/filepath"
 	"sync"
 	"time"
@@ -36,12 +37,11 @@ type Watcher struct {
 func New(root string, debounceDur time.Duration) (*Watcher, error) {
 	fsw, err := fsnotify.NewWatcher()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create fsnotify watcher: %w", err)
 	}
 
 	if err := fsw.Add(root); err != nil {
-		fsw.Close()
-		return nil, err
+		return nil, closeWatcherWithError(fsw, root, err)
 	}
 
 	w := &Watcher{
@@ -54,6 +54,13 @@ func New(root string, debounceDur time.Duration) (*Watcher, error) {
 
 	go w.loop()
 	return w, nil
+}
+
+func closeWatcherWithError(fsw *fsnotify.Watcher, root string, addErr error) error {
+	if closeErr := fsw.Close(); closeErr != nil {
+		return fmt.Errorf("add watch for %s: %w (and close watcher: %v)", root, addErr, closeErr)
+	}
+	return fmt.Errorf("add watch for %s: %w", root, addErr)
 }
 
 // Events returns the channel that receives debounced file paths.

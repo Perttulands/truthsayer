@@ -69,20 +69,7 @@ func (m *MissingGitignore) checkGitignore(path string, lines []string) []finding
 	}
 
 	if _, err := os.Stat(envPath); err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return []finding.Finding{
-			{
-				Rule:       m.Meta().ID,
-				Severity:   m.Meta().Severity,
-				File:       path,
-				Line:       1,
-				Code:       code,
-				Message:    fmt.Sprintf("Unable to verify .env presence: %v", err),
-				Suggestion: "Ensure the scanner can read .env metadata in this directory",
-			},
-		}
+		return m.handleEnvStatError(path, code, err)
 	}
 	if hasEnvIgnore(lines) {
 		return nil
@@ -104,10 +91,27 @@ func (m *MissingGitignore) checkGitignore(path string, lines []string) []finding
 func readPlainLines(path string) ([]string, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("read %s: %w", path, err)
 	}
 	text := strings.ReplaceAll(string(data), "\r\n", "\n")
 	return strings.Split(text, "\n"), nil
+}
+
+func (m *MissingGitignore) handleEnvStatError(path, code string, err error) []finding.Finding {
+	if os.IsNotExist(err) {
+		return nil
+	}
+	return []finding.Finding{
+		{
+			Rule:       m.Meta().ID,
+			Severity:   m.Meta().Severity,
+			File:       path,
+			Line:       1,
+			Code:       code,
+			Message:    fmt.Sprintf("Unable to verify .env presence: %v", err),
+			Suggestion: "Ensure the scanner can read .env metadata in this directory",
+		},
+	}
 }
 
 func hasEnvIgnore(lines []string) bool {

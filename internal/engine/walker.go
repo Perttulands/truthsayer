@@ -44,7 +44,7 @@ func Walk(root string, excludeDirs map[string]bool, excludePatterns []string) ([
 	var files []string
 	err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
-			return err
+			return fmt.Errorf("walk directory entry %s: %w", path, err)
 		}
 		if d.IsDir() {
 			name := d.Name()
@@ -59,7 +59,7 @@ func Walk(root string, excludeDirs map[string]bool, excludePatterns []string) ([
 		}
 		matched, matchErr := matchesAnyPattern(d.Name(), excludePatterns)
 		if matchErr != nil {
-			return matchErr
+			return fmt.Errorf("match exclude patterns for %s: %w", path, matchErr)
 		}
 		if matched {
 			return nil

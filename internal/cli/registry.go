@@ -22,7 +22,7 @@ var validSeverities = map[string]bool{
 func buildEngine(scanDir, configPath string) (*engine.Engine, error) {
 	cfg, err := config.Load(scanDir, configPath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("load config: %w", err)
 	}
 
 	reg := rules.DefaultRegistry()
