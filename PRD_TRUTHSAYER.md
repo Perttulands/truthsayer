@@ -32,7 +32,7 @@
 - [x] **US-012**: As a developer, I want to exclude specific files or directories from scanning via config so I can skip generated code or legacy modules.
 - [x] **US-013**: As a developer, I want to override severity levels per rule so I can promote warnings to errors for rules my team cares about.
 - [x] **US-014**: As a developer, I want to list all available detection rules with their IDs, descriptions, and severity so I understand what the scanner checks.
-- [ ] **US-015**: As a developer, I want to list only the currently enabled rules so I know what's active in my project.
+- [x] **US-015**: As a developer, I want to list only the currently enabled rules so I know what's active in my project.
 - [ ] **US-REVIEW-S3**: Review Sprint 3 — run tests, verify integration, fix issues.
 
 ## Sprint 4: Integration & Polish

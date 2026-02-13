@@ -42,6 +42,7 @@ func printUsage() {
 	fmt.Fprintln(os.Stderr, "  watch <path>   Watch a directory for changes and scan")
 	fmt.Fprintln(os.Stderr, "  report <path>  Generate JSON report to file")
 	fmt.Fprintln(os.Stderr, "  rules          List all available detection rules")
+	fmt.Fprintln(os.Stderr, "  rules --enabled List only currently enabled rules")
 	fmt.Fprintln(os.Stderr, "  --help         Show this help")
 	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "Global options:")

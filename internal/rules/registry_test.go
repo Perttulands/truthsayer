@@ -80,3 +80,34 @@ func TestApplyOverrides_NoOverrides(t *testing.T) {
 		t.Errorf("severity should be unchanged, got %s", findings[0].Severity)
 	}
 }
+
+func TestEnabledRules_All(t *testing.T) {
+	reg := DefaultRegistry()
+	enabled := reg.EnabledRules()
+	all := reg.AllRules()
+	if len(enabled) != len(all) {
+		t.Errorf("expected %d enabled rules (all), got %d", len(all), len(enabled))
+	}
+}
+
+func TestEnabledRules_WithDisabled(t *testing.T) {
+	reg := DefaultRegistry()
+	reg.Disable("silent-fallback.empty-error-check")
+	enabled := reg.EnabledRules()
+	if len(enabled) != 1 {
+		t.Fatalf("expected 1 enabled rule, got %d", len(enabled))
+	}
+	if enabled[0].ID != "bad-defaults.missing-pipefail" {
+		t.Errorf("expected bad-defaults.missing-pipefail, got %s", enabled[0].ID)
+	}
+}
+
+func TestEnabledRules_AllDisabled(t *testing.T) {
+	reg := DefaultRegistry()
+	reg.Disable("silent-fallback.empty-error-check")
+	reg.Disable("bad-defaults.missing-pipefail")
+	enabled := reg.EnabledRules()
+	if len(enabled) != 0 {
+		t.Errorf("expected 0 enabled rules, got %d", len(enabled))
+	}
+}

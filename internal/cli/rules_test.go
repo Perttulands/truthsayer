@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -96,5 +97,119 @@ func TestRules_HasTableHeader(t *testing.T) {
 
 	if !strings.Contains(out, "ID") || !strings.Contains(out, "SEVERITY") || !strings.Contains(out, "DESCRIPTION") {
 		t.Error("output missing table header columns")
+	}
+}
+
+func TestRules_EnabledNoConfig(t *testing.T) {
+	// No config file → all rules enabled
+	origDir, _ := os.Getwd()
+	dir := t.TempDir()
+	os.Chdir(dir)
+	defer os.Chdir(origDir)
+
+	out := captureStdout(t, func() {
+		code := runRules([]string{"--enabled"})
+		if code != 0 {
+			t.Errorf("expected exit code 0, got %d", code)
+		}
+	})
+
+	if !strings.Contains(out, "silent-fallback.empty-error-check") {
+		t.Error("output missing silent-fallback.empty-error-check")
+	}
+	if !strings.Contains(out, "bad-defaults.missing-pipefail") {
+		t.Error("output missing bad-defaults.missing-pipefail")
+	}
+	if !strings.Contains(out, "2 rules enabled") {
+		t.Errorf("expected '2 rules enabled', got: %s", out)
+	}
+}
+
+func TestRules_EnabledWithDisabledRule(t *testing.T) {
+	origDir, _ := os.Getwd()
+	dir := t.TempDir()
+	os.Chdir(dir)
+	defer os.Chdir(origDir)
+
+	os.WriteFile(filepath.Join(dir, ".truthsayer.toml"), []byte(`
+[rules]
+disable = ["silent-fallback.empty-error-check"]
+`), 0644)
+
+	out := captureStdout(t, func() {
+		code := runRules([]string{"--enabled"})
+		if code != 0 {
+			t.Errorf("expected exit code 0, got %d", code)
+		}
+	})
+
+	if strings.Contains(out, "silent-fallback.empty-error-check") {
+		t.Error("disabled rule should not appear in --enabled output")
+	}
+	if !strings.Contains(out, "bad-defaults.missing-pipefail") {
+		t.Error("enabled rule should appear in --enabled output")
+	}
+	if !strings.Contains(out, "1 rules enabled") {
+		t.Errorf("expected '1 rules enabled', got: %s", out)
+	}
+}
+
+func TestRules_EnabledWithConfigFlag(t *testing.T) {
+	origDir, _ := os.Getwd()
+	dir := t.TempDir()
+	os.Chdir(dir)
+	defer os.Chdir(origDir)
+
+	cfgDir := t.TempDir()
+	cfgPath := filepath.Join(cfgDir, "custom.toml")
+	os.WriteFile(cfgPath, []byte(`
+[rules]
+disable = ["bad-defaults.missing-pipefail"]
+`), 0644)
+
+	out := captureStdout(t, func() {
+		code := runRules([]string{"--config", cfgPath, "--enabled"})
+		if code != 0 {
+			t.Errorf("expected exit code 0, got %d", code)
+		}
+	})
+
+	if strings.Contains(out, "bad-defaults.missing-pipefail") {
+		t.Error("disabled rule should not appear in --enabled output")
+	}
+	if !strings.Contains(out, "silent-fallback.empty-error-check") {
+		t.Error("enabled rule should appear in --enabled output")
+	}
+}
+
+func TestRules_EnabledShowsOverriddenSeverity(t *testing.T) {
+	origDir, _ := os.Getwd()
+	dir := t.TempDir()
+	os.Chdir(dir)
+	defer os.Chdir(origDir)
+
+	os.WriteFile(filepath.Join(dir, ".truthsayer.toml"), []byte(`
+[rules.severity]
+"silent-fallback.empty-error-check" = "warning"
+`), 0644)
+
+	out := captureStdout(t, func() {
+		code := runRules([]string{"--enabled"})
+		if code != 0 {
+			t.Errorf("expected exit code 0, got %d", code)
+		}
+	})
+
+	// The overridden rule should show WARNING, not ERROR
+	lines := strings.Split(out, "\n")
+	for _, line := range lines {
+		if strings.Contains(line, "silent-fallback.empty-error-check") {
+			if !strings.Contains(line, "WARNING") {
+				t.Errorf("expected WARNING for overridden rule, got line: %s", line)
+			}
+			if strings.Contains(line, "ERROR") {
+				t.Errorf("should not show ERROR for overridden rule, got line: %s", line)
+			}
+		}
 	}
 }

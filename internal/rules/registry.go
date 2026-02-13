@@ -120,6 +120,33 @@ func (r *Registry) AllRules() []Rule {
 	return out
 }
 
+// EnabledRules returns metadata for all enabled (non-disabled) rules,
+// with severity overrides applied.
+func (r *Registry) EnabledRules() []Rule {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	var out []Rule
+	for _, c := range r.ast {
+		m := c.Meta()
+		if !r.disabled[m.ID] {
+			if sev, ok := r.severityOverrides[m.ID]; ok {
+				m.Severity = sev
+			}
+			out = append(out, m)
+		}
+	}
+	for _, c := range r.regex {
+		m := c.Meta()
+		if !r.disabled[m.ID] {
+			if sev, ok := r.severityOverrides[m.ID]; ok {
+				m.Severity = sev
+			}
+			out = append(out, m)
+		}
+	}
+	return out
+}
+
 // DefaultRegistry creates a registry with all built-in rules registered.
 func DefaultRegistry() *Registry {
 	reg := NewRegistry()
