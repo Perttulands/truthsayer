@@ -21,6 +21,8 @@ func Run() int {
 		return runWatch(os.Args[2:])
 	case "report":
 		return runReport(os.Args[2:])
+	case "rules":
+		return runRules(os.Args[2:])
 	case "--help", "-h", "help":
 		printUsage()
 		return 0
@@ -39,6 +41,7 @@ func printUsage() {
 	fmt.Fprintln(os.Stderr, "  check <file>   Scan a single file for anti-patterns")
 	fmt.Fprintln(os.Stderr, "  watch <path>   Watch a directory for changes and scan")
 	fmt.Fprintln(os.Stderr, "  report <path>  Generate JSON report to file")
+	fmt.Fprintln(os.Stderr, "  rules          List all available detection rules")
 	fmt.Fprintln(os.Stderr, "  --help         Show this help")
 	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "Global options:")
