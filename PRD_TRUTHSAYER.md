@@ -16,7 +16,7 @@
 - [x] **US-REVIEW-S1**: Review Sprint 1 — run tests, verify integration, fix issues.
 
 ## Sprint 2: Detection Rules Engine
-**Status:** IN PROGRESS
+**Status:** COMPLETE
 
 - [x] **US-006**: As a developer, I want to watch a directory for file changes and get instant feedback on new anti-patterns so I catch problems as I code.
 - [x] **US-007**: As a developer, I want watch mode to only report findings in the changed lines (not the entire file) so I'm not overwhelmed by pre-existing issues.
@@ -26,9 +26,9 @@
 - [x] **US-REVIEW-S2**: Review Sprint 2 — run tests, verify integration, fix issues.
 
 ## Sprint 3: CLI & Reporting
-**Status:** NOT STARTED
+**Status:** IN PROGRESS
 
-- [ ] **US-011**: As a team lead, I want to configure which rules are enabled/disabled via a TOML config file so I can tailor the scanner to our codebase.
+- [x] **US-011**: As a team lead, I want to configure which rules are enabled/disabled via a TOML config file so I can tailor the scanner to our codebase.
 - [ ] **US-012**: As a developer, I want to exclude specific files or directories from scanning via config so I can skip generated code or legacy modules.
 - [ ] **US-013**: As a developer, I want to override severity levels per rule so I can promote warnings to errors for rules my team cares about.
 - [ ] **US-014**: As a developer, I want to list all available detection rules with their IDs, descriptions, and severity so I understand what the scanner checks.

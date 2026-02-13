@@ -18,6 +18,7 @@ type Result struct {
 
 // Engine orchestrates concurrent file scanning.
 type Engine struct {
+	reg          *rules.Registry
 	goScanner    *scanner.GoScanner
 	regexScanner *scanner.RegexScanner
 	excludeDirs  map[string]bool
@@ -26,6 +27,7 @@ type Engine struct {
 // New creates a scan engine from a rule registry.
 func New(reg *rules.Registry) *Engine {
 	return &Engine{
+		reg:          reg,
 		goScanner:    scanner.NewGoScanner(reg.ASTCheckers()),
 		regexScanner: scanner.NewRegexScanner(reg.RegexCheckers()),
 	}
@@ -93,6 +95,7 @@ func (e *Engine) Scan(root string) (*Result, error) {
 	wg.Wait()
 
 	allFindings = finding.Dedup(allFindings)
+	e.reg.ApplyOverrides(allFindings)
 	finding.Sort(allFindings)
 
 	return &Result{
@@ -121,6 +124,7 @@ func (e *Engine) ScanFile(path string) (*Result, error) {
 	allFindings = append(allFindings, results...)
 
 	allFindings = finding.Dedup(allFindings)
+	e.reg.ApplyOverrides(allFindings)
 	finding.Sort(allFindings)
 
 	return &Result{

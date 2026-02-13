@@ -136,3 +136,70 @@ func TestReport_ExitCode2_BadPath(t *testing.T) {
 		t.Errorf("expected exit code 2 (tool error), got %d", code)
 	}
 }
+
+// Config integration tests for US-011.
+
+func TestScan_ConfigDisablesRule(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "bad.go", goWithError)
+	writeFile(t, dir, ".truthsayer.toml", `
+[rules]
+disable = ["silent-fallback.empty-error-check"]
+`)
+
+	code := runScan([]string{dir})
+	if code != 0 {
+		t.Errorf("expected exit code 0 (rule disabled), got %d", code)
+	}
+}
+
+func TestScan_ConfigExplicitFlag(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "bad.go", goWithError)
+
+	cfgDir := t.TempDir()
+	cfgPath := writeFile(t, cfgDir, "custom.toml", `
+[rules]
+disable = ["silent-fallback.empty-error-check"]
+`)
+
+	code := runScan([]string{"--config", cfgPath, dir})
+	if code != 0 {
+		t.Errorf("expected exit code 0 (rule disabled via --config), got %d", code)
+	}
+}
+
+func TestCheck_ConfigDisablesRule(t *testing.T) {
+	dir := t.TempDir()
+	path := writeFile(t, dir, "bad.go", goWithError)
+	writeFile(t, dir, ".truthsayer.toml", `
+[rules]
+disable = ["silent-fallback.empty-error-check"]
+`)
+
+	code := runCheck([]string{path})
+	if code != 0 {
+		t.Errorf("expected exit code 0 (rule disabled), got %d", code)
+	}
+}
+
+func TestScan_ConfigBadFile(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "good.go", goClean)
+
+	code := runScan([]string{"--config", "/nonexistent/config.toml", dir})
+	if code != 2 {
+		t.Errorf("expected exit code 2 (config error), got %d", code)
+	}
+}
+
+func TestScan_NoConfigMeansAllEnabled(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "bad.go", goWithError)
+	// No .truthsayer.toml exists
+
+	code := runScan([]string{dir})
+	if code != 1 {
+		t.Errorf("expected exit code 1 (all rules enabled by default), got %d", code)
+	}
+}

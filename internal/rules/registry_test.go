@@ -1,6 +1,10 @@
 package rules
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/perttulands/truthsayer/internal/finding"
+)
 
 func TestDefaultRegistry(t *testing.T) {
 	reg := DefaultRegistry()
@@ -29,5 +33,50 @@ func TestDisable(t *testing.T) {
 		if c.Meta().ID == "silent-fallback.empty-error-check" {
 			t.Error("disabled rule still returned by ASTCheckers")
 		}
+	}
+}
+
+func TestSetSeverity_Known(t *testing.T) {
+	reg := DefaultRegistry()
+	ok := reg.SetSeverity("silent-fallback.empty-error-check", "warning")
+	if !ok {
+		t.Fatal("SetSeverity returned false for known rule")
+	}
+}
+
+func TestSetSeverity_Unknown(t *testing.T) {
+	reg := DefaultRegistry()
+	ok := reg.SetSeverity("nonexistent.rule", "warning")
+	if ok {
+		t.Fatal("SetSeverity returned true for unknown rule")
+	}
+}
+
+func TestApplyOverrides(t *testing.T) {
+	reg := DefaultRegistry()
+	reg.SetSeverity("silent-fallback.empty-error-check", "info")
+
+	findings := []finding.Finding{
+		{Rule: "silent-fallback.empty-error-check", Severity: finding.SeverityError},
+		{Rule: "bad-defaults.missing-pipefail", Severity: finding.SeverityError},
+	}
+	reg.ApplyOverrides(findings)
+
+	if findings[0].Severity != finding.SeverityInfo {
+		t.Errorf("expected info severity, got %s", findings[0].Severity)
+	}
+	if findings[1].Severity != finding.SeverityError {
+		t.Errorf("expected error severity unchanged, got %s", findings[1].Severity)
+	}
+}
+
+func TestApplyOverrides_NoOverrides(t *testing.T) {
+	reg := DefaultRegistry()
+	findings := []finding.Finding{
+		{Rule: "silent-fallback.empty-error-check", Severity: finding.SeverityError},
+	}
+	reg.ApplyOverrides(findings)
+	if findings[0].Severity != finding.SeverityError {
+		t.Errorf("severity should be unchanged, got %s", findings[0].Severity)
 	}
 }

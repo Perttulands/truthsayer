@@ -8,10 +8,11 @@ import (
 	"github.com/perttulands/truthsayer/internal/engine"
 	"github.com/perttulands/truthsayer/internal/finding"
 	"github.com/perttulands/truthsayer/internal/report"
-	"github.com/perttulands/truthsayer/internal/rules"
 )
 
 func runScan(args []string) int {
+	configPath, args := parseConfigFlag(args)
+
 	format := "text"
 	var path string
 
@@ -44,7 +45,11 @@ func runScan(args []string) int {
 		return 2
 	}
 
-	reg := rules.DefaultRegistry()
+	reg, err := buildRegistry(path, configPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		return 2
+	}
 	eng := engine.New(reg)
 
 	start := time.Now()

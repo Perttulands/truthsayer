@@ -8,12 +8,13 @@ import (
 	"github.com/perttulands/truthsayer/internal/engine"
 	"github.com/perttulands/truthsayer/internal/finding"
 	"github.com/perttulands/truthsayer/internal/report"
-	"github.com/perttulands/truthsayer/internal/rules"
 )
 
 const defaultReportOutput = "truthsayer-report.json"
 
 func runReport(args []string) int {
+	configPath, args := parseConfigFlag(args)
+
 	output := defaultReportOutput
 	var path string
 
@@ -42,7 +43,11 @@ func runReport(args []string) int {
 		return 2
 	}
 
-	reg := rules.DefaultRegistry()
+	reg, err := buildRegistry(path, configPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		return 2
+	}
 	eng := engine.New(reg)
 
 	start := time.Now()

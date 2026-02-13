@@ -40,4 +40,7 @@ func printUsage() {
 	fmt.Fprintln(os.Stderr, "  watch <path>   Watch a directory for changes and scan")
 	fmt.Fprintln(os.Stderr, "  report <path>  Generate JSON report to file")
 	fmt.Fprintln(os.Stderr, "  --help         Show this help")
+	fmt.Fprintln(os.Stderr, "")
+	fmt.Fprintln(os.Stderr, "Global options:")
+	fmt.Fprintln(os.Stderr, "  --config <path>  Use a custom config file (default: .truthsayer.toml)")
 }
