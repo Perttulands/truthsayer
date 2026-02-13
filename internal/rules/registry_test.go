@@ -20,8 +20,32 @@ func TestDefaultRegistry(t *testing.T) {
 	if !ids["silent-fallback.empty-error-check"] {
 		t.Error("missing silent-fallback.empty-error-check rule")
 	}
+	if !ids["silent-fallback.bare-return-on-error"] {
+		t.Error("missing silent-fallback.bare-return-on-error rule")
+	}
+	if !ids["error-context.http-200-on-error"] {
+		t.Error("missing error-context.http-200-on-error rule")
+	}
+	if !ids["error-context.nil-on-error"] {
+		t.Error("missing error-context.nil-on-error rule")
+	}
+	if !ids["trace-gaps.no-request-id"] {
+		t.Error("missing trace-gaps.no-request-id rule")
+	}
 	if !ids["bad-defaults.missing-pipefail"] {
 		t.Error("missing bad-defaults.missing-pipefail rule")
+	}
+	if !ids["trace-gaps.no-stderr-capture"] {
+		t.Error("missing trace-gaps.no-stderr-capture rule")
+	}
+	if !ids["bad-defaults.magic-number"] {
+		t.Error("missing bad-defaults.magic-number rule")
+	}
+	if !ids["config-smells.missing-gitignore"] {
+		t.Error("missing config-smells.missing-gitignore rule")
+	}
+	if !ids["mock-leakage.debug-guard"] {
+		t.Error("missing mock-leakage.debug-guard rule")
 	}
 }
 
@@ -92,20 +116,25 @@ func TestEnabledRules_All(t *testing.T) {
 
 func TestEnabledRules_WithDisabled(t *testing.T) {
 	reg := DefaultRegistry()
+	all := reg.AllRules()
 	reg.Disable("silent-fallback.empty-error-check")
 	enabled := reg.EnabledRules()
-	if len(enabled) != 1 {
-		t.Fatalf("expected 1 enabled rule, got %d", len(enabled))
+	if len(enabled) != len(all)-1 {
+		t.Fatalf("expected %d enabled rules, got %d", len(all)-1, len(enabled))
 	}
-	if enabled[0].ID != "bad-defaults.missing-pipefail" {
-		t.Errorf("expected bad-defaults.missing-pipefail, got %s", enabled[0].ID)
+	for _, r := range enabled {
+		if r.ID == "silent-fallback.empty-error-check" {
+			t.Error("disabled rule still in enabled list")
+		}
 	}
 }
 
 func TestEnabledRules_AllDisabled(t *testing.T) {
 	reg := DefaultRegistry()
-	reg.Disable("silent-fallback.empty-error-check")
-	reg.Disable("bad-defaults.missing-pipefail")
+	all := reg.AllRules()
+	for _, r := range all {
+		reg.Disable(r.ID)
+	}
 	enabled := reg.EnabledRules()
 	if len(enabled) != 0 {
 		t.Errorf("expected 0 enabled rules, got %d", len(enabled))

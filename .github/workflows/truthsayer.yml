@@ -1,0 +1,34 @@
+name: Truthsayer
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  truthsayer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build Truthsayer
+        run: go build -o truthsayer ./cmd/truthsayer
+
+      - name: Truthsayer scan (JSON report)
+        run: ./truthsayer scan --format json . > truthsayer-report.json
+        continue-on-error: true
+
+      - name: Truthsayer scan (quality gate)
+        run: ./truthsayer scan .
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: truthsayer-report
+          path: truthsayer-report.json

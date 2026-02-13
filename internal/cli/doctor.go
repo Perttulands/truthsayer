@@ -3,13 +3,18 @@ package cli
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/perttulands/truthsayer/internal/config"
 	"github.com/perttulands/truthsayer/internal/rules"
 )
 
 func runDoctor(args []string) int {
-	configPath, _ := parseConfigFlag(args)
+	configPath, remainingArgs := parseConfigFlag(args)
+	if len(remainingArgs) > 0 {
+		fmt.Fprintf(os.Stderr, "error: doctor does not accept positional arguments: %s\n", strings.Join(remainingArgs, " "))
+		return 2
+	}
 
 	fmt.Println("truthsayer doctor")
 	fmt.Println()
@@ -18,7 +23,11 @@ func runDoctor(args []string) int {
 	fmt.Println("  Installation ... ok")
 
 	// Check 2: Config validity
-	dir, _ := os.Getwd()
+	dir, err := os.Getwd()
+	if err != nil {
+		fmt.Printf("  Config ... unable to determine working directory: %v\n", err)
+		return 1
+	}
 	cfg, err := config.Load(dir, configPath)
 	if err != nil {
 		fmt.Printf("  Config ... config invalid: %v\n", err)

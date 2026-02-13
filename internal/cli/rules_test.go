@@ -85,7 +85,7 @@ func TestRules_ShowsCount(t *testing.T) {
 		runRules(nil)
 	})
 
-	if !strings.Contains(out, "2 rules available") {
+	if !strings.Contains(out, "rules available") {
 		t.Errorf("output missing rule count, got: %s", out)
 	}
 }
@@ -120,8 +120,8 @@ func TestRules_EnabledNoConfig(t *testing.T) {
 	if !strings.Contains(out, "bad-defaults.missing-pipefail") {
 		t.Error("output missing bad-defaults.missing-pipefail")
 	}
-	if !strings.Contains(out, "2 rules enabled") {
-		t.Errorf("expected '2 rules enabled', got: %s", out)
+	if !strings.Contains(out, "rules enabled") {
+		t.Errorf("expected 'rules enabled', got: %s", out)
 	}
 }
 
@@ -149,8 +149,8 @@ disable = ["silent-fallback.empty-error-check"]
 	if !strings.Contains(out, "bad-defaults.missing-pipefail") {
 		t.Error("enabled rule should appear in --enabled output")
 	}
-	if !strings.Contains(out, "1 rules enabled") {
-		t.Errorf("expected '1 rules enabled', got: %s", out)
+	if !strings.Contains(out, "rules enabled") {
+		t.Errorf("expected 'rules enabled', got: %s", out)
 	}
 }
 

@@ -150,7 +150,34 @@ func (r *Registry) EnabledRules() []Rule {
 // DefaultRegistry creates a registry with all built-in rules registered.
 func DefaultRegistry() *Registry {
 	reg := NewRegistry()
+
+	// AST rules (Go)
 	reg.RegisterAST(&EmptyErrorCheck{})
+	reg.RegisterAST(&BareReturnOnError{})
+	reg.RegisterAST(&IgnoredError{})
+	reg.RegisterAST(&UnwrappedError{})
+	reg.RegisterAST(&HTTP200OnError{})
+	reg.RegisterAST(&NilOnError{})
+	reg.RegisterAST(&GenericError{})
+	reg.RegisterAST(&NoTimeout{})
+	reg.RegisterAST(&MagicNumber{})
+	reg.RegisterAST(&UnvalidatedEnvGo{})
+	reg.RegisterAST(&LongFunctionNoLog{})
+	reg.RegisterAST(&ErrorPathNoLog{})
+	reg.RegisterAST(&MockImportNonTest{})
+	reg.RegisterAST(&NoRequestID{})
+	reg.RegisterAST(&DebugGuard{})
+
+	// Regex rules (bash/config/multi-lang)
 	reg.RegisterRegex(&MissingPipefail{})
+	reg.RegisterRegex(&HiddenFailureBash{})
+	reg.RegisterRegex(&HardcodedPath{})
+	reg.RegisterRegex(&UnvalidatedEnvBash{})
+	reg.RegisterRegex(&SecretInConfig{})
+	reg.RegisterRegex(&NoErrTrap{})
+	reg.RegisterRegex(&TestFixtureRef{})
+	reg.RegisterRegex(&NoStderrCapture{})
+	reg.RegisterRegex(&MissingGitignore{})
+
 	return reg
 }

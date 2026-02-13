@@ -1,0 +1,1618 @@
+{
+  "version": "1",
+  "scan_time": "2026-02-13T18:59:49Z",
+  "path": ".",
+  "duration_ms": 17,
+  "findings": [
+    {
+      "rule": "silent-fallback.ignored-error",
+      "severity": "error",
+      "file": "internal/cli/doctor.go",
+      "line": 12,
+      "code": "\tconfigPath, _ := parseConfigFlag(args)",
+      "message": "Error return value explicitly discarded with _",
+      "suggestion": "Handle the error: check and return it, or log it if truly ignorable"
+    },
+    {
+      "rule": "silent-fallback.ignored-error",
+      "severity": "error",
+      "file": "internal/cli/doctor.go",
+      "line": 21,
+      "code": "\tdir, _ := os.Getwd()",
+      "message": "Error return value explicitly discarded with _",
+      "suggestion": "Handle the error: check and return it, or log it if truly ignorable"
+    },
+    {
+      "rule": "silent-fallback.ignored-error",
+      "severity": "error",
+      "file": "internal/cli/doctor_test.go",
+      "line": 11,
+      "code": "\torigDir, _ := os.Getwd()",
+      "message": "Error return value explicitly discarded with _",
+      "suggestion": "Handle the error: check and return it, or log it if truly ignorable"
+    },
+    {
+      "rule": "silent-fallback.ignored-error",
+      "severity": "error",
+      "file": "internal/cli/doctor_test.go",
+      "line": 29,
+      "code": "\torigDir, _ := os.Getwd()",
+      "message": "Error return value explicitly discarded with _",
+      "suggestion": "Handle the error: check and return it, or log it if truly ignorable"
+    },
+    {
+      "rule": "silent-fallback.ignored-error",
+      "severity": "error",
+      "file": "internal/cli/doctor_test.go",
+      "line": 44,
+      "code": "\torigDir, _ := os.Getwd()",
+      "message": "Error return value explicitly discarded with _",
+      "suggestion": "Handle the error: check and return it, or log it if truly ignorable"
+    },
+    {
+      "rule": "silent-fallback.ignored-error",
+      "severity": "error",
+      "file": "internal/cli/doctor_test.go",
+      "line": 62,
+      "code": "\torigDir, _ := os.Getwd()",
+      "message": "Error return value explicitly discarded with _",
+      "suggestion": "Handle the error: check and return it, or log it if truly ignorable"
+    },
+    {
+      "rule": "silent-fallback.ignored-error",
+      "severity": "error",
+      "file": "internal/cli/doctor_test.go",
+      "line": 88,
+      "code": "\torigDir, _ := os.Getwd()",
+      "message": "Error return value explicitly discarded with _",
+      "suggestion": "Handle the error: check and return it, or log it if truly ignorable"
+    },
+    {
+      "rule": "silent-fallback.ignored-error",
+      "severity": "error",
+      "file": "internal/cli/doctor_test.go",
+      "line": 108,
+      "code": "\torigDir, _ := os.Getwd()",
+      "message": "Error return value explicitly discarded with _",
+      "suggestion": "Handle the error: check and return it, or log it if truly ignorable"
+    },
+    {
+      "rule": "silent-fallback.ignored-error",
+      "severity": "error",
+      "file": "internal/cli/doctor_test.go",
+      "line": 135,
+      "code": "\torigDir, _ := os.Getwd()",
+      "message": "Error return value explicitly discarded with _",
+      "suggestion": "Handle the error: check and return it, or log it if truly ignorable"
+    },
+    {
+      "rule": "silent-fallback.ignored-error",
+      "severity": "error",
+      "file": "internal/cli/rules_test.go",
+      "line": 105,
+      "code": "\torigDir, _ := os.Getwd()",
+      "message": "Error return value explicitly discarded with _",
+      "suggestion": "Handle the error: check and return it, or log it if truly ignorable"
+    },
+    {
+      "rule": "silent-fallback.ignored-error",
+      "severity": "error",
+      "file": "internal/cli/rules_test.go",
+      "line": 129,
+      "code": "\torigDir, _ := os.Getwd()",
+      "message": "Error return value explicitly discarded with _",
+      "suggestion": "Handle the error: check and return it, or log it if truly ignorable"
+    },
+    {
+      "rule": "silent-fallback.ignored-error",
+      "severity": "error",
+      "file": "internal/cli/rules_test.go",
+      "line": 158,
+      "code": "\torigDir, _ := os.Getwd()",
+      "message": "Error return value explicitly discarded with _",
+      "suggestion": "Handle the error: check and return it, or log it if truly ignorable"
+    },
+    {
+      "rule": "silent-fallback.ignored-error",
+      "severity": "error",
+      "file": "internal/cli/rules_test.go",
+      "line": 186,
+      "code": "\torigDir, _ := os.Getwd()",
+      "message": "Error return value explicitly discarded with _",
+      "suggestion": "Handle the error: check and return it, or log it if truly ignorable"
+    },
+    {
+      "rule": "silent-fallback.ignored-error",
+      "severity": "error",
+      "file": "internal/cli/version_test.go",
+      "line": 11,
+      "code": "\tr, w, _ := os.Pipe()",
+      "message": "Error return value explicitly discarded with _",
+      "suggestion": "Handle the error: check and return it, or log it if truly ignorable"
+    },
+    {
+      "rule": "silent-fallback.ignored-error",
+      "severity": "error",
+      "file": "internal/cli/version_test.go",
+      "line": 21,
+      "code": "\tn, _ := r.Read(buf)",
+      "message": "Error return value explicitly discarded with _",
+      "suggestion": "Handle the error: check and return it, or log it if truly ignorable"
+    },
+    {
+      "rule": "silent-fallback.ignored-error",
+      "severity": "error",
+      "file": "internal/cli/version_test.go",
+      "line": 34,
+      "code": "\tr, w, _ := os.Pipe()",
+      "message": "Error return value explicitly discarded with _",
+      "suggestion": "Handle the error: check and return it, or log it if truly ignorable"
+    },
+    {
+      "rule": "silent-fallback.ignored-error",
+      "severity": "error",
+      "file": "internal/cli/version_test.go",
+      "line": 44,
+      "code": "\tn, _ := r.Read(buf)",
+      "message": "Error return value explicitly discarded with _",
+      "suggestion": "Handle the error: check and return it, or log it if truly ignorable"
+    },
+    {
+      "rule": "silent-fallback.ignored-error",
+      "severity": "error",
+      "file": "internal/cli/version_test.go",
+      "line": 62,
+      "code": "\tr, w, _ := os.Pipe()",
+      "message": "Error return value explicitly discarded with _",
+      "suggestion": "Handle the error: check and return it, or log it if truly ignorable"
+    },
+    {
+      "rule": "silent-fallback.ignored-error",
+      "severity": "error",
+      "file": "internal/cli/version_test.go",
+      "line": 72,
+      "code": "\tn, _ := r.Read(buf)",
+      "message": "Error return value explicitly discarded with _",
+      "suggestion": "Handle the error: check and return it, or log it if truly ignorable"
+    },
+    {
+      "rule": "silent-fallback.ignored-error",
+      "severity": "error",
+      "file": "internal/engine/walker.go",
+      "line": 71,
+      "code": "\t\tif matched, _ := filepath.Match(p, name); matched {",
+      "message": "Error return value explicitly discarded with _",
+      "suggestion": "Handle the error: check and return it, or log it if truly ignorable"
+    },
+    {
+      "rule": "silent-fallback.ignored-error",
+      "severity": "error",
+      "file": "internal/engine/walker_test.go",
+      "line": 25,
+      "code": "\t\trel, _ := filepath.Rel(tmp, f)",
+      "message": "Error return value explicitly discarded with _",
+      "suggestion": "Handle the error: check and return it, or log it if truly ignorable"
+    },
+    {
+      "rule": "silent-fallback.ignored-error",
+      "severity": "error",
+      "file": "internal/engine/walker_test.go",
+      "line": 60,
+      "code": "\t\trel, _ := filepath.Rel(tmp, f)",
+      "message": "Error return value explicitly discarded with _",
+      "suggestion": "Handle the error: check and return it, or log it if truly ignorable"
+    },
+    {
+      "rule": "silent-fallback.ignored-error",
+      "severity": "error",
+      "file": "internal/rules/http_200_on_error.go",
+      "line": 40,
+      "code": "\t\tisHandler, writerNames, _ := extractHTTPHandlerParamNames(fn)",
+      "message": "Error return value explicitly discarded with _",
+      "suggestion": "Handle the error: check and return it, or log it if truly ignorable"
+    },
+    {
+      "rule": "silent-fallback.empty-error-check",
+      "severity": "error",
+      "file": "internal/rules/missing_gitignore.go",
+      "line": 64,
+      "code": "\tif _, err := os.Stat(envPath); err != nil {",
+      "message": "Error returned as nil without logging or wrapping",
+      "suggestion": "Return the error or log it: return fmt.Errorf(\"operation failed: %w\", err)"
+    },
+    {
+      "rule": "silent-fallback.ignored-error",
+      "severity": "error",
+      "file": "internal/scanner/go_scanner_test.go",
+      "line": 12,
+      "code": "\t_, file, _, _ := runtime.Caller(0)",
+      "message": "Error return value explicitly discarded with _",
+      "suggestion": "Handle the error: check and return it, or log it if truly ignorable"
+    },
+    {
+      "rule": "trace-gaps.error-path-no-log",
+      "severity": "warning",
+      "file": "internal/cli/check.go",
+      "line": 24,
+      "code": "\tif err != nil {",
+      "message": "Error handling block without logging — errors may be lost silently",
+      "suggestion": "Add logging before return: log.Error(\"operation failed\", \"err\", err)"
+    },
+    {
+      "rule": "trace-gaps.error-path-no-log",
+      "severity": "warning",
+      "file": "internal/cli/check.go",
+      "line": 35,
+      "code": "\tif err != nil {",
+      "message": "Error handling block without logging — errors may be lost silently",
+      "suggestion": "Add logging before return: log.Error(\"operation failed\", \"err\", err)"
+    },
+    {
+      "rule": "trace-gaps.error-path-no-log",
+      "severity": "warning",
+      "file": "internal/cli/check.go",
+      "line": 42,
+      "code": "\tif err != nil {",
+      "message": "Error handling block without logging — errors may be lost silently",
+      "suggestion": "Add logging before return: log.Error(\"operation failed\", \"err\", err)"
+    },
+    {
+      "rule": "trace-gaps.error-path-no-log",
+      "severity": "warning",
+      "file": "internal/cli/ci.go",
+      "line": 55,
+      "code": "\tif _, err := os.Stat(filepath.Join(repoDir, \".git\")); err != nil {",
+      "message": "Error handling block without logging — errors may be lost silently",
+      "suggestion": "Add logging before return: log.Error(\"operation failed\", \"err\", err)"
+    },
+    {
+      "rule": "trace-gaps.error-path-no-log",
+      "severity": "warning",
+      "file": "internal/cli/ci.go",
+      "line": 61,
+      "code": "\tif err := os.MkdirAll(workflowDir, 0755); err != nil {",
+      "message": "Error handling block without logging — errors may be lost silently",
+      "suggestion": "Add logging before return: log.Error(\"operation failed\", \"err\", err)"
+    },
+    {
+      "rule": "trace-gaps.error-path-no-log",
+      "severity": "warning",
+      "file": "internal/cli/ci.go",
+      "line": 67,
+      "code": "\tif err := os.WriteFile(workflowPath, []byte(ciWorkflow), 0644); err != nil {",
+      "message": "Error handling block without logging — errors may be lost silently",
+      "suggestion": "Add logging before return: log.Error(\"operation failed\", \"err\", err)"
+    },
+    {
+      "rule": "trace-gaps.error-path-no-log",
+      "severity": "warning",
+      "file": "internal/cli/hook.go",
+      "line": 27,
+      "code": "\tif err != nil {",
+      "message": "Error handling block without logging — errors may be lost silently",
+      "suggestion": "Add logging before return: log.Error(\"operation failed\", \"err\", err)"
+    },
+    {
+      "rule": "trace-gaps.error-path-no-log",
+      "severity": "warning",
+      "file": "internal/cli/hook.go",
+      "line": 37,
+      "code": "\tif err != nil {",
+      "message": "Error handling block without logging — errors may be lost silently",
+      "suggestion": "Add logging before return: log.Error(\"operation failed\", \"err\", err)"
+    },
+    {
+      "rule": "trace-gaps.error-path-no-log",
+      "severity": "warning",
+      "file": "internal/cli/hook.go",
+      "line": 100,
+      "code": "\tif _, err := os.Stat(hooksDir); err != nil {",
+      "message": "Error handling block without logging — errors may be lost silently",
+      "suggestion": "Add logging before return: log.Error(\"operation failed\", \"err\", err)"
+    },
+    {
+      "rule": "trace-gaps.error-path-no-log",
+      "severity": "warning",
+      "file": "internal/cli/hook.go",
+      "line": 106,
+      "code": "\tif err := os.WriteFile(hookPath, []byte(preCommitHook), 0755); err != nil {",
+      "message": "Error handling block without logging — errors may be lost silently",
+      "suggestion": "Add logging before return: log.Error(\"operation failed\", \"err\", err)"
+    },
+    {
+      "rule": "error-context.unwrapped-error",
+      "severity": "warning",
+      "file": "internal/cli/registry.go",
+      "line": 25,
+      "code": "\t\treturn nil, err",
+      "message": "Error returned without context — hard to trace in call chains",
+      "suggestion": "Wrap with context: return fmt.Errorf(\"operation: %w\", err)"
+    },
+    {
+      "rule": "trace-gaps.error-path-no-log",
+      "severity": "warning",
+      "file": "internal/cli/report.go",
+      "line": 36,
+      "code": "\tif err != nil {",
+      "message": "Error handling block without logging — errors may be lost silently",
+      "suggestion": "Add logging before return: log.Error(\"operation failed\", \"err\", err)"
+    },
+    {
+      "rule": "trace-gaps.error-path-no-log",
+      "severity": "warning",
+      "file": "internal/cli/report.go",
+      "line": 46,
+      "code": "\tif err != nil {",
+      "message": "Error handling block without logging — errors may be lost silently",
+      "suggestion": "Add logging before return: log.Error(\"operation failed\", \"err\", err)"
+    },
+    {
+      "rule": "trace-gaps.error-path-no-log",
+      "severity": "warning",
+      "file": "internal/cli/report.go",
+      "line": 53,
+      "code": "\tif err != nil {",
+      "message": "Error handling block without logging — errors may be lost silently",
+      "suggestion": "Add logging before return: log.Error(\"operation failed\", \"err\", err)"
+    },
+    {
+      "rule": "trace-gaps.error-path-no-log",
+      "severity": "warning",
+      "file": "internal/cli/report.go",
+      "line": 60,
+      "code": "\tif err != nil {",
+      "message": "Error handling block without logging — errors may be lost silently",
+      "suggestion": "Add logging before return: log.Error(\"operation failed\", \"err\", err)"
+    },
+    {
+      "rule": "trace-gaps.error-path-no-log",
+      "severity": "warning",
+      "file": "internal/cli/report.go",
+      "line": 67,
+      "code": "\tif err := report.JSON(f, result.Findings, path, scanTime, result.FilesScanned, durationMs); err != nil {",
+      "message": "Error handling block without logging — errors may be lost silently",
+      "suggestion": "Add logging before return: log.Error(\"operation failed\", \"err\", err)"
+    },
+    {
+      "rule": "trace-gaps.error-path-no-log",
+      "severity": "warning",
+      "file": "internal/cli/rules.go",
+      "line": 30,
+      "code": "\t\tif err != nil {",
+      "message": "Error handling block without logging — errors may be lost silently",
+      "suggestion": "Add logging before return: log.Error(\"operation failed\", \"err\", err)"
+    },
+    {
+      "rule": "trace-gaps.error-path-no-log",
+      "severity": "warning",
+      "file": "internal/cli/scan.go",
+      "line": 38,
+      "code": "\tif err != nil {",
+      "message": "Error handling block without logging — errors may be lost silently",
+      "suggestion": "Add logging before return: log.Error(\"operation failed\", \"err\", err)"
+    },
+    {
+      "rule": "trace-gaps.error-path-no-log",
+      "severity": "warning",
+      "file": "internal/cli/scan.go",
+      "line": 48,
+      "code": "\tif err != nil {",
+      "message": "Error handling block without logging — errors may be lost silently",
+      "suggestion": "Add logging before return: log.Error(\"operation failed\", \"err\", err)"
+    },
+    {
+      "rule": "trace-gaps.error-path-no-log",
+      "severity": "warning",
+      "file": "internal/cli/scan.go",
+      "line": 55,
+      "code": "\tif err != nil {",
+      "message": "Error handling block without logging — errors may be lost silently",
+      "suggestion": "Add logging before return: log.Error(\"operation failed\", \"err\", err)"
+    },
+    {
+      "rule": "trace-gaps.error-path-no-log",
+      "severity": "warning",
+      "file": "internal/cli/scan.go",
+      "line": 63,
+      "code": "\t\tif err := report.JSON(os.Stdout, result.Findings, path, time.Now(), result.FilesScanned, durationMs); err != nil {",
+      "message": "Error handling block without logging — errors may be lost silently",
+      "suggestion": "Add logging before return: log.Error(\"operation failed\", \"err\", err)"
+    },
+    {
+      "rule": "trace-gaps.error-path-no-log",
+      "severity": "warning",
+      "file": "internal/cli/watch.go",
+      "line": 26,
+      "code": "\tif err != nil {",
+      "message": "Error handling block without logging — errors may be lost silently",
+      "suggestion": "Add logging before return: log.Error(\"operation failed\", \"err\", err)"
+    },
+    {
+      "rule": "trace-gaps.error-path-no-log",
+      "severity": "warning",
+      "file": "internal/cli/watch.go",
+      "line": 36,
+      "code": "\tif err != nil {",
+      "message": "Error handling block without logging — errors may be lost silently",
+      "suggestion": "Add logging before return: log.Error(\"operation failed\", \"err\", err)"
+    },
+    {
+      "rule": "trace-gaps.error-path-no-log",
+      "severity": "warning",
+      "file": "internal/cli/watch.go",
+      "line": 42,
+      "code": "\tif err != nil {",
+      "message": "Error handling block without logging — errors may be lost silently",
+      "suggestion": "Add logging before return: log.Error(\"operation failed\", \"err\", err)"
+    },
+    {
+      "rule": "trace-gaps.error-path-no-log",
+      "severity": "warning",
+      "file": "internal/cli/watch.go",
+      "line": 64,
+      "code": "\t\t\tif err != nil {",
+      "message": "Error handling block without logging — errors may be lost silently",
+      "suggestion": "Add logging before return: log.Error(\"operation failed\", \"err\", err)"
+    },
+    {
+      "rule": "trace-gaps.error-path-no-log",
+      "severity": "warning",
+      "file": "internal/cli/watch.go",
+      "line": 71,
+      "code": "\t\t\tif err != nil {",
+      "message": "Error handling block without logging — errors may be lost silently",
+      "suggestion": "Add logging before return: log.Error(\"operation failed\", \"err\", err)"
+    },
+    {
+      "rule": "error-context.unwrapped-error",
+      "severity": "warning",
+      "file": "internal/diff/diff.go",
+      "line": 25,
+      "code": "\t\treturn nil, err",
+      "message": "Error returned without context — hard to trace in call chains",
+      "suggestion": "Wrap with context: return fmt.Errorf(\"operation: %w\", err)"
+    },
+    {
+      "rule": "error-context.unwrapped-error",
+      "severity": "warning",
+      "file": "internal/engine/engine.go",
+      "line": 51,
+      "code": "\t\treturn nil, err",
+      "message": "Error returned without context — hard to trace in call chains",
+      "suggestion": "Wrap with context: return fmt.Errorf(\"operation: %w\", err)"
+    },
+    {
+      "rule": "error-context.unwrapped-error",
+      "severity": "warning",
+      "file": "internal/engine/engine.go",
+      "line": 121,
+      "code": "\t\t\treturn nil, err",
+      "message": "Error returned without context — hard to trace in call chains",
+      "suggestion": "Wrap with context: return fmt.Errorf(\"operation: %w\", err)"
+    },
+    {
+      "rule": "error-context.unwrapped-error",
+      "severity": "warning",
+      "file": "internal/engine/engine.go",
+      "line": 128,
+      "code": "\t\treturn nil, err",
+      "message": "Error returned without context — hard to trace in call chains",
+      "suggestion": "Wrap with context: return fmt.Errorf(\"operation: %w\", err)"
+    },
+    {
+      "rule": "error-context.unwrapped-error",
+      "severity": "warning",
+      "file": "internal/engine/walker.go",
+      "line": 46,
+      "code": "\t\t\treturn err",
+      "message": "Error returned without context — hard to trace in call chains",
+      "suggestion": "Wrap with context: return fmt.Errorf(\"operation: %w\", err)"
+    },
+    {
+      "rule": "error-context.unwrapped-error",
+      "severity": "warning",
+      "file": "internal/rules/missing_gitignore.go",
+      "line": 92,
+      "code": "\t\treturn nil, err",
+      "message": "Error returned without context — hard to trace in call chains",
+      "suggestion": "Wrap with context: return fmt.Errorf(\"operation: %w\", err)"
+    },
+    {
+      "rule": "mock-leakage.test-fixture-ref",
+      "severity": "warning",
+      "file": "internal/rules/mock_leakage.go",
+      "line": 75,
+      "code": "\t\tDescription: \"Reference to testdata/ or fixture path in production code\",",
+      "message": "Reference to test fixture path in production code",
+      "suggestion": "Move fixture references to _test.go files or use a config-driven path"
+    },
+    {
+      "rule": "mock-leakage.test-fixture-ref",
+      "severity": "warning",
+      "file": "internal/rules/mock_leakage.go",
+      "line": 82,
+      "code": "var fixtureRefPattern = regexp.MustCompile(`(?:testdata/|fixture[s]?/|test_data/)`)",
+      "message": "Reference to test fixture path in production code",
+      "suggestion": "Move fixture references to _test.go files or use a config-driven path"
+    },
+    {
+      "rule": "error-context.unwrapped-error",
+      "severity": "warning",
+      "file": "internal/scanner/go_scanner.go",
+      "line": 28,
+      "code": "\t\treturn nil, err",
+      "message": "Error returned without context — hard to trace in call chains",
+      "suggestion": "Wrap with context: return fmt.Errorf(\"operation: %w\", err)"
+    },
+    {
+      "rule": "error-context.unwrapped-error",
+      "severity": "warning",
+      "file": "internal/scanner/go_scanner.go",
+      "line": 33,
+      "code": "\t\treturn nil, err",
+      "message": "Error returned without context — hard to trace in call chains",
+      "suggestion": "Wrap with context: return fmt.Errorf(\"operation: %w\", err)"
+    },
+    {
+      "rule": "error-context.unwrapped-error",
+      "severity": "warning",
+      "file": "internal/scanner/go_scanner.go",
+      "line": 46,
+      "code": "\t\treturn nil, err",
+      "message": "Error returned without context — hard to trace in call chains",
+      "suggestion": "Wrap with context: return fmt.Errorf(\"operation: %w\", err)"
+    },
+    {
+      "rule": "error-context.unwrapped-error",
+      "severity": "warning",
+      "file": "internal/scanner/regex_scanner.go",
+      "line": 27,
+      "code": "\t\treturn nil, err",
+      "message": "Error returned without context — hard to trace in call chains",
+      "suggestion": "Wrap with context: return fmt.Errorf(\"operation: %w\", err)"
+    },
+    {
+      "rule": "error-context.unwrapped-error",
+      "severity": "warning",
+      "file": "internal/scanner/regex_scanner.go",
+      "line": 44,
+      "code": "\t\treturn nil, err",
+      "message": "Error returned without context — hard to trace in call chains",
+      "suggestion": "Wrap with context: return fmt.Errorf(\"operation: %w\", err)"
+    },
+    {
+      "rule": "error-context.unwrapped-error",
+      "severity": "warning",
+      "file": "internal/watcher/watcher.go",
+      "line": 39,
+      "code": "\t\treturn nil, err",
+      "message": "Error returned without context — hard to trace in call chains",
+      "suggestion": "Wrap with context: return fmt.Errorf(\"operation: %w\", err)"
+    },
+    {
+      "rule": "trace-gaps.error-path-no-log",
+      "severity": "warning",
+      "file": "internal/watcher/watcher.go",
+      "line": 42,
+      "code": "\tif err := fsw.Add(root); err != nil {",
+      "message": "Error handling block without logging — errors may be lost silently",
+      "suggestion": "Add logging before return: log.Error(\"operation failed\", \"err\", err)"
+    },
+    {
+      "rule": "error-context.unwrapped-error",
+      "severity": "warning",
+      "file": "internal/watcher/watcher.go",
+      "line": 44,
+      "code": "\t\treturn nil, err",
+      "message": "Error returned without context — hard to trace in call chains",
+      "suggestion": "Wrap with context: return fmt.Errorf(\"operation: %w\", err)"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/cli/check.go",
+      "line": 13,
+      "code": "func runCheck(args []string) int {",
+      "message": "Function runCheck is Y lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/check.go",
+      "line": 18,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/check.go",
+      "line": 26,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/check.go",
+      "line": 30,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/check.go",
+      "line": 37,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/check.go",
+      "line": 44,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/ci.go",
+      "line": 49,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/ci.go",
+      "line": 57,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/ci.go",
+      "line": 61,
+      "code": "\tif err := os.MkdirAll(workflowDir, 0755); err != nil {",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/ci.go",
+      "line": 63,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/ci.go",
+      "line": 67,
+      "code": "\tif err := os.WriteFile(workflowPath, []byte(ciWorkflow), 0644); err != nil {",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/ci.go",
+      "line": 69,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/cli/hook.go",
+      "line": 16,
+      "code": "func runHook(args []string) int {",
+      "message": "Function runHook is a lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/hook.go",
+      "line": 21,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/hook.go",
+      "line": 29,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/hook.go",
+      "line": 39,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "trace-gaps.no-stderr-capture",
+      "severity": "info",
+      "file": "internal/cli/hook.go",
+      "line": 69,
+      "code": "\tcmd := exec.Command(\"git\", \"diff\", \"--cached\", \"--name-only\", \"--diff-filter=ACM\")",
+      "message": "exec.Command used without stderr capture",
+      "suggestion": "Capture stderr with cmd.StderrPipe(), cmd.Stderr = ..., or CombinedOutput()"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/hook.go",
+      "line": 94,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/hook.go",
+      "line": 102,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/hook.go",
+      "line": 106,
+      "code": "\tif err := os.WriteFile(hookPath, []byte(preCommitHook), 0755); err != nil {",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/hook.go",
+      "line": 108,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/cli/report.go",
+      "line": 14,
+      "code": "func runReport(args []string) int {",
+      "message": "Function runReport is p lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/report.go",
+      "line": 32,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/report.go",
+      "line": 38,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/report.go",
+      "line": 42,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/report.go",
+      "line": 48,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/report.go",
+      "line": 55,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/report.go",
+      "line": 62,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/report.go",
+      "line": 69,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/cli/root.go",
+      "line": 9,
+      "code": "func Run() int {",
+      "message": "Function Run is X lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/root.go",
+      "line": 10,
+      "code": "\tif len(os.Args) \u003c 2 {",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/root.go",
+      "line": 12,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/root.go",
+      "line": 29,
+      "code": "\t\tif len(os.Args) \u003e 2 \u0026\u0026 os.Args[2] == \"install\" {",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/root.go",
+      "line": 34,
+      "code": "\t\tif len(os.Args) \u003e 2 \u0026\u0026 os.Args[2] == \"init\" {",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/root.go",
+      "line": 38,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/root.go",
+      "line": 47,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/cli/rules.go",
+      "line": 14,
+      "code": "func runRules(args []string) int {",
+      "message": "Function runRules is p lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/rules.go",
+      "line": 32,
+      "code": "\t\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/rules.go",
+      "line": 59,
+      "code": "\tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/cli/scan.go",
+      "line": 12,
+      "code": "func runScan(args []string) int {",
+      "message": "Function runScan is o lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/scan.go",
+      "line": 29,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/scan.go",
+      "line": 34,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/scan.go",
+      "line": 40,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/scan.go",
+      "line": 44,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/scan.go",
+      "line": 50,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/scan.go",
+      "line": 57,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/scan.go",
+      "line": 65,
+      "code": "\t\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/cli/watch.go",
+      "line": 15,
+      "code": "func runWatch(args []string) int {",
+      "message": "Function runWatch is ~ lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/watch.go",
+      "line": 20,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/watch.go",
+      "line": 28,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/watch.go",
+      "line": 32,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/watch.go",
+      "line": 38,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/watch.go",
+      "line": 41,
+      "code": "\tw, err := watcher.New(path, 100*time.Millisecond)",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/cli/watch.go",
+      "line": 44,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/diff/diff.go",
+      "line": 56,
+      "code": "func changedLines(old, new []string) map[int]bool {",
+      "message": "Function changedLines is Z lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/engine/engine.go",
+      "line": 48,
+      "code": "func (e *Engine) Scan(root string) (*Result, error) {",
+      "message": "Function Scan is o lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/engine/engine.go",
+      "line": 114,
+      "code": "func (e *Engine) ScanFile(path string) (*Result, error) {",
+      "message": "Function ScanFile is J lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/engine/walker.go",
+      "line": 38,
+      "code": "func Walk(root string, excludeDirs map[string]bool, excludePatterns []string) ([]string, error) {",
+      "message": "Function Walk is L lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/finding/finding.go",
+      "line": 24,
+      "code": "\t\treturn 2",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/finding/finding.go",
+      "line": 26,
+      "code": "\t\treturn 3",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/report/json.go",
+      "line": 43,
+      "code": "func JSON(w io.Writer, findings []finding.Finding, path string, scanTime time.Time, filesScanned int, durationMs int64) error {",
+      "message": "Function JSON is S lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/report/terminal.go",
+      "line": 16,
+      "code": "func Terminal(w io.Writer, findings []finding.Finding, filesScanned int, durationMs int64) {",
+      "message": "Function Terminal is K lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/report/terminal.go",
+      "line": 36,
+      "code": "\tfmt.Fprintf(w, \"%s\\n\", strings.Repeat(\"─\", 50))",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/bad_defaults.go",
+      "line": 27,
+      "code": "func (m *MissingPipefail) CheckLines(path string, lines []string) []finding.Finding {",
+      "message": "Function CheckLines is I lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/bare_return_on_error.go",
+      "line": 27,
+      "code": "func (b *BareReturnOnError) CheckAST(fset *token.FileSet, file *ast.File, lines []string) []finding.Finding {",
+      "message": "Function CheckAST is X lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/bare_return_on_error.go",
+      "line": 113,
+      "code": "func isNumericZero(value string) bool {",
+      "message": "Function isNumericZero is F lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/rules/bare_return_on_error.go",
+      "line": 116,
+      "code": "\t\tf, err := strconv.ParseFloat(clean, 64)",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/debug_guard.go",
+      "line": 26,
+      "code": "func (d *DebugGuard) CheckAST(fset *token.FileSet, file *ast.File, lines []string) []finding.Finding {",
+      "message": "Function CheckAST is N lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/error_path_no_log.go",
+      "line": 26,
+      "code": "func (e *ErrorPathNoLog) CheckAST(fset *token.FileSet, file *ast.File, lines []string) []finding.Finding {",
+      "message": "Function CheckAST is U lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/generic_error.go",
+      "line": 40,
+      "code": "func (g *GenericError) CheckAST(fset *token.FileSet, file *ast.File, lines []string) []finding.Finding {",
+      "message": "Function CheckAST is c lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/rules/generic_error.go",
+      "line": 73,
+      "code": "\t\tif len(msg) \u003e= 2 {",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/hidden_failure_bash.go",
+      "line": 43,
+      "code": "func (h *HiddenFailureBash) CheckLines(path string, lines []string) []finding.Finding {",
+      "message": "Function CheckLines is F lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/http_200_on_error.go",
+      "line": 26,
+      "code": "func (h *HTTP200OnError) CheckAST(fset *token.FileSet, file *ast.File, lines []string) []finding.Finding {",
+      "message": "Function CheckAST is G lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/http_200_on_error.go",
+      "line": 51,
+      "code": "func (h *HTTP200OnError) scanBlock(",
+      "message": "Function scanBlock is M lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/http_200_on_error.go",
+      "line": 103,
+      "code": "func nestedBlocks(stmt ast.Stmt) []*ast.BlockStmt {",
+      "message": "Function nestedBlocks is W lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/http_200_on_error.go",
+      "line": 144,
+      "code": "func findSuccessWriteCall(stmts []ast.Stmt, writerNames map[string]bool) ast.Node {",
+      "message": "Function findSuccessWriteCall is F lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/http_200_on_error.go",
+      "line": 168,
+      "code": "func isSuccessWriteCall(call *ast.CallExpr, writerNames map[string]bool) bool {",
+      "message": "Function isSuccessWriteCall is S lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/ignored_error.go",
+      "line": 25,
+      "code": "func (ig *IgnoredError) CheckAST(fset *token.FileSet, file *ast.File, lines []string) []finding.Finding {",
+      "message": "Function CheckAST is [ lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/rules/ignored_error.go",
+      "line": 53,
+      "code": "\t\tif len(assign.Lhs) \u003e= 2 {",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/long_function_no_log.go",
+      "line": 37,
+      "code": "func (l *LongFunctionNoLog) CheckAST(fset *token.FileSet, file *ast.File, lines []string) []finding.Finding {",
+      "message": "Function CheckAST is S lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/rules/long_function_no_log.go",
+      "line": 54,
+      "code": "\t\tif bodyLines \u003c= 20 {",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/magic_number.go",
+      "line": 27,
+      "code": "func (m *MagicNumber) CheckAST(fset *token.FileSet, file *ast.File, lines []string) []finding.Finding {",
+      "message": "Function CheckAST is q lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/rules/magic_number.go",
+      "line": 103,
+      "code": "\tif len(stack) \u003c 2 {",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/rules/magic_number.go",
+      "line": 114,
+      "code": "\tfor i := len(stack) - 2; i \u003e= 0; i-- {",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/rules/magic_number.go",
+      "line": 124,
+      "code": "\tfor i := len(stack) - 2; i \u003e= 0; i-- {",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/missing_gitignore.go",
+      "line": 26,
+      "code": "func (m *MissingGitignore) CheckLines(path string, lines []string) []finding.Finding {",
+      "message": "Function CheckLines is Q lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/missing_gitignore.go",
+      "line": 61,
+      "code": "func (m *MissingGitignore) checkGitignore(path string, lines []string) []finding.Finding {",
+      "message": "Function checkGitignore is J lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/missing_gitignore.go",
+      "line": 98,
+      "code": "func hasEnvIgnore(lines []string) bool {",
+      "message": "Function hasEnvIgnore is E lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/mock_leakage.go",
+      "line": 35,
+      "code": "func (m *MockImportNonTest) CheckAST(fset *token.FileSet, file *ast.File, lines []string) []finding.Finding {",
+      "message": "Function CheckAST is N lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/mock_leakage.go",
+      "line": 84,
+      "code": "func (t *TestFixtureRef) CheckLines(path string, lines []string) []finding.Finding {",
+      "message": "Function CheckLines is G lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/nil_on_error.go",
+      "line": 26,
+      "code": "func (n *NilOnError) CheckAST(fset *token.FileSet, file *ast.File, lines []string) []finding.Finding {",
+      "message": "Function CheckAST is R lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/rules/nil_on_error.go",
+      "line": 63,
+      "code": "\tif ret == nil || len(ret.Results) != 2 {",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/no_err_trap.go",
+      "line": 28,
+      "code": "func (n *NoErrTrap) CheckLines(path string, lines []string) []finding.Finding {",
+      "message": "Function CheckLines is Q lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/no_request_id.go",
+      "line": 27,
+      "code": "func (n *NoRequestID) CheckAST(fset *token.FileSet, file *ast.File, lines []string) []finding.Finding {",
+      "message": "Function CheckAST is R lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/no_request_id.go",
+      "line": 63,
+      "code": "func extractHTTPHandlerParamNames(fn *ast.FuncDecl) (bool, map[string]bool, map[string]bool) {",
+      "message": "Function extractHTTPHandlerParamNames is U lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/rules/no_request_id.go",
+      "line": 84,
+      "code": "\tif len(params) \u003c 2 {",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/no_stderr_capture.go",
+      "line": 30,
+      "code": "func (n *NoStderrCapture) CheckLines(path string, lines []string) []finding.Finding {",
+      "message": "Function CheckLines is K lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/no_stderr_capture.go",
+      "line": 59,
+      "code": "func hasNearbyStderrCapture(lines []string, start int) bool {",
+      "message": "Function hasNearbyStderrCapture is E lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/rules/no_stderr_capture.go",
+      "line": 60,
+      "code": "\tend := start + 6",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "trace-gaps.no-stderr-capture",
+      "severity": "info",
+      "file": "internal/rules/no_stderr_capture_test.go",
+      "line": 8,
+      "code": "\t\t\"cmd := exec.Command(\\\"ls\\\")\",",
+      "message": "exec.Command used without stderr capture",
+      "suggestion": "Capture stderr with cmd.StderrPipe(), cmd.Stderr = ..., or CombinedOutput()"
+    },
+    {
+      "rule": "trace-gaps.no-stderr-capture",
+      "severity": "info",
+      "file": "internal/rules/no_stderr_capture_test.go",
+      "line": 65,
+      "code": "\t\t\"// cmd := exec.Command(\\\"ls\\\")\",",
+      "message": "exec.Command used without stderr capture",
+      "suggestion": "Capture stderr with cmd.StderrPipe(), cmd.Stderr = ..., or CombinedOutput()"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/no_timeout.go",
+      "line": 25,
+      "code": "func (nt *NoTimeout) CheckAST(fset *token.FileSet, file *ast.File, lines []string) []finding.Finding {",
+      "message": "Function CheckAST is w lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/registry.go",
+      "line": 125,
+      "code": "func (r *Registry) EnabledRules() []Rule {",
+      "message": "Function EnabledRules is G lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/registry.go",
+      "line": 151,
+      "code": "func DefaultRegistry() *Registry {",
+      "message": "Function DefaultRegistry is P lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/silent_fallback.go",
+      "line": 25,
+      "code": "func (e *EmptyErrorCheck) CheckAST(fset *token.FileSet, file *ast.File, lines []string) []finding.Finding {",
+      "message": "Function CheckAST is L lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/unvalidated_env_bash.go",
+      "line": 29,
+      "code": "func (u *UnvalidatedEnvBash) CheckLines(path string, lines []string) []finding.Finding {",
+      "message": "Function CheckLines is K lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/unvalidated_env_go.go",
+      "line": 25,
+      "code": "func (u *UnvalidatedEnvGo) CheckAST(fset *token.FileSet, file *ast.File, lines []string) []finding.Finding {",
+      "message": "Function CheckAST is S lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/rules/unwrapped_error.go",
+      "line": 26,
+      "code": "func (u *UnwrappedError) CheckAST(fset *token.FileSet, file *ast.File, lines []string) []finding.Finding {",
+      "message": "Function CheckAST is \\ lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/watcher/watcher.go",
+      "line": 36,
+      "code": "func New(root string, debounceDur time.Duration) (*Watcher, error) {",
+      "message": "Function New is E lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    },
+    {
+      "rule": "bad-defaults.magic-number",
+      "severity": "info",
+      "file": "internal/watcher/watcher.go",
+      "line": 49,
+      "code": "\t\tevents:   make(chan string, 64),",
+      "message": "Magic number used directly in function body",
+      "suggestion": "Extract numeric values into a named const for readability and safer defaults"
+    },
+    {
+      "rule": "trace-gaps.long-function-no-log",
+      "severity": "info",
+      "file": "internal/watcher/watcher.go",
+      "line": 76,
+      "code": "func (w *Watcher) loop() {",
+      "message": "Function loop is G lines with no logging",
+      "suggestion": "Add structured logging for key operations and error paths"
+    }
+  ],
+  "summary": {
+    "total": 178,
+    "errors": 25,
+    "warnings": 42,
+    "info": 111,
+    "files_scanned": 76,
+    "duration_ms": 17
+  }
+}

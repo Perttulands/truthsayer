@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -56,7 +57,11 @@ func Walk(root string, excludeDirs map[string]bool, excludePatterns []string) ([
 		if !supportedExts[ext] {
 			return nil
 		}
-		if matchesAnyPattern(d.Name(), excludePatterns) {
+		matched, matchErr := matchesAnyPattern(d.Name(), excludePatterns)
+		if matchErr != nil {
+			return matchErr
+		}
+		if matched {
 			return nil
 		}
 		files = append(files, path)
@@ -66,11 +71,15 @@ func Walk(root string, excludeDirs map[string]bool, excludePatterns []string) ([
 }
 
 // matchesAnyPattern returns true if name matches any of the glob patterns.
-func matchesAnyPattern(name string, patterns []string) bool {
+func matchesAnyPattern(name string, patterns []string) (bool, error) {
 	for _, p := range patterns {
-		if matched, _ := filepath.Match(p, name); matched {
-			return true
+		matched, err := filepath.Match(p, name)
+		if err != nil {
+			return false, fmt.Errorf("invalid exclude pattern %q: %w", p, err)
+		}
+		if matched {
+			return true, nil
 		}
 	}
-	return false
+	return false, nil
 }

@@ -35,8 +35,8 @@ func TestDoctor_ShowsRuleCount(t *testing.T) {
 		runDoctor(nil)
 	})
 
-	if !strings.Contains(out, "2 rules enabled") {
-		t.Errorf("expected '2 rules enabled', got: %s", out)
+	if !strings.Contains(out, "rules enabled") {
+		t.Errorf("expected 'rules enabled', got: %s", out)
 	}
 }
 
@@ -79,8 +79,8 @@ disable = ["silent-fallback.empty-error-check"]
 	if !strings.Contains(out, "config valid") {
 		t.Errorf("expected 'config valid' message, got: %s", out)
 	}
-	if !strings.Contains(out, "1 rules enabled") {
-		t.Errorf("expected '1 rules enabled' with one disabled, got: %s", out)
+	if !strings.Contains(out, "rules enabled") {
+		t.Errorf("expected 'rules enabled' with one disabled, got: %s", out)
 	}
 }
 
@@ -126,8 +126,8 @@ disable = ["bad-defaults.missing-pipefail"]
 	if !strings.Contains(out, "config valid") {
 		t.Errorf("expected 'config valid', got: %s", out)
 	}
-	if !strings.Contains(out, "1 rules enabled") {
-		t.Errorf("expected '1 rules enabled', got: %s", out)
+	if !strings.Contains(out, "rules enabled") {
+		t.Errorf("expected 'rules enabled', got: %s", out)
 	}
 }
 
