@@ -3,6 +3,7 @@ package report
 import (
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 
 	"github.com/perttulands/truthsayer/internal/finding"
@@ -35,6 +36,10 @@ func Terminal(w io.Writer, findings []finding.Finding, filesScanned int, duratio
 	fmt.Fprintf(w, "%s\n", strings.Repeat("─", 50))
 	fmt.Fprintf(w, "Summary: %d errors, %d warnings, %d info (%d files scanned in %dms)\n",
 		errors, warnings, infos, filesScanned, durationMs)
+
+	if cats := countByCategory(findings); len(cats) > 0 {
+		fmt.Fprintf(w, "Categories: %s\n", formatCategoryCounts(cats))
+	}
 }
 
 func severityLabel(s finding.Severity) string {
@@ -48,6 +53,41 @@ func severityLabel(s finding.Severity) string {
 	default:
 		return "      "
 	}
+}
+
+type categoryCount struct {
+	name  string
+	count int
+}
+
+func countByCategory(findings []finding.Finding) []categoryCount {
+	counts := make(map[string]int)
+	for _, f := range findings {
+		cat := f.Rule
+		if idx := strings.IndexByte(cat, '.'); idx > 0 {
+			cat = cat[:idx]
+		}
+		counts[cat]++
+	}
+	out := make([]categoryCount, 0, len(counts))
+	for name, count := range counts {
+		out = append(out, categoryCount{name, count})
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].count != out[j].count {
+			return out[i].count > out[j].count // highest count first
+		}
+		return out[i].name < out[j].name
+	})
+	return out
+}
+
+func formatCategoryCounts(cats []categoryCount) string {
+	parts := make([]string, len(cats))
+	for i, c := range cats {
+		parts[i] = fmt.Sprintf("%s: %d", c.name, c.count)
+	}
+	return strings.Join(parts, ", ")
 }
 
 func countBySeverity(findings []finding.Finding) (errors, warnings, infos int) {

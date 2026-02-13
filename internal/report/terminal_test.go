@@ -104,6 +104,45 @@ func TestTerminal_SeveritySortOrder(t *testing.T) {
 	}
 }
 
+func TestTerminal_CategoryCounts(t *testing.T) {
+	findings := []finding.Finding{
+		{Rule: "silent-fallback.empty-error-check", Severity: finding.SeverityError, File: "a.go", Line: 1, Message: "m1"},
+		{Rule: "silent-fallback.ignored-error", Severity: finding.SeverityError, File: "a.go", Line: 2, Message: "m2"},
+		{Rule: "bad-defaults.missing-pipefail", Severity: finding.SeverityError, File: "b.sh", Line: 1, Message: "m3"},
+		{Rule: "trace-gaps.no-request-id", Severity: finding.SeverityWarning, File: "c.go", Line: 1, Message: "m4"},
+	}
+
+	var buf bytes.Buffer
+	Terminal(&buf, findings, 10, 200)
+	out := buf.String()
+
+	// Must contain category breakdown
+	if !strings.Contains(out, "silent-fallback: 2") {
+		t.Errorf("expected category count for silent-fallback: 2, got:\n%s", out)
+	}
+	if !strings.Contains(out, "bad-defaults: 1") {
+		t.Errorf("expected category count for bad-defaults: 1, got:\n%s", out)
+	}
+	if !strings.Contains(out, "trace-gaps: 1") {
+		t.Errorf("expected category count for trace-gaps: 1, got:\n%s", out)
+	}
+}
+
+func TestTerminal_CategoryCountsEmpty(t *testing.T) {
+	var buf bytes.Buffer
+	Terminal(&buf, nil, 5, 50)
+	out := buf.String()
+
+	// Should still show severity summary even with no findings
+	if !strings.Contains(out, "0 errors") {
+		t.Errorf("expected 0 errors in output:\n%s", out)
+	}
+	// No category line when there are no findings
+	if strings.Contains(out, "Categories:") {
+		t.Error("should not show Categories line when there are no findings")
+	}
+}
+
 func TestTerminal_EmptyCode(t *testing.T) {
 	findings := []finding.Finding{
 		{
