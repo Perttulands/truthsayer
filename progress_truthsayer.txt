@@ -210,3 +210,115 @@
 - Review: PASSED
 - Next: US-008 (generate JSON report)
 ---
+## Iteration 8 - US-008: Generate JSON report of all findings
+- Created internal/report/json.go: JSONReport, JSONFinding, JSONSummary structs + JSON() writer function
+- JSON output matches PRD schema section 8: version, scan_time, path, duration_ms, findings array, summary
+- Uses json.Encoder with SetIndent for pretty-printed output
+- Reuses countBySeverity() from terminal.go (same package, no duplication)
+- Created internal/cli/report.go: `report` command with --output flag (default: truthsayer-report.json)
+- Updated internal/cli/scan.go: added --format flag (text|json), `scan --format json` outputs JSON to stdout
+- Updated internal/cli/root.go: registered `report` command + usage text
+- 3 JSON report tests: empty findings, with findings (all fields + summary counts), valid format check
+- Files changed:
+  - internal/report/json.go (new)
+  - internal/report/json_test.go (new)
+  - internal/cli/report.go (new)
+  - internal/cli/scan.go (modified — --format flag)
+  - internal/cli/root.go (modified — report command)
+  - PRD_TRUTHSAYER.md (marked complete)
+- Learnings for future iterations:
+  - JSONFinding uses `string` for severity (not finding.Severity) — avoids custom JSON marshaling
+  - Suggestion field uses `omitempty` — clean JSON for findings without suggestions
+  - report command writes to file; scan --format json writes to stdout — different use cases per PRD
+  - Arg parsing pattern (for loop with flag check + i++) is consistent across scan.go/report.go
+
+**Summary:**
+- Task: US-008: Generate JSON report of all findings
+- Files: 6 files (3 new, 3 modified)
+- Tests: PASS (45/45 — 42 existing + 3 new)
+- Review: PASSED
+- Next: US-009 (exit code 1 when errors found)
+---
+## Iteration 9 - US-009: Exit code 1 when errors found for CI quality gate
+- Added finding.HasErrors() helper to centralize error-severity check logic
+- Refactored scan.go, check.go to use HasErrors() instead of duplicated for-loop
+- Fixed report.go to also return exit code 1 when error findings exist (was always returning 0)
+- Created internal/cli/exitcode_test.go with 10 tests covering all exit code paths:
+  - scan: exit 1 with errors, exit 0 clean, exit 2 bad path, exit 2 no args
+  - check: exit 1 with errors, exit 0 clean, exit 2 bad path
+  - report: exit 1 with errors, exit 0 clean, exit 2 bad path
+- Files changed:
+  - internal/finding/finding.go (HasErrors added)
+  - internal/finding/finding_test.go (3 new HasErrors tests)
+  - internal/cli/scan.go (refactored to use HasErrors)
+  - internal/cli/check.go (refactored to use HasErrors)
+  - internal/cli/report.go (added HasErrors exit code + finding import)
+  - internal/cli/exitcode_test.go (new — 10 exit code tests)
+  - PRD_TRUTHSAYER.md (marked complete)
+- Learnings for future iterations:
+  - report command was missing exit code 1 logic — always verify all commands implement FR-019
+  - HasErrors() is the single source of truth for "should CI fail?" decision
+  - CLI functions return int, making them directly testable without os.Exit()
+  - First CLI test file created — pattern: temp dirs with fixture content, call runX(), assert exit code
+
+**Summary:**
+- Task: US-009: Exit code 1 when errors found
+- Files: 7 files (5 modified, 1 new test file, 1 PRD)
+- Tests: PASS (55/55 — 45 existing + 10 new)
+- Review: PASSED
+- Next: US-010 (human-readable terminal summary)
+---
+## Iteration 10 - US-010: Human-readable terminal summary with severity and category counts
+- Added category breakdown line to Terminal reporter output
+- Category extracted from rule ID (part before first dot, e.g., "silent-fallback" from "silent-fallback.empty-error-check")
+- Categories sorted by count descending, then alphabetically for ties
+- "Categories:" line only shown when findings exist (no noise on clean scans)
+- Added countByCategory() and formatCategoryCounts() helper functions
+- 2 new tests: TestTerminal_CategoryCounts (multi-category), TestTerminal_CategoryCountsEmpty (no findings)
+- Files changed:
+  - internal/report/terminal.go (countByCategory, formatCategoryCounts, Categories output line)
+  - internal/report/terminal_test.go (2 new tests)
+  - PRD_TRUTHSAYER.md (marked complete)
+- Learnings for future iterations:
+  - Category is derived from rule ID prefix — no separate Category field needed on Finding struct
+  - sort.Slice with count-descending then alpha-ascending gives intuitive output ordering
+  - Terminal output now has two summary lines: severity counts + category counts
+
+**Summary:**
+- Task: US-010: Human-readable terminal summary with severity and category counts
+- Files: 3 files (2 modified, 1 PRD)
+- Tests: PASS (57/57 — 55 existing + 2 new)
+- Review: PASSED
+- Next: US-REVIEW-S2 (Sprint 2 review)
+---
+## Review PASSED - US-REVIEW-S2: Sprint 2 Review
+- **Scope**: US-006 through US-010 (all Sprint 2 tasks)
+- **Tests**: All 57 tests pass across 9 packages (cli, diff, engine, finding, report, rules, scanner, watcher + cmd)
+- **Architecture**: New packages (watcher, diff) integrate cleanly with existing infrastructure. Dependency flow remains acyclic: finding → rules → scanner → engine → {diff, watcher} → cli → report.
+- **Cross-task integration**:
+  - US-006 (watcher) → US-007 (diff): tracker.Update() feeds into FilterByLines() in watch CLI
+  - US-008 (JSON) shares countBySeverity() with terminal reporter — no duplication
+  - US-009 (exit codes) HasErrors() used consistently across scan, check, report commands
+  - US-010 (summary) extends terminal reporter cleanly with category counts
+- **Duplication analysis**:
+  - watchedExts/supportedExts duplication across watcher/walker — intentional, documented, may diverge
+  - CLI command boilerplate — structural, different validation/error semantics per command
+  - watch.go inline error-severity check vs HasErrors() — functionally different (accumulates across events)
+- **Data structures**: Tracker snapshots (map[string][]string), JSON report structs, categoryCount — all appropriate
+- **Edge cases**: New file → all lines changed, no changes → empty map, file not found → error return
+- **Minor observations** (not worth fix tasks):
+  - `new` parameter name shadows builtin in diff.go — idiomatic for short locals
+  - scanTime computed after scan in report.go — semantically "report generation time"
+- **Verdict**: No issues found. Sprint 2 codebase is clean, well-tested, and components integrate properly.
+- Learnings for future iterations:
+  - Sprint 2 established watch/diff infrastructure + JSON reporting + CI exit codes + terminal summary
+  - HasErrors() is the single source of truth for CI failure decisions
+  - Category is derived from rule ID prefix (part before first dot)
+
+**Summary:**
+- Task: US-REVIEW-S2: Review Sprint 2
+- Files: PRD_TRUTHSAYER.md (marked review complete)
+- Tests: PASS (57/57)
+- Review: PASSED
+- Next: US-011 (configure rules via TOML config)
+---
