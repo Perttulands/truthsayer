@@ -253,3 +253,78 @@ func TestScan_NoConfigMeansAllEnabled(t *testing.T) {
 		t.Errorf("expected exit code 1 (all rules enabled by default), got %d", code)
 	}
 }
+
+// Severity override integration tests for US-013.
+
+func TestScan_SeverityOverride_ErrorToWarning(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "bad.go", goWithError)
+	writeFile(t, dir, ".truthsayer.toml", `
+[rules.severity]
+"silent-fallback.empty-error-check" = "warning"
+`)
+
+	code := runScan([]string{dir})
+	if code != 0 {
+		t.Errorf("expected exit code 0 (error demoted to warning), got %d", code)
+	}
+}
+
+func TestCheck_SeverityOverride_ErrorToWarning(t *testing.T) {
+	dir := t.TempDir()
+	path := writeFile(t, dir, "bad.go", goWithError)
+	writeFile(t, dir, ".truthsayer.toml", `
+[rules.severity]
+"silent-fallback.empty-error-check" = "warning"
+`)
+
+	code := runCheck([]string{path})
+	if code != 0 {
+		t.Errorf("expected exit code 0 (error demoted to warning), got %d", code)
+	}
+}
+
+func TestScan_SeverityOverride_ExplicitConfig(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "bad.go", goWithError)
+
+	cfgDir := t.TempDir()
+	cfgPath := writeFile(t, cfgDir, "override.toml", `
+[rules.severity]
+"silent-fallback.empty-error-check" = "info"
+`)
+
+	code := runScan([]string{"--config", cfgPath, dir})
+	if code != 0 {
+		t.Errorf("expected exit code 0 (error demoted to info via --config), got %d", code)
+	}
+}
+
+func TestReport_SeverityOverride_ErrorToWarning(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "bad.go", goWithError)
+	writeFile(t, dir, ".truthsayer.toml", `
+[rules.severity]
+"silent-fallback.empty-error-check" = "warning"
+`)
+	output := filepath.Join(t.TempDir(), "report.json")
+
+	code := runReport([]string{"--output", output, dir})
+	if code != 0 {
+		t.Errorf("expected exit code 0 (error demoted to warning), got %d", code)
+	}
+}
+
+func TestScan_SeverityOverride_InvalidSeverity(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "bad.go", goWithError)
+	writeFile(t, dir, ".truthsayer.toml", `
+[rules.severity]
+"silent-fallback.empty-error-check" = "critical"
+`)
+
+	code := runScan([]string{dir})
+	if code != 2 {
+		t.Errorf("expected exit code 2 (invalid severity), got %d", code)
+	}
+}

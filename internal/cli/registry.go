@@ -6,8 +6,16 @@ import (
 
 	"github.com/perttulands/truthsayer/internal/config"
 	"github.com/perttulands/truthsayer/internal/engine"
+	"github.com/perttulands/truthsayer/internal/finding"
 	"github.com/perttulands/truthsayer/internal/rules"
 )
+
+// validSeverities is the set of valid severity values for config overrides.
+var validSeverities = map[string]bool{
+	string(finding.SeverityError):   true,
+	string(finding.SeverityWarning): true,
+	string(finding.SeverityInfo):    true,
+}
 
 // buildEngine creates a configured engine from the given config path.
 // scanDir is used to find .truthsayer.toml when configPath is empty.
@@ -24,6 +32,9 @@ func buildEngine(scanDir, configPath string) (*engine.Engine, error) {
 	}
 
 	for id, sev := range cfg.Rules.Severity {
+		if !validSeverities[sev] {
+			return nil, fmt.Errorf("config: invalid severity %q for rule %q (valid: error, warning, info)", sev, id)
+		}
 		if !reg.SetSeverity(id, sev) {
 			fmt.Fprintf(os.Stderr, "warning: unknown rule %q in severity config\n", id)
 		}
