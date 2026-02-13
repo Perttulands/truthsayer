@@ -67,6 +67,49 @@ func TestSort_SeverityPrecedence(t *testing.T) {
 	}
 }
 
+func TestFilterByLines(t *testing.T) {
+	findings := []Finding{
+		{Rule: "r1", File: "a.go", Line: 1, Severity: SeverityError},
+		{Rule: "r2", File: "a.go", Line: 5, Severity: SeverityWarning},
+		{Rule: "r3", File: "a.go", Line: 10, Severity: SeverityInfo},
+	}
+
+	changedLines := map[int]bool{1: true, 10: true}
+	got := FilterByLines(findings, changedLines)
+
+	if len(got) != 2 {
+		t.Fatalf("expected 2 filtered findings, got %d", len(got))
+	}
+	if got[0].Line != 1 || got[1].Line != 10 {
+		t.Errorf("expected lines 1 and 10, got %d and %d", got[0].Line, got[1].Line)
+	}
+}
+
+func TestFilterByLines_Empty(t *testing.T) {
+	findings := []Finding{
+		{Rule: "r1", File: "a.go", Line: 1, Severity: SeverityError},
+	}
+
+	// No changed lines — filter out everything
+	got := FilterByLines(findings, map[int]bool{})
+	if len(got) != 0 {
+		t.Fatalf("expected 0 filtered findings, got %d", len(got))
+	}
+}
+
+func TestFilterByLines_NilPassesAll(t *testing.T) {
+	findings := []Finding{
+		{Rule: "r1", File: "a.go", Line: 1, Severity: SeverityError},
+		{Rule: "r2", File: "a.go", Line: 5, Severity: SeverityWarning},
+	}
+
+	// nil changedLines means "all lines changed" (new file or full scan)
+	got := FilterByLines(findings, nil)
+	if len(got) != 2 {
+		t.Fatalf("expected 2 findings (all pass through), got %d", len(got))
+	}
+}
+
 func TestSeverityRank(t *testing.T) {
 	// Verify rank values enforce error < warning < info ordering
 	if SeverityError.rank() >= SeverityWarning.rank() {

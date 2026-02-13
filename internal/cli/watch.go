@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/perttulands/truthsayer/internal/diff"
 	"github.com/perttulands/truthsayer/internal/engine"
 	"github.com/perttulands/truthsayer/internal/finding"
 	"github.com/perttulands/truthsayer/internal/report"
@@ -46,6 +47,7 @@ func runWatch(args []string) int {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt)
 
+	tracker := diff.NewTracker()
 	sawError := false
 
 	for {
@@ -54,6 +56,13 @@ func runWatch(args []string) int {
 			if !ok {
 				return exitCode(sawError)
 			}
+
+			changedLines, err := tracker.Update(filePath)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "diff error: %v\n", err)
+				continue
+			}
+
 			start := time.Now()
 			result, err := eng.ScanFile(filePath)
 			if err != nil {
@@ -62,9 +71,10 @@ func runWatch(args []string) int {
 			}
 			durationMs := time.Since(start).Milliseconds()
 
-			if len(result.Findings) > 0 {
-				report.Terminal(os.Stdout, result.Findings, result.FilesScanned, durationMs)
-				for _, f := range result.Findings {
+			filtered := finding.FilterByLines(result.Findings, changedLines)
+			if len(filtered) > 0 {
+				report.Terminal(os.Stdout, filtered, result.FilesScanned, durationMs)
+				for _, f := range filtered {
 					if f.Severity == finding.SeverityError {
 						sawError = true
 						break

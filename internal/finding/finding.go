@@ -56,6 +56,21 @@ func Dedup(findings []Finding) []Finding {
 	return result
 }
 
+// FilterByLines returns only findings whose Line is in changedLines.
+// If changedLines is nil, all findings pass through (used for new files or full scans).
+func FilterByLines(findings []Finding, changedLines map[int]bool) []Finding {
+	if changedLines == nil {
+		return findings
+	}
+	result := make([]Finding, 0, len(findings))
+	for _, f := range findings {
+		if changedLines[f.Line] {
+			result = append(result, f)
+		}
+	}
+	return result
+}
+
 // Sort sorts findings by severity (error first), then file path, then line number.
 func Sort(findings []Finding) {
 	sort.Slice(findings, func(i, j int) bool {

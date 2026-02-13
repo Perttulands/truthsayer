@@ -154,3 +154,59 @@
 - Review: PASSED
 - Next: US-006 (watch directory for file changes)
 ---
+## Iteration 6 - US-006: Watch directory for file changes
+- Added fsnotify dependency (v1.9.0) for cross-platform file watching
+- Created internal/watcher/watcher.go: Watcher struct wrapping fsnotify with per-file debounce using time.AfterFunc
+- Extension filtering matches PRD spec: .go, .sh, .bash, .toml, .yaml, .yml, .json, .env
+- Only Create and Write events trigger scans (not Remove/Rename/Chmod)
+- Created internal/cli/watch.go: event loop with signal handling (Ctrl+C), real-time Terminal output per file change
+- Updated root.go with "watch" command dispatch and usage text
+- 6 watcher tests: invalid path, valid path, file create, file write, unsupported ext filtering, debounce
+- Files changed:
+  - go.mod, go.sum (fsnotify dependency)
+  - internal/watcher/watcher.go (new)
+  - internal/watcher/watcher_test.go (new)
+  - internal/cli/watch.go (new)
+  - internal/cli/root.go (watch command + usage)
+  - PRD_TRUTHSAYER.md (marked complete)
+- Learnings for future iterations:
+  - watchedExts in watcher.go duplicates supportedExts in walker.go — intentional, different packages/purposes
+  - Debounce uses map[string]*time.Timer with AfterFunc — timer.Reset() for existing, new timer for first event
+  - fsnotify only watches the root dir, not subdirs recursively — sufficient for current needs but may need recursive add later
+  - Watch mode uses Engine.ScanFile() for per-file scanning, same as check command
+
+**Summary:**
+- Task: US-006: Watch directory for file changes
+- Files: 7 files (3 new, 2 modified, 2 dependency files)
+- Tests: PASS (33/33 — 27 existing + 6 new)
+- Review: PASSED
+- Next: US-007 (watch mode reports only changed lines)
+---
+## Iteration 7 - US-007: Watch mode reports only changed lines
+- Created internal/diff package with Tracker type for file content snapshots
+- Tracker.Update() reads file, computes LCS-based diff against previous snapshot, returns changed line numbers (1-based)
+- New file = all lines changed; no changes = empty map; modified = only changed/added lines
+- Added finding.FilterByLines() to filter findings by changed line set (nil = pass all through)
+- Integrated diff tracker into watch.go CLI: tracker.Update() called before scan, findings filtered after scan
+- 6 diff tests: new file, modified lines, added lines, deleted lines, no changes, file not found
+- 3 FilterByLines tests: basic filter, empty set, nil passes all
+- Files changed:
+  - internal/diff/diff.go (new)
+  - internal/diff/diff_test.go (new)
+  - internal/finding/finding.go (FilterByLines added)
+  - internal/finding/finding_test.go (3 new tests)
+  - internal/cli/watch.go (diff tracker integration)
+  - PRD_TRUTHSAYER.md (marked complete)
+- Learnings for future iterations:
+  - LCS-based diff is O(m*n) — fine for typical source files in watch mode
+  - nil map convention for "all lines changed" avoids special cases in callers
+  - Tracker stores snapshots in memory — works for watch mode lifecycle, no persistence needed
+  - First call to Update for a path returns all lines as changed, so first-time scans report everything
+
+**Summary:**
+- Task: US-007: Watch mode reports only changed lines
+- Files: 7 files (2 new, 3 modified, 1 PRD, 1 progress)
+- Tests: PASS (42/42 — 33 existing + 9 new)
+- Review: PASSED
+- Next: US-008 (generate JSON report)
+---

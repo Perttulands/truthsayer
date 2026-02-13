@@ -19,7 +19,7 @@
 **Status:** IN PROGRESS
 
 - [x] **US-006**: As a developer, I want to watch a directory for file changes and get instant feedback on new anti-patterns so I catch problems as I code.
-- [ ] **US-007**: As a developer, I want watch mode to only report findings in the changed lines (not the entire file) so I'm not overwhelmed by pre-existing issues.
+- [x] **US-007**: As a developer, I want watch mode to only report findings in the changed lines (not the entire file) so I'm not overwhelmed by pre-existing issues.
 - [ ] **US-008**: As a developer, I want to generate a JSON report of all findings so I can feed it into other tools or dashboards.
 - [ ] **US-009**: As a CI engineer, I want the scanner to exit with code 1 when errors are found so I can use it as a pipeline quality gate.
 - [ ] **US-010**: As a developer, I want a human-readable terminal summary after each scan showing counts by severity and category.
