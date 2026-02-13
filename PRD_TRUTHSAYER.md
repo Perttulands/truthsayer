@@ -11,7 +11,7 @@
 - [x] **US-001**: As a developer, I want to scan a directory for anti-patterns so I can find hidden problems before they reach production.
 - [x] **US-002**: As a developer, I want to scan a single file so I can check my work before committing.
 - [x] **US-003**: As a developer, I want findings to include file path, line number, code snippet, and a fix suggestion so I can act on them immediately.
-- [ ] **US-004**: As a developer, I want scan results sorted by severity (error > warning > info) so I can triage effectively.
+- [x] **US-004**: As a developer, I want scan results sorted by severity (error > warning > info) so I can triage effectively.
 - [ ] **US-005**: As a developer, I want the scanner to skip vendor/, node_modules/, and .git/ directories by default so scans are fast and relevant.
 - [ ] **US-REVIEW-S1**: Review Sprint 1 — run tests, verify integration, fix issues.
 

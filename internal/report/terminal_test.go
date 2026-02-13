@@ -65,6 +65,45 @@ func TestTerminal_CodeSnippetTrimmed(t *testing.T) {
 	}
 }
 
+func TestTerminal_SeveritySortOrder(t *testing.T) {
+	// US-004: findings must appear sorted by severity (error > warning > info)
+	findings := []finding.Finding{
+		{Rule: "rule-err", Severity: finding.SeverityError, File: "a.go", Line: 10, Message: "error finding"},
+		{Rule: "rule-warn", Severity: finding.SeverityWarning, File: "b.go", Line: 20, Message: "warning finding"},
+		{Rule: "rule-info", Severity: finding.SeverityInfo, File: "c.go", Line: 30, Message: "info finding"},
+	}
+
+	var buf bytes.Buffer
+	Terminal(&buf, findings, 3, 50)
+	out := buf.String()
+
+	// Verify severity labels appear in correct order
+	errIdx := strings.Index(out, "ERROR")
+	warnIdx := strings.Index(out, "WARN")
+	infoIdx := strings.Index(out, "INFO")
+
+	if errIdx == -1 || warnIdx == -1 || infoIdx == -1 {
+		t.Fatalf("missing severity labels in output:\n%s", out)
+	}
+	if errIdx >= warnIdx {
+		t.Errorf("ERROR (pos %d) should appear before WARN (pos %d)", errIdx, warnIdx)
+	}
+	if warnIdx >= infoIdx {
+		t.Errorf("WARN (pos %d) should appear before INFO (pos %d)", warnIdx, infoIdx)
+	}
+
+	// Verify summary counts
+	if !strings.Contains(out, "1 errors") {
+		t.Error("summary should show 1 errors")
+	}
+	if !strings.Contains(out, "1 warnings") {
+		t.Error("summary should show 1 warnings")
+	}
+	if !strings.Contains(out, "1 info") {
+		t.Error("summary should show 1 info")
+	}
+}
+
 func TestTerminal_EmptyCode(t *testing.T) {
 	findings := []finding.Finding{
 		{

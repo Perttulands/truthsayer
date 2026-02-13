@@ -45,3 +45,34 @@ func TestSort(t *testing.T) {
 		}
 	}
 }
+
+func TestSort_SeverityPrecedence(t *testing.T) {
+	// US-004: severity order is error > warning > info, regardless of file/line
+	findings := []Finding{
+		{Rule: "r1", Severity: SeverityInfo, File: "aaa.go", Line: 1},
+		{Rule: "r2", Severity: SeverityWarning, File: "bbb.go", Line: 1},
+		{Rule: "r3", Severity: SeverityError, File: "zzz.go", Line: 99},
+	}
+	Sort(findings)
+
+	// Error must come first even though zzz.go > aaa.go alphabetically
+	if findings[0].Severity != SeverityError {
+		t.Errorf("first finding should be error, got %s", findings[0].Severity)
+	}
+	if findings[1].Severity != SeverityWarning {
+		t.Errorf("second finding should be warning, got %s", findings[1].Severity)
+	}
+	if findings[2].Severity != SeverityInfo {
+		t.Errorf("third finding should be info, got %s", findings[2].Severity)
+	}
+}
+
+func TestSeverityRank(t *testing.T) {
+	// Verify rank values enforce error < warning < info ordering
+	if SeverityError.rank() >= SeverityWarning.rank() {
+		t.Error("error rank should be less than warning rank")
+	}
+	if SeverityWarning.rank() >= SeverityInfo.rank() {
+		t.Error("warning rank should be less than info rank")
+	}
+}
