@@ -1,0 +1,51 @@
+package cli
+
+import (
+	"fmt"
+	"os"
+	"time"
+
+	"github.com/perttulands/truthsayer/internal/engine"
+	"github.com/perttulands/truthsayer/internal/finding"
+	"github.com/perttulands/truthsayer/internal/report"
+	"github.com/perttulands/truthsayer/internal/rules"
+)
+
+func runCheck(args []string) int {
+	if len(args) == 0 {
+		fmt.Fprintln(os.Stderr, "error: check requires a file argument")
+		return 2
+	}
+
+	path := args[len(args)-1]
+
+	info, err := os.Stat(path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		return 2
+	}
+	if info.IsDir() {
+		fmt.Fprintf(os.Stderr, "error: %s is a directory, use 'scan' instead\n", path)
+		return 2
+	}
+
+	reg := rules.DefaultRegistry()
+	eng := engine.New(reg)
+
+	start := time.Now()
+	result, err := eng.ScanFile(path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		return 2
+	}
+	durationMs := time.Since(start).Milliseconds()
+
+	report.Terminal(os.Stdout, result.Findings, result.FilesScanned, durationMs)
+
+	for _, f := range result.Findings {
+		if f.Severity == finding.SeverityError {
+			return 1
+		}
+	}
+	return 0
+}

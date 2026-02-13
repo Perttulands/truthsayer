@@ -57,6 +57,75 @@ func handler() error {
 	}
 }
 
+func TestEngine_ScanFile_Go(t *testing.T) {
+	tmp := t.TempDir()
+	goCode := `package main
+
+import "fmt"
+
+func handler() error {
+	err := fmt.Errorf("fail")
+	if err != nil {
+		return nil
+	}
+	return nil
+}
+`
+	path := filepath.Join(tmp, "bad.go")
+	os.WriteFile(path, []byte(goCode), 0o644)
+
+	reg := rules.DefaultRegistry()
+	eng := New(reg)
+
+	result, err := eng.ScanFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.FilesScanned != 1 {
+		t.Errorf("expected 1 file scanned, got %d", result.FilesScanned)
+	}
+	if len(result.Findings) == 0 {
+		t.Error("expected findings for bad.go, got 0")
+	}
+	// All findings should reference this file
+	for _, f := range result.Findings {
+		if f.File != path {
+			t.Errorf("finding file = %q, want %q", f.File, path)
+		}
+	}
+}
+
+func TestEngine_ScanFile_Bash(t *testing.T) {
+	tmp := t.TempDir()
+	bashCode := "#!/bin/bash\necho hello\n"
+	path := filepath.Join(tmp, "no_pipefail.sh")
+	os.WriteFile(path, []byte(bashCode), 0o644)
+
+	reg := rules.DefaultRegistry()
+	eng := New(reg)
+
+	result, err := eng.ScanFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.FilesScanned != 1 {
+		t.Errorf("expected 1 file scanned, got %d", result.FilesScanned)
+	}
+	if len(result.Findings) == 0 {
+		t.Error("expected findings for no_pipefail.sh, got 0")
+	}
+}
+
+func TestEngine_ScanFile_NotExist(t *testing.T) {
+	reg := rules.DefaultRegistry()
+	eng := New(reg)
+
+	_, err := eng.ScanFile("/nonexistent/file.go")
+	if err == nil {
+		t.Error("expected error for nonexistent file")
+	}
+}
+
 func TestEngine_ScanEmptyDirectory(t *testing.T) {
 	tmp := t.TempDir()
 	reg := rules.DefaultRegistry()

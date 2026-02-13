@@ -100,3 +100,31 @@ func (e *Engine) Scan(root string) (*Result, error) {
 		FilesScanned: len(files),
 	}, nil
 }
+
+// ScanFile scans a single file and returns findings.
+func (e *Engine) ScanFile(path string) (*Result, error) {
+	var allFindings []finding.Finding
+	ext := filepath.Ext(path)
+
+	if ext == ".go" {
+		results, err := e.goScanner.Scan(path)
+		if err != nil {
+			return nil, err
+		}
+		allFindings = append(allFindings, results...)
+	}
+
+	results, err := e.regexScanner.Scan(path)
+	if err != nil {
+		return nil, err
+	}
+	allFindings = append(allFindings, results...)
+
+	allFindings = finding.Dedup(allFindings)
+	finding.Sort(allFindings)
+
+	return &Result{
+		Findings:     allFindings,
+		FilesScanned: 1,
+	}, nil
+}

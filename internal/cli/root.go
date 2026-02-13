@@ -15,6 +15,8 @@ func Run() int {
 	switch os.Args[1] {
 	case "scan":
 		return runScan(os.Args[2:])
+	case "check":
+		return runCheck(os.Args[2:])
 	case "--help", "-h", "help":
 		printUsage()
 		return 0
@@ -30,5 +32,6 @@ func printUsage() {
 	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "Commands:")
 	fmt.Fprintln(os.Stderr, "  scan <path>    Scan a directory for anti-patterns")
+	fmt.Fprintln(os.Stderr, "  check <file>   Scan a single file for anti-patterns")
 	fmt.Fprintln(os.Stderr, "  --help         Show this help")
 }
