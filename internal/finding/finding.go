@@ -71,6 +71,16 @@ func FilterByLines(findings []Finding, changedLines map[int]bool) []Finding {
 	return result
 }
 
+// HasErrors returns true if any finding has error severity.
+func HasErrors(findings []Finding) bool {
+	for _, f := range findings {
+		if f.Severity == SeverityError {
+			return true
+		}
+	}
+	return false
+}
+
 // Sort sorts findings by severity (error first), then file path, then line number.
 func Sort(findings []Finding) {
 	sort.Slice(findings, func(i, j int) bool {

@@ -42,10 +42,8 @@ func runCheck(args []string) int {
 
 	report.Terminal(os.Stdout, result.Findings, result.FilesScanned, durationMs)
 
-	for _, f := range result.Findings {
-		if f.Severity == finding.SeverityError {
-			return 1
-		}
+	if finding.HasErrors(result.Findings) {
+		return 1
 	}
 	return 0
 }

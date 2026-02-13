@@ -110,6 +110,36 @@ func TestFilterByLines_NilPassesAll(t *testing.T) {
 	}
 }
 
+func TestHasErrors_WithErrors(t *testing.T) {
+	findings := []Finding{
+		{Rule: "r1", Severity: SeverityWarning},
+		{Rule: "r2", Severity: SeverityError},
+		{Rule: "r3", Severity: SeverityInfo},
+	}
+	if !HasErrors(findings) {
+		t.Error("expected HasErrors=true when error-severity finding present")
+	}
+}
+
+func TestHasErrors_WithoutErrors(t *testing.T) {
+	findings := []Finding{
+		{Rule: "r1", Severity: SeverityWarning},
+		{Rule: "r2", Severity: SeverityInfo},
+	}
+	if HasErrors(findings) {
+		t.Error("expected HasErrors=false when no error-severity findings")
+	}
+}
+
+func TestHasErrors_Empty(t *testing.T) {
+	if HasErrors(nil) {
+		t.Error("expected HasErrors=false for nil findings")
+	}
+	if HasErrors([]Finding{}) {
+		t.Error("expected HasErrors=false for empty findings")
+	}
+}
+
 func TestSeverityRank(t *testing.T) {
 	// Verify rank values enforce error < warning < info ordering
 	if SeverityError.rank() >= SeverityWarning.rank() {

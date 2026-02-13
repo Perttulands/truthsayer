@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/perttulands/truthsayer/internal/engine"
+	"github.com/perttulands/truthsayer/internal/finding"
 	"github.com/perttulands/truthsayer/internal/report"
 	"github.com/perttulands/truthsayer/internal/rules"
 )
@@ -66,5 +67,9 @@ func runReport(args []string) int {
 	}
 
 	fmt.Fprintf(os.Stderr, "Report written to %s (%d findings, %d files scanned)\n", output, len(result.Findings), result.FilesScanned)
+
+	if finding.HasErrors(result.Findings) {
+		return 1
+	}
 	return 0
 }
