@@ -1,8 +1,10 @@
 package scanner
 
 import (
+	"bufio"
 	"go/parser"
 	"go/token"
+	"os"
 
 	"github.com/perttulands/truthsayer/internal/finding"
 	"github.com/perttulands/truthsayer/internal/rules"
@@ -26,9 +28,29 @@ func (s *GoScanner) Scan(path string) ([]finding.Finding, error) {
 		return nil, err
 	}
 
+	lines, err := readGoLines(path)
+	if err != nil {
+		return nil, err
+	}
+
 	var findings []finding.Finding
 	for _, checker := range s.checkers {
-		findings = append(findings, checker.CheckAST(fset, file)...)
+		findings = append(findings, checker.CheckAST(fset, file, lines)...)
 	}
 	return findings, nil
+}
+
+func readGoLines(path string) ([]string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	var lines []string
+	sc := bufio.NewScanner(f)
+	for sc.Scan() {
+		lines = append(lines, sc.Text())
+	}
+	return lines, sc.Err()
 }

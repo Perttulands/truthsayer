@@ -22,7 +22,7 @@ func (e *EmptyErrorCheck) Meta() Rule {
 	}
 }
 
-func (e *EmptyErrorCheck) CheckAST(fset *token.FileSet, file *ast.File) []finding.Finding {
+func (e *EmptyErrorCheck) CheckAST(fset *token.FileSet, file *ast.File, lines []string) []finding.Finding {
 	var findings []finding.Finding
 	fname := fset.File(file.Pos()).Name()
 
@@ -42,7 +42,7 @@ func (e *EmptyErrorCheck) CheckAST(fset *token.FileSet, file *ast.File) []findin
 				Severity:   e.Meta().Severity,
 				File:       fname,
 				Line:       pos.Line,
-				Code:       "if err != nil { return nil }",
+				Code:       sourceLine(lines, pos.Line),
 				Message:    "Error returned as nil without logging or wrapping",
 				Suggestion: "Return the error or log it: return fmt.Errorf(\"operation failed: %w\", err)",
 			})
@@ -50,6 +50,14 @@ func (e *EmptyErrorCheck) CheckAST(fset *token.FileSet, file *ast.File) []findin
 		return true
 	})
 	return findings
+}
+
+// sourceLine returns the source line at the given 1-based line number.
+func sourceLine(lines []string, line int) string {
+	if line < 1 || line > len(lines) {
+		return ""
+	}
+	return lines[line-1]
 }
 
 // isErrNilCheck checks if the condition is `err != nil`.

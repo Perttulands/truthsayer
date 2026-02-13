@@ -27,9 +27,10 @@ type Rule struct {
 }
 
 // ASTChecker is implemented by rules that analyze Go AST nodes.
+// Source lines are provided so rules can include actual code snippets.
 type ASTChecker interface {
 	Meta() Rule
-	CheckAST(fset *token.FileSet, file *ast.File) []finding.Finding
+	CheckAST(fset *token.FileSet, file *ast.File, lines []string) []finding.Finding
 }
 
 // RegexChecker is implemented by rules that match text lines.

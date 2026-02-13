@@ -8,6 +8,9 @@ import (
 	"github.com/perttulands/truthsayer/internal/finding"
 )
 
+// maxCodeLen is the maximum length of a code snippet in terminal output.
+const maxCodeLen = 120
+
 // Terminal writes a human-readable scan report to w.
 func Terminal(w io.Writer, findings []finding.Finding, filesScanned int, durationMs int64) {
 	errors, warnings, infos := countBySeverity(findings)
@@ -16,6 +19,12 @@ func Terminal(w io.Writer, findings []finding.Finding, filesScanned int, duratio
 		label := severityLabel(f.Severity)
 		fmt.Fprintf(w, "%s  %s\n", label, f.Rule)
 		fmt.Fprintf(w, "  %s:%d\n", f.File, f.Line)
+		if code := strings.TrimSpace(f.Code); code != "" {
+			if len(code) > maxCodeLen {
+				code = code[:maxCodeLen] + "…"
+			}
+			fmt.Fprintf(w, "  > %s\n", code)
+		}
 		fmt.Fprintf(w, "  %s\n", f.Message)
 		if f.Suggestion != "" {
 			fmt.Fprintf(w, "  → %s\n", f.Suggestion)
