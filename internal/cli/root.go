@@ -36,6 +36,8 @@ func Run() int {
 		}
 		fmt.Fprintln(os.Stderr, "usage: truthsayer ci init <path>")
 		return 2
+	case "--version", "-v", "version":
+		return runVersion()
 	case "--help", "-h", "help":
 		printUsage()
 		return 0
@@ -60,6 +62,7 @@ func printUsage() {
 	fmt.Fprintln(os.Stderr, "  hook install <path>  Install git pre-commit hook")
 	fmt.Fprintln(os.Stderr, "  doctor         Check installation and config")
 	fmt.Fprintln(os.Stderr, "  ci init <path>       Generate GitHub Actions workflow")
+	fmt.Fprintln(os.Stderr, "  --version      Print version string")
 	fmt.Fprintln(os.Stderr, "  --help         Show this help")
 	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "Global options:")

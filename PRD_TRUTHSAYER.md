@@ -41,5 +41,5 @@
 - [x] **US-016**: As a developer, I want to run Truthsayer as a git pre-commit hook on staged files so anti-patterns are caught before they're committed.
 - [x] **US-017**: As a CI engineer, I want to run Truthsayer in a GitHub Actions workflow and have it fail the build on errors.
 - [x] **US-018**: As a developer, I want a `doctor` command that checks my installation, config validity, and reports the active rule count so I can verify everything works.
-- [ ] **US-019**: As a developer, I want `--version` to print the version string so I can verify which build I'm running.
+- [x] **US-019**: As a developer, I want `--version` to print the version string so I can verify which build I'm running.
 - [ ] **US-REVIEW-S4**: Review Sprint 4 — run tests, verify integration, fix issues.
