@@ -1,6 +1,59 @@
 # Progress Log
 
 ## Learnings
-(Patterns discovered during implementation)
+- Go binary at /usr/local/go/bin, need PATH export
+- go.mod has 1.25.0 but system has Go 1.26 — works fine with forward compat
+- testdata/ is excluded by default walker — use tmp dirs for integration tests
+- `for range N` syntax works in Go 1.26
 
+---
+## Iteration 1 - US-001: Scan directory for anti-patterns
+- Built full project scaffold: cmd/, internal/{finding,rules,scanner,engine,report,cli}
+- Implemented Finding type with Dedup() and Sort() functions
+- Implemented Rule interface (ASTChecker, RegexChecker) and Registry
+- Two initial rules: empty-error-check (AST), missing-pipefail (regex)
+- Go AST scanner using go/parser, regex scanner using line-based matching
+- Concurrent engine with worker pool (NumCPU goroutines)
+- Directory walker with default excludes (.git, vendor, node_modules, testdata)
+- Terminal reporter with severity-sorted output
+- CLI scan command with proper exit codes (0=clean, 1=errors, 2=tool error)
+- Files changed:
+  - cmd/truthsayer/main.go
+  - internal/finding/finding.go, finding_test.go
+  - internal/rules/rule.go, registry.go, registry_test.go, silent_fallback.go, bad_defaults.go
+  - internal/scanner/go_scanner.go, go_scanner_test.go, regex_scanner.go, regex_scanner_test.go
+  - internal/engine/engine.go, engine_test.go, walker.go, walker_test.go
+  - internal/report/terminal.go
+  - internal/cli/root.go, scan.go
+  - testdata/go/*.go, testdata/bash/*.sh
+- Learnings for future iterations:
+  - AST rule pattern: ast.Inspect + type switch on node types
+  - Regex rule pattern: CheckLines receives all lines, return findings
+  - Engine dispatches based on file extension
+  - Walker skips dirs starting with "." (broader than PRD but defensive)
+
+**Summary:**
+- Task: US-001: Scan directory for anti-patterns
+- Files: 19 Go files + 4 testdata files
+- Tests: PASS (10/10)
+- Review: PASSED
+- Next: US-002 (single file scanning)
+---
+## Iteration 2 - US-002: Scan a single file
+- Added Engine.ScanFile() method for single-file scanning
+- Created internal/cli/check.go with runCheck() command handler
+- Registered "check" command in root.go CLI dispatch
+- Added 3 engine tests: ScanFile_Go, ScanFile_Bash, ScanFile_NotExist
+- Exit codes: 0=clean, 1=error findings, 2=tool error (bad path, directory)
+- Learnings for future iterations:
+  - ScanFile returns errors (single file mode) vs Scan silently skips bad files (bulk mode)
+  - check.go validates file-vs-dir at CLI boundary, gives helpful "use scan instead" message
+  - Duplication between ScanFile and Scan's per-file logic is justified by different error handling semantics
+
+**Summary:**
+- Task: US-002: Scan a single file
+- Files: internal/engine/engine.go, engine_test.go, internal/cli/check.go, root.go, PRD_TRUTHSAYER.md
+- Tests: PASS (14/14)
+- Review: PASSED
+- Next: US-003 (findings include file path, line number, code snippet, fix suggestion)
 ---
