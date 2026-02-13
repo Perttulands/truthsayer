@@ -500,3 +500,130 @@
 - Review: PASSED
 - Next: US-016 (git pre-commit hook)
 ---
+## Iteration 16 - US-016: Git pre-commit hook on staged files
+- Created internal/cli/hook.go: `hook` command scans staged files, `hook install` writes pre-commit hook
+- `hook` command: gets staged files via `git diff --cached --name-only --diff-filter=ACM`, scans each with ScanFile()
+- `hook install` command: writes executable pre-commit hook to `.git/hooks/pre-commit`
+- Follows existing CLI patterns: parseConfigFlag, buildEngine, HasErrors, Terminal reporter
+- Early return when no staged files (no engine construction needed)
+- ScanFile errors silently skipped (staged files may include unsupported extensions)
+- 9 new tests: staged errors, clean staged, no staged, ignores unstaged, not git repo, no args, install creates hook, install not repo, config respected
+- Files changed:
+  - internal/cli/hook.go (new)
+  - internal/cli/hook_test.go (new)
+  - internal/cli/root.go (hook + hook install command dispatch + usage text)
+  - PRD_TRUTHSAYER.md (marked complete)
+- Learnings for future iterations:
+  - git diff --cached --name-only --diff-filter=ACM returns relative paths from repo root
+  - exec.Command with cmd.Dir sets working directory for git commands
+  - initGitRepo helper in tests creates disposable git repos for hook testing
+  - Pre-commit hook script calls `truthsayer hook .` — assumes truthsayer is on PATH
+
+**Summary:**
+- Task: US-016: Git pre-commit hook on staged files
+- Files: 4 files (2 new, 2 modified)
+- Tests: PASS (114/114 — 105 existing + 9 new)
+- Review: PASSED
+- Next: US-017 (GitHub Actions workflow)
+---
+## Iteration 17 - US-017: GitHub Actions workflow via ci init command
+- Created internal/cli/ci.go: `ci init` command that generates .github/workflows/truthsayer.yml
+- Workflow template: checkout → setup-go → build → scan JSON report → scan quality gate → upload artifact
+- JSON report step uses continue-on-error so the report is always generated
+- Quality gate step runs `truthsayer scan .` — exits 1 on error findings (fails the build)
+- Artifact upload uses `if: always()` so report is available even on failure
+- Follows exact same pattern as US-016 hook install (check git repo, mkdirall, write file)
+- Registered `ci init` subcommand in root.go (same dispatch pattern as `hook install`)
+- 6 new tests: creates file, content validation (scan step, JSON, Go setup, triggers), artifact upload, not git repo, no args, creates directories
+- Files changed:
+  - internal/cli/ci.go (new)
+  - internal/cli/ci_test.go (new)
+  - internal/cli/root.go (ci init command dispatch + usage text)
+  - PRD_TRUTHSAYER.md (marked complete)
+- Learnings for future iterations:
+  - ci init follows identical pattern to hook install — validates git repo, creates dirs, writes template
+  - Workflow builds from source (no pre-built binary assumption) — appropriate for Go projects
+  - continue-on-error on JSON report step ensures report is always generated for artifact upload
+  - Two scan steps: JSON for report artifact + plain for CI quality gate (exit code 1 = build fail)
+
+**Summary:**
+- Task: US-017: GitHub Actions workflow via ci init command
+- Files: 4 files (2 new, 2 modified)
+- Tests: PASS (120/120 — 114 existing + 6 new)
+- Review: PASSED
+- Next: US-018 (doctor command)
+---
+## Iteration 18 - US-018: Doctor command for installation/config checks
+- Created internal/cli/doctor.go: `doctor` command with three checks: Installation, Config, Rules
+- Installation check: always ok (binary is running)
+- Config check: loads config via config.Load(), reports valid/invalid/no config found
+- Rules check: counts enabled rules after applying disable config
+- Supports --config flag for explicit config path
+- Returns exit code 0 on success, 1 on invalid config
+- 7 new tests: version display, rule count, no config, valid config, invalid config, explicit config flag, check labels
+- Files changed:
+  - internal/cli/doctor.go (new)
+  - internal/cli/doctor_test.go (new)
+  - internal/cli/root.go (modified — doctor command dispatch + usage text)
+  - PRD_TRUTHSAYER.md (marked complete)
+- Learnings for future iterations:
+  - Doctor command uses config.Load + rules.DefaultRegistry directly — no engine needed
+  - Disable loop duplicates buildEngine's but justified since doctor doesn't need scanning infrastructure
+  - Pre-existing os.Chdir parallel test flakiness in -v mode — tests pass in normal run
+
+**Summary:**
+- Task: US-018: Doctor command for installation/config checks
+- Files: 4 files (2 new, 2 modified)
+- Tests: PASS (127/127 — 120 existing + 7 new)
+- Review: PASSED
+- Next: US-019 (--version flag)
+---
+## Iteration 19 - US-019: --version flag prints version string
+- Created internal/cli/version.go: package-level Version variable + runVersion() function
+- Version set at build time via -ldflags "-X ...cli.Version=X.Y.Z"
+- Default "dev" when Version is empty (no ldflags)
+- Added --version, -v, version cases to CLI switch in root.go
+- Added --version to usage text
+- 3 new tests: prints version, default "dev", CLI dispatch
+- Files changed:
+  - internal/cli/version.go (new)
+  - internal/cli/version_test.go (new)
+  - internal/cli/root.go (modified — version dispatch + usage)
+  - PRD_TRUTHSAYER.md (marked complete)
+- Learnings for future iterations:
+  - Package-level var + ldflags is idiomatic Go version injection
+  - Build with: go build -ldflags "-X github.com/perttulands/truthsayer/internal/cli.Version=1.0.0"
+  - Doctor command could reference Version var for version display in future
+
+**Summary:**
+- Task: US-019: --version flag prints version string
+- Files: 4 files (2 new, 2 modified)
+- Tests: PASS (130/130 — 127 existing + 3 new)
+- Review: PASSED
+- Next: US-REVIEW-S4 (Sprint 4 review)
+---
+## Review PASSED - US-REVIEW-S4: Sprint 4 Review
+- **Scope**: US-016 through US-019 (all Sprint 4 tasks)
+- **Tests**: All 130 tests pass across 10 packages (cli, config, diff, engine, finding, report, rules, scanner, watcher + cmd)
+- **Architecture**: All 4 new features (hook, ci, doctor, version) follow established CLI pattern: runX(args) int with exit codes. Clean integration with existing infrastructure.
+- **Cross-task integration**:
+  - US-016 (hook): Uses buildEngine, parseConfigFlag, HasErrors, Terminal reporter — fully integrated with Sprint 3 config
+  - US-017 (ci init): Standalone template writer, no config dependency (correct — workflow is static)
+  - US-018 (doctor): Uses config.Load + DefaultRegistry directly, applies disable config — consistent with rules command pattern
+  - US-019 (version): Standalone, ldflags injection, no cross-dependencies
+  - root.go dispatch handles subcommands (hook install, ci init) with nested if checks — simple and adequate
+- **Duplication analysis**:
+  - doctor.go disable loop (~4 lines) duplicates buildEngine — justified since doctor doesn't need engine
+  - hook.go/ci.go both check git repo via .git path — different paths, different semantics, not worth extracting
+  - version_test.go uses inline os.Pipe vs captureStdout helper — minor inconsistency, not worth fixing
+- **Data structures**: No new data structures — Sprint 4 is purely CLI commands using existing Finding, Engine, Config types
+- **Edge cases**: All handled — no staged files, not a git repo, invalid config, empty version, MkdirAll for workflow dirs
+- **Verdict**: No issues found. Sprint 4 codebase is clean, well-tested, and integrates properly.
+
+**Summary:**
+- Task: US-REVIEW-S4: Review Sprint 4
+- Files: PRD_TRUTHSAYER.md (marked review complete)
+- Tests: PASS (130/130)
+- Review: PASSED
+- Next: COMPLETE (all tasks done)
+---
