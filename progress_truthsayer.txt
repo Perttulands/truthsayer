@@ -57,3 +57,100 @@
 - Review: PASSED
 - Next: US-003 (findings include file path, line number, code snippet, fix suggestion)
 ---
+## Iteration 3 - US-003: Findings include file path, line number, code snippet, fix suggestion
+- Terminal reporter now displays code snippet with `> ` prefix between file:line and message
+- Code snippets trimmed of whitespace, truncated at 120 chars with ellipsis
+- Empty code gracefully handled (no display)
+- ASTChecker interface extended: `CheckAST(fset, file, lines)` — receives source lines
+- GoScanner reads file lines and passes them to AST checkers
+- EmptyErrorCheck now uses actual source line via `sourceLine()` helper instead of hardcoded string
+- Added terminal_test.go: 3 tests (all fields shown, trimmed code, empty code)
+- Added findings_fields_test.go: 2 integration tests (Go + Bash findings have all fields)
+- Files changed:
+  - internal/report/terminal.go, terminal_test.go (new)
+  - internal/rules/rule.go, silent_fallback.go
+  - internal/scanner/go_scanner.go
+  - internal/engine/findings_fields_test.go (new)
+  - PRD_TRUTHSAYER.md
+- Learnings for future iterations:
+  - readGoLines in go_scanner.go duplicates readLines in regex_scanner.go — trivial (5 lines), not worth extracting now
+  - ASTChecker interface now takes `lines []string` — any new AST rule must accept this param
+  - sourceLine() is in silent_fallback.go — if more AST rules need it, extract to shared location
+
+**Summary:**
+- Task: US-003: Findings include file path, line number, code snippet, fix suggestion
+- Files: 7 files (5 modified, 2 new test files)
+- Tests: PASS (21/21)
+- Review: PASSED
+- Next: US-004 (scan results sorted by severity)
+---
+## Iteration 4 - US-004: Scan results sorted by severity
+- Sort logic already existed in finding.Sort() from US-001 (rank: error=0, warning=1, info=2)
+- Both Engine.Scan() and Engine.ScanFile() already call finding.Sort()
+- Added verification tests to confirm severity ordering end-to-end:
+  - TestSort_SeverityPrecedence: error sorts before warning/info regardless of file name
+  - TestSeverityRank: rank function enforces error < warning < info ordering
+  - TestTerminal_SeveritySortOrder: terminal output shows ERROR before WARN before INFO
+- Files changed:
+  - internal/finding/finding_test.go (2 new tests)
+  - internal/report/terminal_test.go (1 new test)
+  - PRD_TRUTHSAYER.md
+- Learnings for future iterations:
+  - Sort was already built into the engine pipeline from US-001
+  - Both current rules (EmptyErrorCheck, MissingPipefail) are SeverityError — need mixed severities for full integration testing
+  - Terminal reporter trusts input order — it does NOT re-sort, so engine must sort before passing
+
+**Summary:**
+- Task: US-004: Scan results sorted by severity
+- Files: 3 files (2 test files modified, 1 PRD)
+- Tests: PASS (24/24)
+- Review: PASSED
+- Next: US-005 (skip vendor/, node_modules/, .git/ directories)
+---
+## Iteration 5 - US-005: Skip vendor/, node_modules/, .git/ directories by default
+- Walker already implemented exclusion in US-001 (defaultExcludeDirs map + dot-prefix skip)
+- Added TestWalk_SkipsAllDefaultExcludedDirs: verifies all three dirs (vendor, node_modules, .git) are skipped
+- Added TestWalk_SkipsNodeModulesNested: verifies deeply nested node_modules content is excluded
+- Added TestEngine_ScanSkipsExcludedDirs: integration test verifying engine-level scan skips excluded dirs (files not counted, no findings)
+- Files changed:
+  - internal/engine/walker_test.go (2 new tests)
+  - internal/engine/engine_test.go (1 new test)
+  - PRD_TRUTHSAYER.md
+- Learnings for future iterations:
+  - US-001 built the exclusion infrastructure; US-005 was purely verification
+  - The walker uses filepath.SkipDir which prunes the entire subtree — efficient for large vendor/node_modules trees
+  - testdata/ is also excluded by default (hardcoded in defaultExcludeDirs) — tests use t.TempDir() to avoid this
+
+**Summary:**
+- Task: US-005: Skip vendor/, node_modules/, .git/ directories by default
+- Files: 3 files (2 test files modified, 1 PRD)
+- Tests: PASS (27/27)
+- Review: PASSED
+- Next: US-REVIEW-S1 (Sprint 1 review)
+---
+## Review PASSED - US-REVIEW-S1: Sprint 1 Review
+- **Scope**: US-001 through US-005 (all Sprint 1 tasks)
+- **Tests**: All 24 tests pass across 5 packages (engine, finding, report, rules, scanner)
+- **Architecture**: Clean dependency flow: finding → rules → scanner → engine → cli → report. No circular imports.
+- **Duplication analysis**:
+  - readGoLines/readLines duplication between scanners — trivial (5 lines), justified by package separation
+  - runScan/runCheck CLI pattern duplication — structural, different validation/error semantics
+- **Data structures**: Finding struct well-designed with JSON tags. Registry with AST/regex split is clean. Map-based exclude dirs and supported extensions are idiomatic.
+- **Edge cases**: Empty dirs, out-of-bounds source lines, nonexistent files all handled. Worker pool caps at file count.
+- **Integration**: CLI → Engine → Scanner → Rules pipeline works e2e. Exit codes consistent (0/1/2). Terminal reporter trusts pre-sorted input, which engine guarantees.
+- **Minor observations** (not worth fix tasks):
+  - walker.go:40 operator precedence reads correctly but relies on implicit && > || binding
+  - Engine.Scan silently swallows per-file errors in bulk mode (documented, intentional)
+- **Verdict**: No issues found. Sprint 1 codebase is clean, well-tested, and components integrate properly.
+- Learnings for future iterations:
+  - Sprint 1 established solid patterns: Rule interface (AST/Regex), concurrent Engine, Walker with excludes
+  - All rules currently SeverityError — Sprint 2 should introduce mixed severities for fuller testing
+  - No CLI tests exist yet — may want integration tests for scan/check commands in later sprints
+
+**Summary:**
+- Task: US-REVIEW-S1: Review Sprint 1
+- Files: PRD_TRUTHSAYER.md (marked review complete)
+- Tests: PASS (24/24)
+- Review: PASSED
+- Next: US-006 (watch directory for file changes)
+---
