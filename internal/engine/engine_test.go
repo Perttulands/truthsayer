@@ -126,6 +126,54 @@ func TestEngine_ScanFile_NotExist(t *testing.T) {
 	}
 }
 
+func TestEngine_ScanSkipsExcludedDirs(t *testing.T) {
+	tmp := t.TempDir()
+
+	// Create a file with anti-patterns in a normal directory
+	goCode := `package main
+
+import "fmt"
+
+func handler() error {
+	err := fmt.Errorf("fail")
+	if err != nil {
+		return nil
+	}
+	return nil
+}
+`
+	os.MkdirAll(filepath.Join(tmp, "src"), 0o755)
+	os.WriteFile(filepath.Join(tmp, "src", "main.go"), []byte(goCode), 0o644)
+
+	// Put identical anti-pattern files inside excluded directories
+	for _, dir := range []string{"vendor", "node_modules", ".git"} {
+		os.MkdirAll(filepath.Join(tmp, dir), 0o755)
+		os.WriteFile(filepath.Join(tmp, dir, "bad.go"), []byte(goCode), 0o644)
+	}
+
+	reg := rules.DefaultRegistry()
+	eng := New(reg)
+
+	result, err := eng.Scan(tmp)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Only src/main.go should be scanned
+	if result.FilesScanned != 1 {
+		t.Errorf("expected 1 file scanned (src/main.go only), got %d", result.FilesScanned)
+	}
+
+	// All findings should reference src/main.go, not excluded dirs
+	for _, f := range result.Findings {
+		for _, dir := range []string{"vendor", "node_modules", ".git"} {
+			if filepath.Base(filepath.Dir(f.File)) == dir {
+				t.Errorf("finding from excluded dir %q: %s", dir, f.File)
+			}
+		}
+	}
+}
+
 func TestEngine_ScanEmptyDirectory(t *testing.T) {
 	tmp := t.TempDir()
 	reg := rules.DefaultRegistry()
