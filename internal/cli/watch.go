@@ -1,0 +1,87 @@
+package cli
+
+import (
+	"fmt"
+	"os"
+	"os/signal"
+	"time"
+
+	"github.com/perttulands/truthsayer/internal/engine"
+	"github.com/perttulands/truthsayer/internal/finding"
+	"github.com/perttulands/truthsayer/internal/report"
+	"github.com/perttulands/truthsayer/internal/rules"
+	"github.com/perttulands/truthsayer/internal/watcher"
+)
+
+func runWatch(args []string) int {
+	if len(args) == 0 {
+		fmt.Fprintln(os.Stderr, "error: watch requires a path argument")
+		return 2
+	}
+
+	path := args[len(args)-1]
+
+	info, err := os.Stat(path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		return 2
+	}
+	if !info.IsDir() {
+		fmt.Fprintf(os.Stderr, "error: %s is not a directory (use check for single files)\n", path)
+		return 2
+	}
+
+	reg := rules.DefaultRegistry()
+	eng := engine.New(reg)
+
+	w, err := watcher.New(path, 100*time.Millisecond)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		return 2
+	}
+	defer w.Close()
+
+	fmt.Fprintf(os.Stderr, "Watching %s for changes... (Ctrl+C to stop)\n", path)
+
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt)
+
+	sawError := false
+
+	for {
+		select {
+		case filePath, ok := <-w.Events():
+			if !ok {
+				return exitCode(sawError)
+			}
+			start := time.Now()
+			result, err := eng.ScanFile(filePath)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "scan error: %v\n", err)
+				continue
+			}
+			durationMs := time.Since(start).Milliseconds()
+
+			if len(result.Findings) > 0 {
+				report.Terminal(os.Stdout, result.Findings, result.FilesScanned, durationMs)
+				for _, f := range result.Findings {
+					if f.Severity == finding.SeverityError {
+						sawError = true
+						break
+					}
+				}
+			}
+
+		case <-sig:
+			fmt.Fprintln(os.Stderr, "\nStopping watch...")
+			return exitCode(sawError)
+		}
+	}
+}
+
+func exitCode(sawError bool) int {
+	if sawError {
+		return 1
+	}
+	return 0
+}

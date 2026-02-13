@@ -6,7 +6,7 @@
 
 
 ## Sprint 1: Core Scanner Infrastructure
-**Status:** IN PROGRESS
+**Status:** COMPLETE
 
 - [x] **US-001**: As a developer, I want to scan a directory for anti-patterns so I can find hidden problems before they reach production.
 - [x] **US-002**: As a developer, I want to scan a single file so I can check my work before committing.
@@ -16,9 +16,9 @@
 - [x] **US-REVIEW-S1**: Review Sprint 1 — run tests, verify integration, fix issues.
 
 ## Sprint 2: Detection Rules Engine
-**Status:** NOT STARTED
+**Status:** IN PROGRESS
 
-- [ ] **US-006**: As a developer, I want to watch a directory for file changes and get instant feedback on new anti-patterns so I catch problems as I code.
+- [x] **US-006**: As a developer, I want to watch a directory for file changes and get instant feedback on new anti-patterns so I catch problems as I code.
 - [ ] **US-007**: As a developer, I want watch mode to only report findings in the changed lines (not the entire file) so I'm not overwhelmed by pre-existing issues.
 - [ ] **US-008**: As a developer, I want to generate a JSON report of all findings so I can feed it into other tools or dashboards.
 - [ ] **US-009**: As a CI engineer, I want the scanner to exit with code 1 when errors are found so I can use it as a pipeline quality gate.
