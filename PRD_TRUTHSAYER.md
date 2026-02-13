@@ -26,7 +26,7 @@
 - [x] **US-REVIEW-S2**: Review Sprint 2 — run tests, verify integration, fix issues.
 
 ## Sprint 3: CLI & Reporting
-**Status:** IN PROGRESS
+**Status:** COMPLETE
 
 - [x] **US-011**: As a team lead, I want to configure which rules are enabled/disabled via a TOML config file so I can tailor the scanner to our codebase.
 - [x] **US-012**: As a developer, I want to exclude specific files or directories from scanning via config so I can skip generated code or legacy modules.
@@ -36,9 +36,9 @@
 - [x] **US-REVIEW-S3**: Review Sprint 3 — run tests, verify integration, fix issues.
 
 ## Sprint 4: Integration & Polish
-**Status:** NOT STARTED
+**Status:** IN PROGRESS
 
-- [ ] **US-016**: As a developer, I want to run Truthsayer as a git pre-commit hook on staged files so anti-patterns are caught before they're committed.
+- [x] **US-016**: As a developer, I want to run Truthsayer as a git pre-commit hook on staged files so anti-patterns are caught before they're committed.
 - [ ] **US-017**: As a CI engineer, I want to run Truthsayer in a GitHub Actions workflow and have it fail the build on errors.
 - [ ] **US-018**: As a developer, I want a `doctor` command that checks my installation, config validity, and reports the active rule count so I can verify everything works.
 - [ ] **US-019**: As a developer, I want `--version` to print the version string so I can verify which build I'm running.

@@ -23,6 +23,11 @@ func Run() int {
 		return runReport(os.Args[2:])
 	case "rules":
 		return runRules(os.Args[2:])
+	case "hook":
+		if len(os.Args) > 2 && os.Args[2] == "install" {
+			return runHookInstall(os.Args[3:])
+		}
+		return runHook(os.Args[2:])
 	case "--help", "-h", "help":
 		printUsage()
 		return 0
@@ -43,6 +48,8 @@ func printUsage() {
 	fmt.Fprintln(os.Stderr, "  report <path>  Generate JSON report to file")
 	fmt.Fprintln(os.Stderr, "  rules          List all available detection rules")
 	fmt.Fprintln(os.Stderr, "  rules --enabled List only currently enabled rules")
+	fmt.Fprintln(os.Stderr, "  hook <path>    Run pre-commit hook (scan staged files)")
+	fmt.Fprintln(os.Stderr, "  hook install <path>  Install git pre-commit hook")
 	fmt.Fprintln(os.Stderr, "  --help         Show this help")
 	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "Global options:")
