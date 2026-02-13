@@ -10,7 +10,14 @@ import (
 
 // Config represents the .truthsayer.toml configuration.
 type Config struct {
+	Scan  ScanConfig  `toml:"scan"`
 	Rules RulesConfig `toml:"rules"`
+}
+
+// ScanConfig holds file/directory exclusion settings.
+type ScanConfig struct {
+	ExcludeDirs     []string `toml:"exclude_dirs"`
+	ExcludePatterns []string `toml:"exclude_patterns"`
 }
 
 // RulesConfig holds rule enable/disable and severity settings.

@@ -16,7 +16,7 @@ func TestWalk_SkipsExcludedDirs(t *testing.T) {
 	os.WriteFile(filepath.Join(tmp, "vendor", "lib", "dep.go"), []byte("package dep"), 0o644)
 	os.WriteFile(filepath.Join(tmp, ".git", "objects", "file"), []byte("data"), 0o644)
 
-	files, err := Walk(tmp, nil)
+	files, err := Walk(tmp, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,7 +46,7 @@ func TestWalk_SkipsAllDefaultExcludedDirs(t *testing.T) {
 		os.WriteFile(filepath.Join(tmp, dir, "file.go"), []byte("package hidden"), 0o644)
 	}
 
-	files, err := Walk(tmp, nil)
+	files, err := Walk(tmp, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,13 +76,88 @@ func TestWalk_SkipsNodeModulesNested(t *testing.T) {
 	os.WriteFile(filepath.Join(tmp, "node_modules", "pkg", "lib", "index.json"), []byte(`{}`), 0o644)
 	os.WriteFile(filepath.Join(tmp, "node_modules", "pkg", "package.json"), []byte(`{}`), 0o644)
 
-	files, err := Walk(tmp, nil)
+	files, err := Walk(tmp, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if len(files) != 1 {
 		t.Fatalf("expected 1 file (app/server.go), got %d: %v", len(files), files)
+	}
+}
+
+func TestWalk_CustomExcludeDirs(t *testing.T) {
+	tmp := t.TempDir()
+	os.MkdirAll(filepath.Join(tmp, "src"), 0o755)
+	os.MkdirAll(filepath.Join(tmp, "generated"), 0o755)
+	os.WriteFile(filepath.Join(tmp, "src", "main.go"), []byte("package main"), 0o644)
+	os.WriteFile(filepath.Join(tmp, "generated", "code.go"), []byte("package gen"), 0o644)
+
+	// Default excludes + custom "generated" dir
+	excludes := map[string]bool{
+		".git":      true,
+		"vendor":    true,
+		"generated": true,
+	}
+	files, err := Walk(tmp, excludes, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(files) != 1 {
+		t.Fatalf("expected 1 file, got %d: %v", len(files), files)
+	}
+}
+
+func TestWalk_ExcludePatterns(t *testing.T) {
+	tmp := t.TempDir()
+	os.WriteFile(filepath.Join(tmp, "main.go"), []byte("package main"), 0o644)
+	os.WriteFile(filepath.Join(tmp, "main_generated.go"), []byte("package main"), 0o644)
+	os.WriteFile(filepath.Join(tmp, "api.pb.go"), []byte("package main"), 0o644)
+	os.WriteFile(filepath.Join(tmp, "utils.go"), []byte("package main"), 0o644)
+
+	patterns := []string{"*_generated.go", "*.pb.go"}
+	files, err := Walk(tmp, nil, patterns)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(files) != 2 {
+		t.Fatalf("expected 2 files (main.go, utils.go), got %d: %v", len(files), files)
+	}
+	for _, f := range files {
+		base := filepath.Base(f)
+		if base == "main_generated.go" || base == "api.pb.go" {
+			t.Errorf("should not include pattern-excluded file: %s", base)
+		}
+	}
+}
+
+func TestWalk_ExcludePatternsSubdir(t *testing.T) {
+	tmp := t.TempDir()
+	os.MkdirAll(filepath.Join(tmp, "pkg"), 0o755)
+	os.WriteFile(filepath.Join(tmp, "pkg", "service.go"), []byte("package pkg"), 0o644)
+	os.WriteFile(filepath.Join(tmp, "pkg", "service_generated.go"), []byte("package pkg"), 0o644)
+
+	patterns := []string{"*_generated.go"}
+	files, err := Walk(tmp, nil, patterns)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(files) != 1 {
+		t.Fatalf("expected 1 file (pkg/service.go), got %d: %v", len(files), files)
+	}
+}
+
+func TestWalk_NilPatterns_NoFiltering(t *testing.T) {
+	tmp := t.TempDir()
+	os.WriteFile(filepath.Join(tmp, "main.go"), []byte("package main"), 0o644)
+	os.WriteFile(filepath.Join(tmp, "gen.pb.go"), []byte("package main"), 0o644)
+
+	files, err := Walk(tmp, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(files) != 2 {
+		t.Fatalf("expected 2 files (no pattern filtering), got %d: %v", len(files), files)
 	}
 }
 
@@ -93,7 +168,7 @@ func TestWalk_FindsSupportedExtensions(t *testing.T) {
 	os.WriteFile(filepath.Join(tmp, "readme.md"), []byte("# readme"), 0o644) // unsupported
 	os.WriteFile(filepath.Join(tmp, "config.toml"), []byte("[x]"), 0o644)
 
-	files, err := Walk(tmp, nil)
+	files, err := Walk(tmp, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

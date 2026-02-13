@@ -137,6 +137,56 @@ func TestReport_ExitCode2_BadPath(t *testing.T) {
 	}
 }
 
+// Scan exclusion integration tests for US-012.
+
+func TestScan_ConfigExcludeDir(t *testing.T) {
+	dir := t.TempDir()
+	os.MkdirAll(filepath.Join(dir, "legacy"), 0o755)
+	writeFile(t, dir, "legacy/bad.go", goWithError)
+	writeFile(t, dir, "good.go", goClean)
+	writeFile(t, dir, ".truthsayer.toml", `
+[scan]
+exclude_dirs = ["legacy"]
+`)
+
+	code := runScan([]string{dir})
+	if code != 0 {
+		t.Errorf("expected exit code 0 (legacy dir excluded), got %d", code)
+	}
+}
+
+func TestScan_ConfigExcludePattern(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "bad_generated.go", goWithError)
+	writeFile(t, dir, "good.go", goClean)
+	writeFile(t, dir, ".truthsayer.toml", `
+[scan]
+exclude_patterns = ["*_generated.go"]
+`)
+
+	code := runScan([]string{dir})
+	if code != 0 {
+		t.Errorf("expected exit code 0 (generated file excluded), got %d", code)
+	}
+}
+
+func TestScan_DefaultExcludesStillApply(t *testing.T) {
+	dir := t.TempDir()
+	os.MkdirAll(filepath.Join(dir, "vendor"), 0o755)
+	writeFile(t, dir, "vendor/bad.go", goWithError)
+	writeFile(t, dir, "good.go", goClean)
+	// Config adds custom exclude but default vendor/ should still work
+	writeFile(t, dir, ".truthsayer.toml", `
+[scan]
+exclude_dirs = ["legacy"]
+`)
+
+	code := runScan([]string{dir})
+	if code != 0 {
+		t.Errorf("expected exit code 0 (vendor still excluded), got %d", code)
+	}
+}
+
 // Config integration tests for US-011.
 
 func TestScan_ConfigDisablesRule(t *testing.T) {

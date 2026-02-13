@@ -29,7 +29,7 @@
 **Status:** IN PROGRESS
 
 - [x] **US-011**: As a team lead, I want to configure which rules are enabled/disabled via a TOML config file so I can tailor the scanner to our codebase.
-- [ ] **US-012**: As a developer, I want to exclude specific files or directories from scanning via config so I can skip generated code or legacy modules.
+- [x] **US-012**: As a developer, I want to exclude specific files or directories from scanning via config so I can skip generated code or legacy modules.
 - [ ] **US-013**: As a developer, I want to override severity levels per rule so I can promote warnings to errors for rules my team cares about.
 - [ ] **US-014**: As a developer, I want to list all available detection rules with their IDs, descriptions, and severity so I understand what the scanner checks.
 - [ ] **US-015**: As a developer, I want to list only the currently enabled rules so I know what's active in my project.

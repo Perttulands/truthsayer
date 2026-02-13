@@ -132,6 +132,66 @@ disable = ["rule-a", "rule-b", "rule-c"]
 	}
 }
 
+func TestLoad_ScanExcludeDirs(t *testing.T) {
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "excl.toml")
+	os.WriteFile(cfgPath, []byte(`
+[scan]
+exclude_dirs = ["generated", "legacy"]
+`), 0644)
+
+	cfg, err := Load(".", cfgPath)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(cfg.Scan.ExcludeDirs) != 2 {
+		t.Fatalf("expected 2 exclude_dirs, got %d", len(cfg.Scan.ExcludeDirs))
+	}
+	if cfg.Scan.ExcludeDirs[0] != "generated" || cfg.Scan.ExcludeDirs[1] != "legacy" {
+		t.Errorf("unexpected exclude_dirs: %v", cfg.Scan.ExcludeDirs)
+	}
+}
+
+func TestLoad_ScanExcludePatterns(t *testing.T) {
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "pat.toml")
+	os.WriteFile(cfgPath, []byte(`
+[scan]
+exclude_patterns = ["*_generated.go", "*.pb.go", "*.min.js"]
+`), 0644)
+
+	cfg, err := Load(".", cfgPath)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(cfg.Scan.ExcludePatterns) != 3 {
+		t.Fatalf("expected 3 exclude_patterns, got %d", len(cfg.Scan.ExcludePatterns))
+	}
+	if cfg.Scan.ExcludePatterns[1] != "*.pb.go" {
+		t.Errorf("unexpected pattern: %v", cfg.Scan.ExcludePatterns)
+	}
+}
+
+func TestLoad_NoScanSection_EmptyDefaults(t *testing.T) {
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "rules-only.toml")
+	os.WriteFile(cfgPath, []byte(`
+[rules]
+disable = ["rule-a"]
+`), 0644)
+
+	cfg, err := Load(".", cfgPath)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(cfg.Scan.ExcludeDirs) != 0 {
+		t.Errorf("expected no exclude_dirs, got %v", cfg.Scan.ExcludeDirs)
+	}
+	if len(cfg.Scan.ExcludePatterns) != 0 {
+		t.Errorf("expected no exclude_patterns, got %v", cfg.Scan.ExcludePatterns)
+	}
+}
+
 func TestLoad_EmptyConfig(t *testing.T) {
 	dir := t.TempDir()
 	cfgPath := filepath.Join(dir, "empty.toml")

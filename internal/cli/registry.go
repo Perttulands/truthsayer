@@ -5,12 +5,13 @@ import (
 	"os"
 
 	"github.com/perttulands/truthsayer/internal/config"
+	"github.com/perttulands/truthsayer/internal/engine"
 	"github.com/perttulands/truthsayer/internal/rules"
 )
 
-// buildRegistry creates a rule registry configured by the given config path.
+// buildEngine creates a configured engine from the given config path.
 // scanDir is used to find .truthsayer.toml when configPath is empty.
-func buildRegistry(scanDir, configPath string) (*rules.Registry, error) {
+func buildEngine(scanDir, configPath string) (*engine.Engine, error) {
 	cfg, err := config.Load(scanDir, configPath)
 	if err != nil {
 		return nil, err
@@ -28,7 +29,25 @@ func buildRegistry(scanDir, configPath string) (*rules.Registry, error) {
 		}
 	}
 
-	return reg, nil
+	eng := engine.New(reg)
+
+	// Apply scan exclusions from config
+	if len(cfg.Scan.ExcludeDirs) > 0 {
+		merged := make(map[string]bool)
+		for k, v := range engine.DefaultExcludeDirs() {
+			merged[k] = v
+		}
+		for _, d := range cfg.Scan.ExcludeDirs {
+			merged[d] = true
+		}
+		eng.SetExcludeDirs(merged)
+	}
+
+	if len(cfg.Scan.ExcludePatterns) > 0 {
+		eng.SetExcludePatterns(cfg.Scan.ExcludePatterns)
+	}
+
+	return eng, nil
 }
 
 // parseConfigFlag extracts --config flag from args, returning the config path and remaining args.

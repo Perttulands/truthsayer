@@ -18,10 +18,11 @@ type Result struct {
 
 // Engine orchestrates concurrent file scanning.
 type Engine struct {
-	reg          *rules.Registry
-	goScanner    *scanner.GoScanner
-	regexScanner *scanner.RegexScanner
-	excludeDirs  map[string]bool
+	reg             *rules.Registry
+	goScanner       *scanner.GoScanner
+	regexScanner    *scanner.RegexScanner
+	excludeDirs     map[string]bool
+	excludePatterns []string
 }
 
 // New creates a scan engine from a rule registry.
@@ -38,9 +39,14 @@ func (e *Engine) SetExcludeDirs(dirs map[string]bool) {
 	e.excludeDirs = dirs
 }
 
+// SetExcludePatterns sets glob patterns for files to exclude from scanning.
+func (e *Engine) SetExcludePatterns(patterns []string) {
+	e.excludePatterns = patterns
+}
+
 // Scan walks the path and scans all matching files concurrently.
 func (e *Engine) Scan(root string) (*Result, error) {
-	files, err := Walk(root, e.excludeDirs)
+	files, err := Walk(root, e.excludeDirs, e.excludePatterns)
 	if err != nil {
 		return nil, err
 	}

@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/perttulands/truthsayer/internal/engine"
 	"github.com/perttulands/truthsayer/internal/finding"
 	"github.com/perttulands/truthsayer/internal/report"
 )
@@ -32,12 +31,11 @@ func runCheck(args []string) int {
 	}
 
 	scanDir := filepath.Dir(path)
-	reg, err := buildRegistry(scanDir, configPath)
+	eng, err := buildEngine(scanDir, configPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		return 2
 	}
-	eng := engine.New(reg)
 
 	start := time.Now()
 	result, err := eng.ScanFile(path)

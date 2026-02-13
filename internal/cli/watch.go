@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/perttulands/truthsayer/internal/diff"
-	"github.com/perttulands/truthsayer/internal/engine"
 	"github.com/perttulands/truthsayer/internal/finding"
 	"github.com/perttulands/truthsayer/internal/report"
 	"github.com/perttulands/truthsayer/internal/watcher"
@@ -33,12 +32,11 @@ func runWatch(args []string) int {
 		return 2
 	}
 
-	reg, err := buildRegistry(path, configPath)
+	eng, err := buildEngine(path, configPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		return 2
 	}
-	eng := engine.New(reg)
 
 	w, err := watcher.New(path, 100*time.Millisecond)
 	if err != nil {
