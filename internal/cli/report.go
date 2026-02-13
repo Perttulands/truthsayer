@@ -6,18 +6,20 @@ import (
 	"time"
 
 	"github.com/perttulands/truthsayer/internal/engine"
-	"github.com/perttulands/truthsayer/internal/finding"
 	"github.com/perttulands/truthsayer/internal/report"
 	"github.com/perttulands/truthsayer/internal/rules"
 )
 
-func runScan(args []string) int {
-	format := "text"
+const defaultReportOutput = "truthsayer-report.json"
+
+func runReport(args []string) int {
+	output := defaultReportOutput
 	var path string
 
+	// Parse --output flag
 	for i := 0; i < len(args); i++ {
-		if args[i] == "--format" && i+1 < len(args) {
-			format = args[i+1]
+		if args[i] == "--output" && i+1 < len(args) {
+			output = args[i+1]
 			i++
 		} else {
 			path = args[i]
@@ -25,12 +27,7 @@ func runScan(args []string) int {
 	}
 
 	if path == "" {
-		fmt.Fprintln(os.Stderr, "error: scan requires a path argument")
-		return 2
-	}
-
-	if format != "text" && format != "json" {
-		fmt.Fprintf(os.Stderr, "error: unknown format %q (use text or json)\n", format)
+		fmt.Fprintln(os.Stderr, "error: report requires a path argument")
 		return 2
 	}
 
@@ -55,20 +52,19 @@ func runScan(args []string) int {
 	}
 	durationMs := time.Since(start).Milliseconds()
 
-	switch format {
-	case "json":
-		if err := report.JSON(os.Stdout, result.Findings, path, time.Now(), result.FilesScanned, durationMs); err != nil {
-			fmt.Fprintf(os.Stderr, "error writing JSON: %v\n", err)
-			return 2
-		}
-	default:
-		report.Terminal(os.Stdout, result.Findings, result.FilesScanned, durationMs)
+	f, err := os.Create(output)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		return 2
+	}
+	defer f.Close()
+
+	scanTime := time.Now()
+	if err := report.JSON(f, result.Findings, path, scanTime, result.FilesScanned, durationMs); err != nil {
+		fmt.Fprintf(os.Stderr, "error writing report: %v\n", err)
+		return 2
 	}
 
-	for _, f := range result.Findings {
-		if f.Severity == finding.SeverityError {
-			return 1
-		}
-	}
+	fmt.Fprintf(os.Stderr, "Report written to %s (%d findings, %d files scanned)\n", output, len(result.Findings), result.FilesScanned)
 	return 0
 }
