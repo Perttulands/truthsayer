@@ -47,6 +47,15 @@ func TestDefaultRegistry(t *testing.T) {
 	if !ids["mock-leakage.debug-guard"] {
 		t.Error("missing mock-leakage.debug-guard rule")
 	}
+	if !ids["test-isolation.test-leaked-server"] {
+		t.Error("missing test-isolation.test-leaked-server rule")
+	}
+	if !ids["test-isolation.test-leaked-sse"] {
+		t.Error("missing test-isolation.test-leaked-sse rule")
+	}
+	if !ids["test-isolation.test-missing-cleanup"] {
+		t.Error("missing test-isolation.test-missing-cleanup rule")
+	}
 }
 
 func TestDisable(t *testing.T) {

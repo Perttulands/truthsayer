@@ -178,6 +178,9 @@ func DefaultRegistry() *Registry {
 	reg.RegisterRegex(&TestFixtureRef{})
 	reg.RegisterRegex(&NoStderrCapture{})
 	reg.RegisterRegex(&MissingGitignore{})
+	reg.RegisterRegex(&TestLeakedServer{})
+	reg.RegisterRegex(&TestLeakedSSE{})
+	reg.RegisterRegex(&TestMissingCleanup{})
 
 	return reg
 }

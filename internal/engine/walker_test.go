@@ -164,6 +164,8 @@ func TestWalk_NilPatterns_NoFiltering(t *testing.T) {
 func TestWalk_FindsSupportedExtensions(t *testing.T) {
 	tmp := t.TempDir()
 	os.WriteFile(filepath.Join(tmp, "main.go"), []byte("package main"), 0o644)
+	os.WriteFile(filepath.Join(tmp, "app.test.js"), []byte("describe('x', () => {})"), 0o644)
+	os.WriteFile(filepath.Join(tmp, "types.spec.ts"), []byte("describe('x', () => {})"), 0o644)
 	os.WriteFile(filepath.Join(tmp, "deploy.sh"), []byte("#!/bin/bash"), 0o644)
 	os.WriteFile(filepath.Join(tmp, "readme.md"), []byte("# readme"), 0o644) // unsupported
 	os.WriteFile(filepath.Join(tmp, "config.toml"), []byte("[x]"), 0o644)
@@ -173,7 +175,7 @@ func TestWalk_FindsSupportedExtensions(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(files) != 3 {
-		t.Fatalf("expected 3 supported files, got %d: %v", len(files), files)
+	if len(files) != 5 {
+		t.Fatalf("expected 5 supported files, got %d: %v", len(files), files)
 	}
 }

@@ -25,6 +25,12 @@ func DefaultExcludeDirs() map[string]bool {
 
 var supportedExts = map[string]bool{
 	".go":   true,
+	".js":   true,
+	".jsx":  true,
+	".ts":   true,
+	".tsx":  true,
+	".mjs":  true,
+	".cjs":  true,
 	".sh":   true,
 	".bash": true,
 	".toml": true,
