@@ -16,7 +16,7 @@ func (h *HiddenFailureBash) Meta() Rule {
 		Category:    "silent-fallback",
 		Name:        "Hidden failure in bash",
 		Description: "Command failure silently suppressed with || true, 2>/dev/null, or || :",
-		Severity:    finding.SeverityWarning,
+		Severity:    finding.SeverityError,
 		FileTypes:   []string{".sh", ".bash"},
 		ScanType:    ScanTypeRegex,
 	}
@@ -40,6 +40,18 @@ var hiddenFailureSuggestions = []string{
 	"Capture stderr to a variable or log file instead of discarding it",
 }
 
+// hasReasonComment checks if the line has an inline # REASON: comment justifying the suppression,
+// or if the immediately preceding line is a # REASON: comment.
+func hasReasonComment(line string, lines []string, lineIdx int) bool {
+	if strings.Contains(line, "# REASON:") {
+		return true
+	}
+	if lineIdx > 0 && strings.Contains(lines[lineIdx-1], "# REASON:") {
+		return true
+	}
+	return false
+}
+
 func (h *HiddenFailureBash) CheckLines(path string, lines []string) []finding.Finding {
 	var findings []finding.Finding
 	for i, line := range lines {
@@ -49,14 +61,26 @@ func (h *HiddenFailureBash) CheckLines(path string, lines []string) []finding.Fi
 		}
 		for j, pat := range hiddenFailurePatterns {
 			if pat.MatchString(line) {
+				severity := finding.SeverityError
+				msg := hiddenFailureMessages[j]
+				suggestion := hiddenFailureSuggestions[j]
+
+				if hasReasonComment(line, lines, i) {
+					severity = finding.SeverityInfo
+					msg = msg + " (justified with REASON comment)"
+					suggestion = ""
+				} else {
+					msg = msg + " — add '# REASON: ...' to justify or fix the suppression"
+				}
+
 				findings = append(findings, finding.Finding{
 					Rule:       h.Meta().ID,
-					Severity:   h.Meta().Severity,
+					Severity:   severity,
 					File:       path,
 					Line:       i + 1,
 					Code:       line,
-					Message:    hiddenFailureMessages[j],
-					Suggestion: hiddenFailureSuggestions[j],
+					Message:    msg,
+					Suggestion: suggestion,
 				})
 			}
 		}
