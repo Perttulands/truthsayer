@@ -3,64 +3,61 @@ package cli
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/perttulands/truthsayer/internal/finding"
 	"github.com/perttulands/truthsayer/internal/report"
 )
 
+type scanOptions struct {
+	format        string
+	path          string
+	createBeads   bool
+	beadThreshold int
+}
+
 func runScan(args []string) int {
 	configPath, args := parseConfigFlag(args)
 
-	format := "text"
-	var path string
-
-	for i := 0; i < len(args); i++ {
-		if args[i] == "--format" && i+1 < len(args) {
-			format = args[i+1]
-			i++
-		} else {
-			path = args[i]
-		}
+	opts, err := parseScanOptions(args)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		return 2
 	}
 
-	if path == "" {
+	if opts.path == "" {
 		fmt.Fprintln(os.Stderr, "error: scan requires a path argument")
 		return 2
 	}
 
-	if format != "text" && format != "json" {
-		fmt.Fprintf(os.Stderr, "error: unknown format %q (use text or json)\n", format)
-		return 2
-	}
-
-	info, err := os.Stat(path)
+	info, err := os.Stat(opts.path)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		return 2
 	}
 	if !info.IsDir() {
-		fmt.Fprintf(os.Stderr, "error: %s is not a directory\n", path)
+		fmt.Fprintf(os.Stderr, "error: %s is not a directory\n", opts.path)
 		return 2
 	}
 
-	eng, err := buildEngine(path, configPath)
+	eng, err := buildEngine(opts.path, configPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		return 2
 	}
 
 	start := time.Now()
-	result, err := eng.Scan(path)
+	result, err := eng.Scan(opts.path)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		return 2
 	}
 	durationMs := time.Since(start).Milliseconds()
 
-	switch format {
+	switch opts.format {
 	case "json":
-		if err := report.JSON(os.Stdout, result.Findings, path, time.Now(), result.FilesScanned, durationMs); err != nil {
+		if err := report.JSON(os.Stdout, result.Findings, opts.path, time.Now(), result.FilesScanned, durationMs); err != nil {
 			fmt.Fprintf(os.Stderr, "error writing JSON: %v\n", err)
 			return 2
 		}
@@ -68,8 +65,62 @@ func runScan(args []string) int {
 		report.Terminal(os.Stdout, result.Findings, result.FilesScanned, durationMs)
 	}
 
+	if opts.createBeads {
+		created, err := createErrorBeads(result.Findings, opts.beadThreshold, newProblemBeadCreator())
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			return 2
+		}
+
+		if opts.format == "json" {
+			printBeadSummary(os.Stderr, created)
+		} else {
+			printBeadSummary(os.Stdout, created)
+		}
+	}
+
 	if finding.HasErrors(result.Findings) {
 		return 1
 	}
 	return 0
+}
+
+func parseScanOptions(args []string) (scanOptions, error) {
+	opts := scanOptions{
+		format: "text",
+	}
+
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "--format":
+			if i+1 >= len(args) {
+				return scanOptions{}, fmt.Errorf("--format requires a value")
+			}
+			opts.format = args[i+1]
+			i++
+		case "--create-beads":
+			opts.createBeads = true
+		case "--bead-threshold":
+			if i+1 >= len(args) {
+				return scanOptions{}, fmt.Errorf("--bead-threshold requires a value")
+			}
+			n, err := strconv.Atoi(args[i+1])
+			if err != nil {
+				return scanOptions{}, fmt.Errorf("invalid --bead-threshold %q", args[i+1])
+			}
+			if n < 0 {
+				return scanOptions{}, fmt.Errorf("--bead-threshold must be >= 0")
+			}
+			opts.beadThreshold = n
+			i++
+		default:
+			opts.path = args[i]
+		}
+	}
+
+	if opts.format != "text" && opts.format != "json" {
+		return scanOptions{}, fmt.Errorf("unknown format %q (use text or json)", opts.format)
+	}
+
+	return opts, nil
 }
