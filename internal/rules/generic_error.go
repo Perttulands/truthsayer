@@ -3,6 +3,7 @@ package rules
 import (
 	"go/ast"
 	"go/token"
+	"strconv"
 
 	"github.com/perttulands/truthsayer/internal/finding"
 )
@@ -68,10 +69,10 @@ func (g *GenericError) CheckAST(fset *token.FileSet, file *ast.File, lines []str
 		if !ok || lit.Kind != token.STRING {
 			return true
 		}
-		// Strip quotes
-		msg := lit.Value
-		if len(msg) >= 2 {
-			msg = msg[1 : len(msg)-1]
+		// Unquote string literal properly
+		msg, err := strconv.Unquote(lit.Value)
+		if err != nil {
+			return true
 		}
 		if genericMessages[msg] {
 			pos := fset.Position(call.Pos())

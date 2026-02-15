@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"fmt"
 	"go/ast"
 	"go/token"
 	"strings"
@@ -64,7 +65,7 @@ func (l *LongFunctionNoLog) CheckAST(fset *token.FileSet, file *ast.File, lines 
 			File:       fname,
 			Line:       pos.Line,
 			Code:       sourceLine(lines, pos.Line),
-			Message:    "Function " + fn.Name.Name + " is " + strings.Replace(string(rune(bodyLines+'0')), "\x00", "", -1) + " lines with no logging",
+			Message:    fmt.Sprintf("Function %s is %d lines with no logging", fn.Name.Name, bodyLines),
 			Suggestion: "Add structured logging for key operations and error paths",
 		})
 	}

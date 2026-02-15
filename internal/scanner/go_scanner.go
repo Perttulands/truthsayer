@@ -22,23 +22,24 @@ func NewGoScanner(checkers []rules.ASTChecker) *GoScanner {
 }
 
 // Scan parses a Go file and runs all AST checkers against it.
-func (s *GoScanner) Scan(path string) ([]finding.Finding, error) {
+// Returns findings and the source lines that were read (for reuse by regex scanner).
+func (s *GoScanner) Scan(path string) ([]finding.Finding, []string, error) {
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
 	if err != nil {
-		return nil, fmt.Errorf("parse go file %s: %w", path, err)
+		return nil, nil, fmt.Errorf("parse go file %s: %w", path, err)
 	}
 
 	lines, err := readGoLines(path)
 	if err != nil {
-		return nil, fmt.Errorf("read go source lines %s: %w", path, err)
+		return nil, nil, fmt.Errorf("read go source lines %s: %w", path, err)
 	}
 
 	var findings []finding.Finding
 	for _, checker := range s.checkers {
 		findings = append(findings, checker.CheckAST(fset, file, lines)...)
 	}
-	return findings, nil
+	return findings, lines, nil
 }
 
 func readGoLines(path string) ([]string, error) {

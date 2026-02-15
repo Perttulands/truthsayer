@@ -79,15 +79,17 @@ func (e *Engine) Scan(root string) (*Result, error) {
 				ext := filepath.Ext(path)
 
 				if ext == ".go" {
-					results, err := e.goScanner.Scan(path)
+					results, lines, err := e.goScanner.Scan(path)
+					if err == nil {
+						fileFindings = append(fileFindings, results...)
+						// Reuse lines already read for AST parsing
+						fileFindings = append(fileFindings, e.regexScanner.ScanLines(path, lines)...)
+					}
+				} else {
+					results, err := e.regexScanner.Scan(path)
 					if err == nil {
 						fileFindings = append(fileFindings, results...)
 					}
-				}
-
-				results, err := e.regexScanner.Scan(path)
-				if err == nil {
-					fileFindings = append(fileFindings, results...)
 				}
 
 				if len(fileFindings) > 0 {
@@ -117,18 +119,20 @@ func (e *Engine) ScanFile(path string) (*Result, error) {
 	ext := filepath.Ext(path)
 
 	if ext == ".go" {
-		results, err := e.goScanner.Scan(path)
+		results, lines, err := e.goScanner.Scan(path)
 		if err != nil {
 			return nil, fmt.Errorf("scan go file %s: %w", path, err)
 		}
 		allFindings = append(allFindings, results...)
+		// Reuse lines already read for AST parsing
+		allFindings = append(allFindings, e.regexScanner.ScanLines(path, lines)...)
+	} else {
+		results, err := e.regexScanner.Scan(path)
+		if err != nil {
+			return nil, fmt.Errorf("scan text rules in %s: %w", path, err)
+		}
+		allFindings = append(allFindings, results...)
 	}
-
-	results, err := e.regexScanner.Scan(path)
-	if err != nil {
-		return nil, fmt.Errorf("scan text rules in %s: %w", path, err)
-	}
-	allFindings = append(allFindings, results...)
 
 	allFindings = finding.Dedup(allFindings)
 	e.reg.ApplyOverrides(allFindings)

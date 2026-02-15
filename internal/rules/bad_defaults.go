@@ -22,11 +22,17 @@ func (m *MissingPipefail) Meta() Rule {
 	}
 }
 
-var pipefailPattern = regexp.MustCompile(`set\s+-[a-zA-Z]*e[a-zA-Z]*u[a-zA-Z]*o\s+pipefail`)
+// pipefailPattern matches `set -o pipefail` or combined forms like `set -euo pipefail`.
+// Accepts any flag order (e.g., set -oue pipefail, set -ueo pipefail).
+var pipefailPattern = regexp.MustCompile(`set\s+.*pipefail`)
 
 func (m *MissingPipefail) CheckLines(path string, lines []string) []finding.Finding {
-	// Check if any line has set -euo pipefail (or equivalent)
+	// Check if any line sets pipefail
 	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "#") {
+			continue
+		}
 		if pipefailPattern.MatchString(line) {
 			return nil
 		}

@@ -16,7 +16,7 @@ func testdataPath(rel string) string {
 func TestGoScanner_EmptyErrorCheck(t *testing.T) {
 	s := NewGoScanner([]rules.ASTChecker{&rules.EmptyErrorCheck{}})
 
-	findings, err := s.Scan(testdataPath("go/empty_error_check.go"))
+	findings, _, err := s.Scan(testdataPath("go/empty_error_check.go"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,7 +38,7 @@ func TestGoScanner_EmptyErrorCheck(t *testing.T) {
 func TestGoScanner_ProperHandling(t *testing.T) {
 	s := NewGoScanner([]rules.ASTChecker{&rules.EmptyErrorCheck{}})
 
-	findings, err := s.Scan(testdataPath("go/proper_error_handling.go"))
+	findings, _, err := s.Scan(testdataPath("go/proper_error_handling.go"))
 	if err != nil {
 		t.Fatal(err)
 	}

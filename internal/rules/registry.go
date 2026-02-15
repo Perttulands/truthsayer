@@ -167,6 +167,9 @@ func DefaultRegistry() *Registry {
 	reg.RegisterAST(&MockImportNonTest{})
 	reg.RegisterAST(&NoRequestID{})
 	reg.RegisterAST(&DebugGuard{})
+	reg.RegisterAST(&UncheckedTypeAssert{})
+	reg.RegisterAST(&DeferInLoop{})
+	reg.RegisterAST(&GoroutineNoContext{})
 
 	// Regex rules (bash/config/multi-lang)
 	reg.RegisterRegex(&MissingPipefail{})

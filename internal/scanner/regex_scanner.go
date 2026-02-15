@@ -22,12 +22,17 @@ func NewRegexScanner(checkers []rules.RegexChecker) *RegexScanner {
 
 // Scan reads a file's lines and runs all matching regex checkers.
 func (s *RegexScanner) Scan(path string) ([]finding.Finding, error) {
-	ext := filepath.Ext(path)
 	lines, err := readLines(path)
 	if err != nil {
 		return nil, fmt.Errorf("read lines from %s: %w", path, err)
 	}
+	return s.ScanLines(path, lines), nil
+}
 
+// ScanLines runs all matching regex checkers against pre-read lines.
+// Use this to avoid re-reading files that were already read for AST parsing.
+func (s *RegexScanner) ScanLines(path string, lines []string) []finding.Finding {
+	ext := filepath.Ext(path)
 	var findings []finding.Finding
 	for _, checker := range s.checkers {
 		meta := checker.Meta()
@@ -36,7 +41,7 @@ func (s *RegexScanner) Scan(path string) ([]finding.Finding, error) {
 		}
 		findings = append(findings, checker.CheckLines(path, lines)...)
 	}
-	return findings, nil
+	return findings
 }
 
 func readLines(path string) ([]string, error) {
