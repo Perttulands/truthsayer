@@ -27,23 +27,23 @@ func (u *UnvalidatedEnvGo) CheckAST(fset *token.FileSet, file *ast.File, lines [
 	fname := fset.File(file.Pos()).Name()
 
 	ast.Inspect(file, func(n ast.Node) bool {
+		// Skip if os.Getenv is used inside an if-init statement,
+		// which means the value is being checked inline.
+		if ifStmt, ok := n.(*ast.IfStmt); ok {
+			if ifStmt.Init != nil && containsGetenvCall(ifStmt.Init) {
+				return false // skip — the if-init validates the value
+			}
+			return true
+		}
+
 		call, ok := n.(*ast.CallExpr)
 		if !ok {
 			return true
 		}
-		sel, ok := call.Fun.(*ast.SelectorExpr)
-		if !ok {
+		if !isGetenvCall(call) {
 			return true
 		}
-		pkg, ok := sel.X.(*ast.Ident)
-		if !ok {
-			return true
-		}
-		if pkg.Name != "os" || sel.Sel.Name != "Getenv" {
-			return true
-		}
-		// Check if os.Getenv is inside an if/assignment that validates
-		// We flag all direct uses — wrapping in validation is the fix
+
 		pos := fset.Position(call.Pos())
 		findings = append(findings, finding.Finding{
 			Rule:       u.Meta().ID,
@@ -57,4 +57,32 @@ func (u *UnvalidatedEnvGo) CheckAST(fset *token.FileSet, file *ast.File, lines [
 		return true
 	})
 	return findings
+}
+
+func isGetenvCall(call *ast.CallExpr) bool {
+	sel, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return false
+	}
+	pkg, ok := sel.X.(*ast.Ident)
+	if !ok {
+		return false
+	}
+	return pkg.Name == "os" && sel.Sel.Name == "Getenv"
+}
+
+func containsGetenvCall(node ast.Node) bool {
+	found := false
+	ast.Inspect(node, func(n ast.Node) bool {
+		if found {
+			return false
+		}
+		call, ok := n.(*ast.CallExpr)
+		if ok && isGetenvCall(call) {
+			found = true
+			return false
+		}
+		return true
+	})
+	return found
 }

@@ -28,6 +28,10 @@ var combinedOutputPattern = regexp.MustCompile(`\.CombinedOutput\s*\(`)
 var stderrAssignPattern = regexp.MustCompile(`\.Stderr\s*=`)
 
 func (n *NoStderrCapture) CheckLines(path string, lines []string) []finding.Finding {
+	if strings.HasSuffix(path, "_test.go") {
+		return nil
+	}
+
 	var findings []finding.Finding
 
 	for i, line := range lines {

@@ -170,6 +170,9 @@ func DefaultRegistry() *Registry {
 	reg.RegisterAST(&UncheckedTypeAssert{})
 	reg.RegisterAST(&DeferInLoop{})
 	reg.RegisterAST(&GoroutineNoContext{})
+	reg.RegisterAST(&SwallowedError{})
+	reg.RegisterAST(&ContextTodo{})
+	reg.RegisterAST(&ErrorStringCompare{})
 
 	// Regex rules (bash/config/multi-lang)
 	reg.RegisterRegex(&MissingPipefail{})

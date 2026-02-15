@@ -9,7 +9,9 @@ import (
 	"github.com/perttulands/truthsayer/internal/finding"
 )
 
-// LongFunctionNoLog detects functions >20 lines with no log/trace/print call.
+// LongFunctionNoLog detects functions >30 lines with no log/trace/print call.
+// Functions with names matching common pure-logic patterns (checkers, parsers,
+// validators, formatters) are excluded since they typically don't need logging.
 type LongFunctionNoLog struct{}
 
 func (l *LongFunctionNoLog) Meta() Rule {
@@ -17,7 +19,7 @@ func (l *LongFunctionNoLog) Meta() Rule {
 		ID:          "trace-gaps.long-function-no-log",
 		Category:    "trace-gaps",
 		Name:        "Long function without logging",
-		Description: "Function >20 lines with no logging or tracing calls",
+		Description: "Function >30 lines with no logging or tracing calls",
 		Severity:    finding.SeverityInfo,
 		FileTypes:   []string{".go"},
 		ScanType:    ScanTypeAST,
@@ -26,6 +28,7 @@ func (l *LongFunctionNoLog) Meta() Rule {
 
 var logCallNames = map[string]bool{
 	"Print": true, "Println": true, "Printf": true,
+	"Fprintf": true, "Fprintln": true,
 	"Log": true, "Logf": true,
 	"Info": true, "Infof": true, "Infow": true,
 	"Warn": true, "Warnf": true, "Warnw": true,
@@ -52,10 +55,13 @@ func (l *LongFunctionNoLog) CheckAST(fset *token.FileSet, file *ast.File, lines 
 		startLine := fset.Position(fn.Body.Pos()).Line
 		endLine := fset.Position(fn.Body.End()).Line
 		bodyLines := endLine - startLine
-		if bodyLines <= 20 {
+		if bodyLines <= 30 {
 			continue
 		}
 		if hasLogCall(fn.Body) {
+			continue
+		}
+		if isPureLogicFunction(fn.Name.Name) {
 			continue
 		}
 		pos := fset.Position(fn.Pos())
@@ -82,14 +88,40 @@ func hasLogCall(block *ast.BlockStmt) bool {
 		if !ok {
 			return true
 		}
-		// Check method calls: logger.Info(), log.Printf(), etc.
+		// Check method calls: logger.Info(), log.Printf(), fmt.Fprintf(), etc.
 		sel, ok := call.Fun.(*ast.SelectorExpr)
 		if ok && logCallNames[sel.Sel.Name] {
 			found = true
 			return false
 		}
-		// Check package-level calls: fmt.Println(), etc.
 		return true
 	})
 	return found
+}
+
+// isPureLogicFunction returns true for function names that conventionally
+// perform pure data transformation and don't need logging. Unexported
+// helper functions are also excluded since they typically don't represent
+// top-level operations worth tracing.
+func isPureLogicFunction(name string) bool {
+	// Unexported helper functions rarely need logging
+	if len(name) > 0 && name[0] >= 'a' && name[0] <= 'z' {
+		return true
+	}
+
+	lower := strings.ToLower(name)
+	for _, prefix := range []string{
+		"is", "has", "can", "should",
+		"check", "parse", "format", "count",
+		"match", "find", "extract", "convert",
+		"compare", "sort", "filter", "validate",
+		"marshal", "unmarshal", "encode", "decode",
+		"render", "compile", "build",
+		"default", "new", "make", "create",
+	} {
+		if strings.HasPrefix(lower, prefix) {
+			return true
+		}
+	}
+	return false
 }

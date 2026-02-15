@@ -26,7 +26,26 @@ func (e *EmptyErrorCheck) CheckAST(fset *token.FileSet, file *ast.File, lines []
 	var findings []finding.Finding
 	fname := fset.File(file.Pos()).Name()
 
+	// Track func literals that return only error (like filepath.WalkFunc),
+	// where returning nil is idiomatic to mean "continue".
+	errorOnlyFuncLits := make(map[*ast.FuncLit]bool)
 	ast.Inspect(file, func(n ast.Node) bool {
+		fl, ok := n.(*ast.FuncLit)
+		if !ok {
+			return true
+		}
+		if isErrorOnlyReturn(fl.Type) {
+			errorOnlyFuncLits[fl] = true
+		}
+		return true
+	})
+
+	ast.Inspect(file, func(n ast.Node) bool {
+		// Skip func literals that return only error
+		if fl, ok := n.(*ast.FuncLit); ok && errorOnlyFuncLits[fl] {
+			return false
+		}
+
 		ifStmt, ok := n.(*ast.IfStmt)
 		if !ok {
 			return true
@@ -50,6 +69,15 @@ func (e *EmptyErrorCheck) CheckAST(fset *token.FileSet, file *ast.File, lines []
 		return true
 	})
 	return findings
+}
+
+// isErrorOnlyReturn checks if a func type returns only a single error result.
+func isErrorOnlyReturn(ft *ast.FuncType) bool {
+	if ft.Results == nil || len(ft.Results.List) != 1 {
+		return false
+	}
+	ident, ok := ft.Results.List[0].Type.(*ast.Ident)
+	return ok && ident.Name == "error"
 }
 
 // sourceLine returns the source line at the given 1-based line number.

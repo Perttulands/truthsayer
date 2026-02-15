@@ -23,6 +23,9 @@ func TestDoctor_ShowsVersion(t *testing.T) {
 	if !strings.Contains(out, "truthsayer") {
 		t.Error("output missing 'truthsayer' name")
 	}
+	if !strings.Contains(out, "Version") {
+		t.Error("output missing Version check")
+	}
 }
 
 func TestDoctor_ShowsRuleCount(t *testing.T) {
@@ -35,8 +38,8 @@ func TestDoctor_ShowsRuleCount(t *testing.T) {
 		runDoctor(nil)
 	})
 
-	if !strings.Contains(out, "rules enabled") {
-		t.Errorf("expected 'rules enabled', got: %s", out)
+	if !strings.Contains(out, "enabled") {
+		t.Errorf("expected 'enabled', got: %s", out)
 	}
 }
 
@@ -76,11 +79,14 @@ disable = ["silent-fallback.empty-error-check"]
 		}
 	})
 
-	if !strings.Contains(out, "config valid") {
-		t.Errorf("expected 'config valid' message, got: %s", out)
+	if !strings.Contains(out, "Config ... ok") {
+		t.Errorf("expected 'Config ... ok' message, got: %s", out)
 	}
-	if !strings.Contains(out, "rules enabled") {
-		t.Errorf("expected 'rules enabled' with one disabled, got: %s", out)
+	if !strings.Contains(out, "enabled") {
+		t.Errorf("expected 'enabled' in rule count, got: %s", out)
+	}
+	if !strings.Contains(out, "disabled") {
+		t.Errorf("expected 'disabled' count shown, got: %s", out)
 	}
 }
 
@@ -99,8 +105,8 @@ func TestDoctor_InvalidConfig(t *testing.T) {
 		}
 	})
 
-	if !strings.Contains(out, "config invalid") {
-		t.Errorf("expected 'config invalid' message, got: %s", out)
+	if !strings.Contains(out, "FAIL") {
+		t.Errorf("expected 'FAIL' message, got: %s", out)
 	}
 }
 
@@ -123,11 +129,11 @@ disable = ["bad-defaults.missing-pipefail"]
 		}
 	})
 
-	if !strings.Contains(out, "config valid") {
-		t.Errorf("expected 'config valid', got: %s", out)
+	if !strings.Contains(out, "Config ... ok") {
+		t.Errorf("expected 'Config ... ok', got: %s", out)
 	}
-	if !strings.Contains(out, "rules enabled") {
-		t.Errorf("expected 'rules enabled', got: %s", out)
+	if !strings.Contains(out, "enabled") {
+		t.Errorf("expected 'enabled', got: %s", out)
 	}
 }
 
@@ -141,14 +147,16 @@ func TestDoctor_ShowsChecks(t *testing.T) {
 		runDoctor(nil)
 	})
 
-	// Should have check labels
-	if !strings.Contains(out, "Installation") {
-		t.Error("output missing Installation check")
+	if !strings.Contains(out, "Version") {
+		t.Error("output missing Version check")
 	}
 	if !strings.Contains(out, "Config") {
 		t.Error("output missing Config check")
 	}
 	if !strings.Contains(out, "Rules") {
 		t.Error("output missing Rules check")
+	}
+	if !strings.Contains(out, "Files") {
+		t.Error("output missing Files check")
 	}
 }

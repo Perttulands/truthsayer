@@ -158,6 +158,15 @@ func (t *TestMissingCleanup) CheckLines(path string, lines []string) []finding.F
 }
 
 func isTestIsolationFile(path string) bool {
+	ext := strings.ToLower(filepath.Ext(path))
+	// These rules target JavaScript/TypeScript test files, not Go test files.
+	// Go tests use t.Cleanup() and defer, not before/after hooks.
+	switch ext {
+	case ".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs":
+		// ok
+	default:
+		return false
+	}
 	base := strings.ToLower(filepath.Base(path))
 	return strings.Contains(base, "test") || strings.Contains(base, "spec")
 }
