@@ -30,11 +30,12 @@ var langExts = map[string][]string{
 	"bash":       {".sh", ".bash"},
 }
 
-// parseLangFlag parses a comma-separated --lang value into a LanguageConfig
-// where only the specified languages are enabled (all others disabled).
-func parseLangFlag(value string) (*config.LanguageConfig, error) {
+// resolveLanguages parses a comma-separated --lang value and returns canonical
+// language names. Returns an error if any alias is unknown or no languages match.
+func resolveLanguages(value string) ([]string, error) {
 	parts := strings.Split(value, ",")
-	enabled := make(map[string]bool)
+	seen := make(map[string]bool)
+	var langs []string
 	for _, p := range parts {
 		p = strings.TrimSpace(p)
 		if p == "" {
@@ -44,10 +45,28 @@ func parseLangFlag(value string) (*config.LanguageConfig, error) {
 		if !ok {
 			return nil, fmt.Errorf("unknown language %q (valid: go, js, ts, python, bash)", p)
 		}
-		enabled[canonical] = true
+		if !seen[canonical] {
+			seen[canonical] = true
+			langs = append(langs, canonical)
+		}
 	}
-	if len(enabled) == 0 {
+	if len(langs) == 0 {
 		return nil, fmt.Errorf("--lang requires at least one language")
+	}
+	return langs, nil
+}
+
+// parseLangFlag parses a comma-separated --lang value into a LanguageConfig
+// where only the specified languages are enabled (all others disabled).
+func parseLangFlag(value string) (*config.LanguageConfig, error) {
+	langs, err := resolveLanguages(value)
+	if err != nil {
+		return nil, err
+	}
+
+	enabled := make(map[string]bool, len(langs))
+	for _, l := range langs {
+		enabled[l] = true
 	}
 
 	f, t := false, true
@@ -78,23 +97,16 @@ func parseLangFlag(value string) (*config.LanguageConfig, error) {
 // langFilterExts returns the set of file extensions for the given --lang value.
 // Used by the rules command to filter rules by FileTypes.
 func langFilterExts(value string) (map[string]bool, error) {
-	parts := strings.Split(value, ",")
+	langs, err := resolveLanguages(value)
+	if err != nil {
+		return nil, err
+	}
+
 	exts := make(map[string]bool)
-	for _, p := range parts {
-		p = strings.TrimSpace(p)
-		if p == "" {
-			continue
-		}
-		canonical, ok := langAliases[strings.ToLower(p)]
-		if !ok {
-			return nil, fmt.Errorf("unknown language %q (valid: go, js, ts, python, bash)", p)
-		}
-		for _, ext := range langExts[canonical] {
+	for _, lang := range langs {
+		for _, ext := range langExts[lang] {
 			exts[ext] = true
 		}
-	}
-	if len(exts) == 0 {
-		return nil, fmt.Errorf("--lang requires at least one language")
 	}
 	return exts, nil
 }

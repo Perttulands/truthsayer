@@ -314,6 +314,13 @@
   - **Files**: `README.md`, CI config files (`.github/workflows/` or equivalent)
   - **Acceptance**: README documents all new features; CI builds and tests pass with cgo
 
+- [x] **US-405a** Fix: Extract shared language resolution in lang.go (5 min)
+  - `parseLangFlag` and `langFilterExts` duplicate parsing logic (split, trim, alias lookup, error)
+  - Extract `resolveLanguages(value string) ([]string, error)` shared helper
+  - Both functions call it and then do their specific output transformation
+  - **Files**: `internal/cli/lang.go`, `internal/cli/lang_test.go`
+  - **Acceptance**: No duplicate parsing logic; all existing lang_test.go tests pass
+
 - [ ] **US-REVIEW-S4** Review Sprint 4
   - All config/CLI changes working
   - Full test suite green: `go test ./... -count=1`

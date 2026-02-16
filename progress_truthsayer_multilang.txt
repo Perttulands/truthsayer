@@ -412,3 +412,29 @@
 - Learnings: `ubuntu-latest` on GitHub Actions includes gcc by default, but explicit `build-essential` install ensures cgo works reliably across runner versions. `CGO_ENABLED=1` should be explicit in CI to avoid surprises if Go defaults change. Splitting CI into test/scan jobs gives faster feedback on test failures.
 **Summary:** Task: US-405 | Files: README.md, .github/workflows/truthsayer.yml | Tests: PASS | Review: PASSED | Next: US-REVIEW-S4
 ---
+
+## Iteration 33 - US-REVIEW-S4: Review Sprint 4 (partial)
+- Reviewed all Sprint 4 code: US-400 through US-405 (6 tasks)
+- Files reviewed: config.go, engine.go, walker.go, lang.go, scan.go, rules.go, doctor.go, cross_language_integration_test.go, benchmark_test.go, README.md, truthsayer.yml
+- `go test ./... -count=1` — all green, no regressions
+- Linus criteria analysis:
+  - Good taste: Clean data flow config→engine→scanner, lazy init via sync.Once, nil-means-enabled pattern
+  - No special cases: Language routing via extLang() is clean
+  - Duplication found: `parseLangFlag` and `langFilterExts` in lang.go duplicate parsing logic (split, trim, alias lookup, error handling)
+  - Extension map duplication across files noted but acceptable (import cycle constraint, maps serve different types)
+  - Doctor walker divergence from engine walker is intentional (counting project files vs scannable files)
+  - Swallowed scan errors in engine.go is pre-existing, not Sprint 4 regression
+- Issue found: inserted US-405a fix task for lang.go parsing deduplication
+- Learnings: When reviewing, distinguish between Sprint-N regressions and pre-existing patterns. Only insert fix tasks for issues introduced or worsened by the current sprint.
+**Summary:** Task: US-REVIEW-S4 | Files: [all Sprint 4 files reviewed] | Tests: PASS | Review: ISSUES | Next: US-405a
+---
+
+## Iteration 34 - US-405a: Extract shared language resolution in lang.go
+- Extracted `resolveLanguages(value string) ([]string, error)` from duplicated parsing in `parseLangFlag` and `langFilterExts`
+- Both functions now call `resolveLanguages` and then do their specific output transformation (LanguageConfig vs extension map)
+- Dedup eliminates: split, trim, alias lookup, unknown-language error, empty-result error — all now in one place
+- Added deduplication of canonical names via `seen` map in `resolveLanguages`
+- All 20 existing lang_test.go tests pass unchanged; full test suite green
+- Learnings: Extracting a shared resolver that returns canonical names is the cleanest decomposition — each caller only needs to transform names into their own output type.
+**Summary:** Task: US-405a | Files: internal/cli/lang.go | Tests: PASS | Review: PASSED | Next: US-REVIEW-S4
+---
