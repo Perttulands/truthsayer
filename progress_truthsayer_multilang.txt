@@ -360,3 +360,31 @@
 - Learnings: Rule IDs use `py-` and `js-` prefixes (e.g., `silent-fallback.py-bare-except`), not the PRD's unqualified names. The `--lang` flag for scan reuses the existing `SetLanguages` mechanism on the engine — no new dispatch path needed. `filterRulesByExts` uses FileTypes overlap for clean language-based rule filtering.
 **Summary:** Task: US-401 | Files: lang.go, lang_test.go, scan.go, rules.go, root.go | Tests: PASS | Review: PASSED | Next: US-402
 ---
+
+## Iteration 29 - US-402: Doctor command extension for multi-language
+- Extended `runDoctor()` in `doctor.go` with 3 new checks:
+  - Per-language rule count breakdown: `countRulesByLang()` + `classifyRule()` helpers classify rules by FileTypes → "88 enabled (21 Go, 29 JS/TS, 26 Python, 12 bash)"
+  - Parser status: `checkParser()` initializes tree-sitter parser with JS and Python grammars, verifies parse of trivial snippet → "JS/TS AST parser ... available (tree-sitter)"
+  - Multi-language file counting: extended `filepath.Walk` to count `.js/.jsx/.ts/.tsx/.mjs/.cjs`, `.py/.pyi` files in addition to Go and bash
+- Updated "no scannable files" message and directory skip list to include `__pycache__`, `.venv`
+- Added 4 new tests: `TestDoctor_ShowsPerLanguageRuleCounts`, `TestDoctor_ShowsParserStatus`, `TestDoctor_CountsMultiLanguageFiles`, `TestDoctor_ParserStatusAvailable`
+- All 11 doctor tests pass, full test suite green with zero regressions
+- Learnings: `classifyRule` returns on first matching FileType — rules with mixed extensions (e.g., JS regex rules with `.js,.ts`) are classified by their first extension. `checkParser` uses `context.Background()` which is fine for a one-shot diagnostic check. tree-sitter parsers always succeed if compiled in — the check is mostly for build verification.
+**Summary:** Task: US-402 | Files: doctor.go, doctor_test.go | Tests: PASS | Review: PASSED | Next: US-403
+---
+
+## Iteration 30 - US-403: Cross-language integration tests
+- Created `testdata/mixed/` directory with 4 fixture files: `main.go`, `app.js` (empty catch + eval), `handler.ts` (as any), `process.py` (bare except + except pass + mutable default)
+- Created `internal/engine/cross_language_integration_test.go` with 7 tests:
+  - `TestCrossLanguage_MixedDirectoryScan`: scans mixed directory, verifies findings per language (JS, TS, Python) and specific expected rule IDs
+  - `TestCrossLanguage_NoCrossContamination`: verifies no cross-language rule firing (Go rules on JS/TS/Python, etc.)
+  - `TestCrossLanguage_DisablePython`: disables Python via config, verifies no Python findings, JS/TS still work
+  - `TestCrossLanguage_DisableJS`: disables JS+TS, verifies no JS/TS findings, Python still works
+  - `TestCrossLanguage_LangFilterGoOnly`: simulates `--lang go`, only Go findings appear
+  - `TestCrossLanguage_LangFilterPythonOnly`: simulates `--lang python`, only Python findings appear
+  - `TestCrossLanguage_AllLanguagesEnabled`: explicit all-enabled matches default nil behavior
+- Reuses existing helpers: `isJSRuleID`, `isPyRuleID`, `isGoRuleID`, `boolPtr`, `testdataMixedDir` follows established pattern
+- Full test suite passes with zero regressions
+- Learnings: Mixed directory fixtures should contain well-known anti-patterns that are guaranteed to trigger their rules — bare except + mutable default for Python, empty catch + eval for JS, as any for TS. The `SetLanguages` mechanism cleanly simulates `--lang` flag behavior at the engine level.
+**Summary:** Task: US-403 | Files: cross_language_integration_test.go, testdata/mixed/{main.go,app.js,handler.ts,process.py} | Tests: PASS | Review: PASSED | Next: US-404
+---

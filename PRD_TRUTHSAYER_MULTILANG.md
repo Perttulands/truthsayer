@@ -289,7 +289,7 @@
   - **Files**: `cmd/doctor.go` (or equivalent), doctor test file
   - **Acceptance**: `truthsayer doctor` shows per-language rule counts and parser availability
 
-- [ ] **US-403** Cross-language integration tests
+- [x] **US-403** Cross-language integration tests
   - Create `testdata/mixed/` directory with `.go`, `.js`, `.ts`, `.py` files containing known anti-patterns
   - Integration test: scan mixed directory, verify findings per language with no cross-contamination
   - Test language-disable: disable Python via config, rescan, verify no Python findings
