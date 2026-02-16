@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"runtime"
 	"sync"
@@ -26,11 +27,20 @@ type Engine struct {
 	excludeDirs     map[string]bool
 	excludePatterns []string
 	langs           *config.LanguageConfig
+	parallelism     int
 
 	jsOnce sync.Once
 	js     *scanner.JSScanner
 	pyOnce sync.Once
 	py     *scanner.PyScanner
+
+	cacheMu   sync.RWMutex
+	fileCache map[string]cachedFileFindings
+}
+
+type cachedFileFindings struct {
+	mtimeUnixNano int64
+	findings      []finding.Finding
 }
 
 // New creates a scan engine from a rule registry.
@@ -39,6 +49,8 @@ func New(reg *rules.Registry) *Engine {
 		reg:          reg,
 		goScanner:    scanner.NewGoScanner(reg.ASTCheckers()),
 		regexScanner: scanner.NewRegexScanner(reg.RegexCheckers()),
+		parallelism:  runtime.NumCPU(),
+		fileCache:    make(map[string]cachedFileFindings),
 	}
 }
 
@@ -55,6 +67,14 @@ func (e *Engine) SetExcludePatterns(patterns []string) {
 // SetLanguages configures which languages are enabled for scanning.
 func (e *Engine) SetLanguages(lc *config.LanguageConfig) {
 	e.langs = lc
+}
+
+// SetParallelism sets worker count used by directory scans. Values < 1 are ignored.
+func (e *Engine) SetParallelism(workers int) {
+	if workers < 1 {
+		return
+	}
+	e.parallelism = workers
 }
 
 func (e *Engine) langEnabled(lang string) bool {
@@ -96,6 +116,34 @@ func (e *Engine) getPyScanner() *scanner.PyScanner {
 	return e.py
 }
 
+func cloneFindings(findings []finding.Finding) []finding.Finding {
+	if len(findings) == 0 {
+		return nil
+	}
+	out := make([]finding.Finding, len(findings))
+	copy(out, findings)
+	return out
+}
+
+func (e *Engine) getCachedFindings(path string, mtimeUnixNano int64) ([]finding.Finding, bool) {
+	e.cacheMu.RLock()
+	defer e.cacheMu.RUnlock()
+	entry, ok := e.fileCache[path]
+	if !ok || entry.mtimeUnixNano != mtimeUnixNano {
+		return nil, false
+	}
+	return cloneFindings(entry.findings), true
+}
+
+func (e *Engine) putCachedFindings(path string, mtimeUnixNano int64, findings []finding.Finding) {
+	e.cacheMu.Lock()
+	defer e.cacheMu.Unlock()
+	e.fileCache[path] = cachedFileFindings{
+		mtimeUnixNano: mtimeUnixNano,
+		findings:      cloneFindings(findings),
+	}
+}
+
 // extLang maps file extensions to language names for config filtering.
 func extLang(ext string) string {
 	switch ext {
@@ -123,35 +171,48 @@ func (e *Engine) scanFileFindings(path string) ([]finding.Finding, error) {
 		return nil, nil
 	}
 
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	mtimeUnixNano := info.ModTime().UnixNano()
+	if cached, ok := e.getCachedFindings(path, mtimeUnixNano); ok {
+		return cached, nil
+	}
+
+	var fileFindings []finding.Finding
 	switch {
 	case ext == ".go":
 		results, lines, err := e.goScanner.Scan(path)
 		if err != nil {
 			return nil, err
 		}
-		return append(results, e.regexScanner.ScanLines(path, lines)...), nil
+		fileFindings = append(results, e.regexScanner.ScanLines(path, lines)...)
 
 	case isJSExt(ext):
 		results, lines, err := e.getJSScanner().Scan(path)
 		if err != nil {
 			return nil, err
 		}
-		return append(results, e.regexScanner.ScanLines(path, lines)...), nil
+		fileFindings = append(results, e.regexScanner.ScanLines(path, lines)...)
 
 	case isPyExt(ext):
 		results, lines, err := e.getPyScanner().Scan(path)
 		if err != nil {
 			return nil, err
 		}
-		return append(results, e.regexScanner.ScanLines(path, lines)...), nil
+		fileFindings = append(results, e.regexScanner.ScanLines(path, lines)...)
 
 	default:
 		results, err := e.regexScanner.Scan(path)
 		if err != nil {
 			return nil, err
 		}
-		return results, nil
+		fileFindings = results
 	}
+
+	e.putCachedFindings(path, mtimeUnixNano, fileFindings)
+	return fileFindings, nil
 }
 
 // Scan walks the path and scans all matching files concurrently.
@@ -161,7 +222,10 @@ func (e *Engine) Scan(root string) (*Result, error) {
 		return nil, fmt.Errorf("walk files under %s: %w", root, err)
 	}
 
-	numWorkers := runtime.NumCPU()
+	numWorkers := e.parallelism
+	if numWorkers < 1 {
+		numWorkers = runtime.NumCPU()
+	}
 	if numWorkers > len(files) {
 		numWorkers = len(files)
 	}

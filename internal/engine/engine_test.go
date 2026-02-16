@@ -3,12 +3,43 @@ package engine
 import (
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/perttulands/truthsayer/internal/config"
 	"github.com/perttulands/truthsayer/internal/finding"
 	"github.com/perttulands/truthsayer/internal/rules"
 )
+
+type countingRegexChecker struct {
+	mu    sync.Mutex
+	calls int
+}
+
+func (c *countingRegexChecker) Meta() rules.Rule {
+	return rules.Rule{
+		ID:        "test.counter",
+		Category:  "test",
+		Name:      "counter",
+		Severity:  finding.SeverityInfo,
+		FileTypes: []string{".sh"},
+		ScanType:  rules.ScanTypeRegex,
+	}
+}
+
+func (c *countingRegexChecker) CheckLines(path string, lines []string) []finding.Finding {
+	c.mu.Lock()
+	c.calls++
+	c.mu.Unlock()
+	return nil
+}
+
+func (c *countingRegexChecker) CallCount() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.calls
+}
 
 func TestEngine_ScanDirectory(t *testing.T) {
 	// Create a temp directory with test files
@@ -525,5 +556,61 @@ func TestExtLang(t *testing.T) {
 		if got := extLang(tt.ext); got != tt.want {
 			t.Errorf("extLang(%q) = %q, want %q", tt.ext, got, tt.want)
 		}
+	}
+}
+
+func TestEngine_FileCacheByMtime(t *testing.T) {
+	tmp := t.TempDir()
+	path := filepath.Join(tmp, "script.sh")
+	if err := os.WriteFile(path, []byte("#!/bin/bash\necho hi\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	reg := rules.NewRegistry()
+	counter := &countingRegexChecker{}
+	reg.RegisterRegex(counter)
+	eng := New(reg)
+
+	if _, err := eng.ScanFile(path); err != nil {
+		t.Fatal(err)
+	}
+	if counter.CallCount() != 1 {
+		t.Fatalf("expected checker to run once, got %d", counter.CallCount())
+	}
+
+	if _, err := eng.ScanFile(path); err != nil {
+		t.Fatal(err)
+	}
+	if counter.CallCount() != 1 {
+		t.Fatalf("expected cached result on second scan, got %d calls", counter.CallCount())
+	}
+
+	if err := os.WriteFile(path, []byte("#!/bin/bash\necho changed\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().Add(2 * time.Second)
+	if err := os.Chtimes(path, now, now); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := eng.ScanFile(path); err != nil {
+		t.Fatal(err)
+	}
+	if counter.CallCount() != 2 {
+		t.Fatalf("expected cache invalidation after mtime change, got %d calls", counter.CallCount())
+	}
+}
+
+func TestEngine_SetParallelism(t *testing.T) {
+	reg := rules.NewRegistry()
+	eng := New(reg)
+	eng.SetParallelism(7)
+	if eng.parallelism != 7 {
+		t.Fatalf("expected parallelism=7, got %d", eng.parallelism)
+	}
+
+	eng.SetParallelism(0)
+	if eng.parallelism != 7 {
+		t.Fatalf("parallelism should remain unchanged on invalid value, got %d", eng.parallelism)
 	}
 }

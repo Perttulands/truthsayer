@@ -3,7 +3,9 @@ package cli
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/perttulands/truthsayer/internal/finding"
@@ -14,6 +16,7 @@ type scanOptions struct {
 	format        string
 	path          string
 	lang          string
+	parallel      int
 	createBeads   bool
 	beadThreshold int
 }
@@ -56,6 +59,9 @@ func runScan(args []string) int {
 			return 2
 		}
 		eng.SetLanguages(lc)
+	}
+	if opts.parallel > 0 {
+		eng.SetParallelism(opts.parallel)
 	}
 
 	start := time.Now()
@@ -117,6 +123,20 @@ func parseScanOptions(args []string) (scanOptions, error) {
 			i++
 		case "--create-beads":
 			opts.createBeads = true
+		case "--parallel":
+			opts.parallel = runtime.NumCPU()
+			if i+1 < len(args) {
+				next := args[i+1]
+				if n, err := strconv.Atoi(next); err == nil {
+					if n < 1 {
+						return scanOptions{}, fmt.Errorf("--parallel must be >= 1")
+					}
+					opts.parallel = n
+					i++
+				} else if strings.HasPrefix(next, "-") {
+					// bare --parallel flag with another option following
+				}
+			}
 		case "--bead-threshold":
 			if i+1 >= len(args) {
 				return scanOptions{}, fmt.Errorf("--bead-threshold requires a value")

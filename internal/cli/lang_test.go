@@ -3,6 +3,7 @@ package cli
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -304,6 +305,39 @@ func TestParseScanOptions_LangFlagMissing(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "--lang requires a value") {
 		t.Errorf("expected '--lang requires a value' error, got: %v", err)
+	}
+}
+
+func TestParseScanOptions_ParallelFlag_DefaultWorkers(t *testing.T) {
+	opts, err := parseScanOptions([]string{"--parallel", "/tmp"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if opts.parallel != runtime.NumCPU() {
+		t.Fatalf("expected parallel workers=%d, got %d", runtime.NumCPU(), opts.parallel)
+	}
+	if opts.path != "/tmp" {
+		t.Fatalf("expected path=/tmp, got %q", opts.path)
+	}
+}
+
+func TestParseScanOptions_ParallelFlag_WithValue(t *testing.T) {
+	opts, err := parseScanOptions([]string{"--parallel", "3", "/tmp"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if opts.parallel != 3 {
+		t.Fatalf("expected parallel workers=3, got %d", opts.parallel)
+	}
+}
+
+func TestParseScanOptions_ParallelFlag_Invalid(t *testing.T) {
+	_, err := parseScanOptions([]string{"--parallel", "0", "/tmp"})
+	if err == nil {
+		t.Fatal("expected error for invalid parallel value")
+	}
+	if !strings.Contains(err.Error(), "--parallel must be >= 1") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 
