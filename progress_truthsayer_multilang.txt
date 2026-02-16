@@ -388,3 +388,27 @@
 - Learnings: Mixed directory fixtures should contain well-known anti-patterns that are guaranteed to trigger their rules — bare except + mutable default for Python, empty catch + eval for JS, as any for TS. The `SetLanguages` mechanism cleanly simulates `--lang` flag behavior at the engine level.
 **Summary:** Task: US-403 | Files: cross_language_integration_test.go, testdata/mixed/{main.go,app.js,handler.ts,process.py} | Tests: PASS | Review: PASSED | Next: US-404
 ---
+
+## Iteration 31 - US-404: Performance benchmarks
+- Created `internal/engine/benchmark_test.go` with:
+  - `generateJSCorpus()` / `generatePyCorpus()`: generate ~10k LOC each across 50 files (25 module + 25 service templates)
+  - `BenchmarkJSScan10k`: Go benchmark, ~169ms/op (well under 5s target)
+  - `BenchmarkPythonScan10k`: Go benchmark, ~152ms/op (well under 5s target)
+  - `TestBenchmarkPerformanceTarget`: explicit <5s assertion test for both JS and Python corpora
+- Corpus templates use `fmt.Sprintf` with seed-based naming for file variety (classes, services, caches, pipelines, validators)
+- JS corpus: mix of `.js` and `.ts` files (every 5th file is `.ts`)
+- Python corpus: all `.py` files with realistic patterns (dataclasses, repositories, event buses, pipelines)
+- `go test -race ./internal/scanner/...` clean
+- Full test suite passes with zero regressions
+- Learnings: Go benchmarks with `b.TempDir()` auto-clean corpus on each run. `b.ResetTimer()` after warmup ensures parser initialization doesn't skew results. ~150-190ms for 10k LOC confirms tree-sitter + concurrent scanning is well within performance budget.
+**Summary:** Task: US-404 | Files: internal/engine/benchmark_test.go | Tests: PASS | Review: PASSED | Next: US-405
+---
+
+## Iteration 32 - US-405: Documentation and CI updates
+- Updated `README.md`: multi-language support (Go, JS/TS, Python, bash), cgo build requirement, `--lang` flag, language aliases table, supported languages table (88 rules), new config options (`[scan.languages]`, new exclude patterns), updated categories table with JS/TS and Python examples
+- Updated `.github/workflows/truthsayer.yml`: split into `test` and `scan` jobs, added `build-essential` install step for C compiler, explicit `CGO_ENABLED=1`, added `go test ./... -count=1` step, added `go test -race ./internal/scanner/...` step
+- Verified cross-platform build on Linux amd64: `go build` with CGO_ENABLED=1 succeeds, `truthsayer doctor` shows all parsers available and 88 rules
+- Full test suite passes with zero regressions
+- Learnings: `ubuntu-latest` on GitHub Actions includes gcc by default, but explicit `build-essential` install ensures cgo works reliably across runner versions. `CGO_ENABLED=1` should be explicit in CI to avoid surprises if Go defaults change. Splitting CI into test/scan jobs gives faster feedback on test failures.
+**Summary:** Task: US-405 | Files: README.md, .github/workflows/truthsayer.yml | Tests: PASS | Review: PASSED | Next: US-REVIEW-S4
+---
