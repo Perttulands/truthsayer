@@ -20,7 +20,7 @@
   - **Files**: `go.mod`, `go.sum`, `internal/scanner/treesitter_test.go`
   - **Acceptance**: `go test ./internal/scanner/ -run TestTreeSitter -count=1` passes; parsers initialize for JS, TS, TSX, Python
 
-- [ ] **US-101** Implement shared tree-sitter utilities
+- [x] **US-101** Implement shared tree-sitter utilities
   - Create `internal/scanner/treesitter.go` with helper functions:
     - `FindNodesByType(root, types...) []*Node`
     - `NodeText(node, source) string`
