@@ -1,11 +1,16 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	sitter "github.com/smacker/go-tree-sitter"
+	"github.com/smacker/go-tree-sitter/javascript"
+	"github.com/smacker/go-tree-sitter/python"
 
 	"github.com/perttulands/truthsayer/internal/config"
 	"github.com/perttulands/truthsayer/internal/rules"
@@ -61,7 +66,7 @@ func runDoctor(args []string) int {
 		fmt.Println("  Config ... ok")
 	}
 
-	// Check 4: Active rule count
+	// Check 4: Active rule count with per-language breakdown
 	reg := rules.DefaultRegistry()
 	if cfg != nil {
 		for _, id := range cfg.Rules.Disable {
@@ -70,32 +75,52 @@ func runDoctor(args []string) int {
 	}
 	enabled := reg.EnabledRules()
 	disabled := len(reg.AllRules()) - len(enabled)
+	goRules, jstsRules, pyRules, bashRules := countRulesByLang(enabled)
 	if disabled > 0 {
-		fmt.Printf("  Rules ... %d enabled, %d disabled\n", len(enabled), disabled)
+		fmt.Printf("  Rules ... %d enabled, %d disabled (%d Go, %d JS/TS, %d Python, %d bash)\n",
+			len(enabled), disabled, goRules, jstsRules, pyRules, bashRules)
 	} else {
-		fmt.Printf("  Rules ... %d enabled\n", len(enabled))
+		fmt.Printf("  Rules ... %d enabled (%d Go, %d JS/TS, %d Python, %d bash)\n",
+			len(enabled), goRules, jstsRules, pyRules, bashRules)
 	}
 
-	// Check 5: Go files in directory
-	goFiles := 0
-	shFiles := 0
+	// Check 5: Parser status
+	if ok := checkParser(javascript.GetLanguage(), "var x = 1;"); ok {
+		fmt.Println("  JS/TS AST parser ... available (tree-sitter)")
+	} else {
+		fmt.Println("  JS/TS AST parser ... unavailable")
+		issues++
+	}
+	if ok := checkParser(python.GetLanguage(), "x = 1"); ok {
+		fmt.Println("  Python AST parser ... available (tree-sitter)")
+	} else {
+		fmt.Println("  Python AST parser ... unavailable")
+		issues++
+	}
+
+	// Check 6: Files in directory
+	goFiles, jstsFiles, pyFiles, shFiles := 0, 0, 0, 0
 	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return nil
 		}
 		base := filepath.Base(path)
-		if info.IsDir() && (base == ".git" || base == "vendor" || base == "node_modules") {
+		if info.IsDir() && (base == ".git" || base == "vendor" || base == "node_modules" || base == "__pycache__" || base == ".venv") {
 			return filepath.SkipDir
 		}
 		switch filepath.Ext(path) {
 		case ".go":
 			goFiles++
+		case ".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs":
+			jstsFiles++
+		case ".py", ".pyi":
+			pyFiles++
 		case ".sh", ".bash":
 			shFiles++
 		}
 		return nil
 	})
-	fmt.Printf("  Files ... %d Go, %d bash files found\n", goFiles, shFiles)
+	fmt.Printf("  Files ... %d Go, %d JS/TS, %d Python, %d bash files found\n", goFiles, jstsFiles, pyFiles, shFiles)
 
 	fmt.Println()
 	if issues > 0 {
@@ -103,9 +128,9 @@ func runDoctor(args []string) int {
 		return 1
 	}
 
-	if goFiles == 0 && shFiles == 0 {
+	if goFiles == 0 && jstsFiles == 0 && pyFiles == 0 && shFiles == 0 {
 		fmt.Println("  No scannable files found in current directory.")
-		fmt.Println("  Run 'truthsayer scan <path>' on a directory with Go or bash files.")
+		fmt.Println("  Run 'truthsayer scan <path>' on a directory with Go, JS/TS, Python, or bash files.")
 		return 0
 	}
 
@@ -117,4 +142,50 @@ func runDoctor(args []string) int {
 	fmt.Println("    truthsayer watch .          # Watch for changes")
 	fmt.Println("    truthsayer hook install .   # Install git pre-commit hook")
 	return 0
+}
+
+// countRulesByLang counts enabled rules per language group.
+func countRulesByLang(enabled []rules.Rule) (goCount, jstsCount, pyCount, bashCount int) {
+	for _, r := range enabled {
+		lang := classifyRule(r)
+		switch lang {
+		case "go":
+			goCount++
+		case "jsts":
+			jstsCount++
+		case "python":
+			pyCount++
+		case "bash":
+			bashCount++
+		}
+	}
+	return
+}
+
+// classifyRule determines a rule's primary language from its FileTypes.
+func classifyRule(r rules.Rule) string {
+	for _, ft := range r.FileTypes {
+		switch ft {
+		case ".go":
+			return "go"
+		case ".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs":
+			return "jsts"
+		case ".py", ".pyi":
+			return "python"
+		case ".sh", ".bash":
+			return "bash"
+		}
+	}
+	return ""
+}
+
+// checkParser verifies a tree-sitter parser can initialize and parse a snippet.
+func checkParser(lang *sitter.Language, snippet string) bool {
+	parser := sitter.NewParser()
+	parser.SetLanguage(lang)
+	tree, err := parser.ParseCtx(context.Background(), nil, []byte(snippet))
+	if err != nil {
+		return false
+	}
+	return tree.RootNode() != nil
 }

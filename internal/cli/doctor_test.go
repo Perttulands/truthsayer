@@ -160,3 +160,106 @@ func TestDoctor_ShowsChecks(t *testing.T) {
 		t.Error("output missing Files check")
 	}
 }
+
+func TestDoctor_ShowsPerLanguageRuleCounts(t *testing.T) {
+	origDir, _ := os.Getwd()
+	dir := t.TempDir()
+	os.Chdir(dir)
+	defer os.Chdir(origDir)
+
+	out := captureStdout(t, func() {
+		code := runDoctor(nil)
+		if code != 0 {
+			t.Errorf("expected exit code 0, got %d", code)
+		}
+	})
+
+	// Should show per-language breakdown
+	if !strings.Contains(out, "Go") {
+		t.Errorf("expected per-language rule count for Go, got: %s", out)
+	}
+	if !strings.Contains(out, "JS/TS") {
+		t.Errorf("expected per-language rule count for JS/TS, got: %s", out)
+	}
+	if !strings.Contains(out, "Python") {
+		t.Errorf("expected per-language rule count for Python, got: %s", out)
+	}
+}
+
+func TestDoctor_ShowsParserStatus(t *testing.T) {
+	origDir, _ := os.Getwd()
+	dir := t.TempDir()
+	os.Chdir(dir)
+	defer os.Chdir(origDir)
+
+	out := captureStdout(t, func() {
+		code := runDoctor(nil)
+		if code != 0 {
+			t.Errorf("expected exit code 0, got %d", code)
+		}
+	})
+
+	if !strings.Contains(out, "JS/TS AST parser") {
+		t.Errorf("expected JS/TS parser status, got: %s", out)
+	}
+	if !strings.Contains(out, "Python AST parser") {
+		t.Errorf("expected Python parser status, got: %s", out)
+	}
+	if !strings.Contains(out, "tree-sitter") {
+		t.Errorf("expected tree-sitter mentioned in parser status, got: %s", out)
+	}
+}
+
+func TestDoctor_CountsMultiLanguageFiles(t *testing.T) {
+	origDir, _ := os.Getwd()
+	dir := t.TempDir()
+	os.Chdir(dir)
+	defer os.Chdir(origDir)
+
+	// Create files for each language
+	os.WriteFile(filepath.Join(dir, "main.go"), []byte("package main"), 0644)
+	os.WriteFile(filepath.Join(dir, "app.js"), []byte("console.log()"), 0644)
+	os.WriteFile(filepath.Join(dir, "app.ts"), []byte("const x = 1"), 0644)
+	os.WriteFile(filepath.Join(dir, "script.py"), []byte("print()"), 0644)
+	os.WriteFile(filepath.Join(dir, "run.sh"), []byte("#!/bin/bash"), 0644)
+
+	out := captureStdout(t, func() {
+		code := runDoctor(nil)
+		if code != 0 {
+			t.Errorf("expected exit code 0, got %d", code)
+		}
+	})
+
+	// Should count JS/TS and Python files in addition to Go and bash
+	if !strings.Contains(out, "1 Go") {
+		t.Errorf("expected '1 Go' in file count, got: %s", out)
+	}
+	if !strings.Contains(out, "2 JS/TS") {
+		t.Errorf("expected '2 JS/TS' in file count, got: %s", out)
+	}
+	if !strings.Contains(out, "1 Python") {
+		t.Errorf("expected '1 Python' in file count, got: %s", out)
+	}
+	if !strings.Contains(out, "1 bash") {
+		t.Errorf("expected '1 bash' in file count, got: %s", out)
+	}
+}
+
+func TestDoctor_ParserStatusAvailable(t *testing.T) {
+	origDir, _ := os.Getwd()
+	dir := t.TempDir()
+	os.Chdir(dir)
+	defer os.Chdir(origDir)
+
+	out := captureStdout(t, func() {
+		code := runDoctor(nil)
+		if code != 0 {
+			t.Errorf("expected exit code 0, got %d", code)
+		}
+	})
+
+	// Both parsers should report "available" since tree-sitter is compiled in
+	if !strings.Contains(out, "available (tree-sitter)") {
+		t.Errorf("expected 'available (tree-sitter)' in parser status, got: %s", out)
+	}
+}

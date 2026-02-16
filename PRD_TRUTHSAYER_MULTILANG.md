@@ -279,7 +279,7 @@
   - **Files**: `cmd/scan.go` (or equivalent CLI file), `cmd/rules.go`, CLI test files
   - **Acceptance**: `--lang` flag works for both scan and rules commands with all aliases
 
-- [ ] **US-402** Doctor command extension for multi-language
+- [x] **US-402** Doctor command extension for multi-language
   - Extend `truthsayer doctor` to show:
     - Rule count per language: "47 rules active (21 Go, 16 JS/TS, 10 Python)"
     - Parser status: "JS/TS AST parser: available (tree-sitter)"
