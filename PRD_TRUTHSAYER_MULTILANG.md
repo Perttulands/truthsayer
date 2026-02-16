@@ -72,7 +72,7 @@
   - **Files**: `internal/engine/engine.go`, `internal/walker/walker.go` (or equivalent), `internal/engine/engine_test.go`
   - **Acceptance**: Engine correctly routes JS/TS files to JSScanner, Python files to PyScanner, Go files unchanged
 
-- [ ] **US-106** Tree-sitter parser correctness and edge case tests
+- [x] **US-106** Tree-sitter parser correctness and edge case tests
   - Test that tree-sitter correctly parses modern syntax:
     - JS: optional chaining, nullish coalescing, top-level await, class fields, decorators
     - TS: generics, type assertions, enums, decorators, satisfies operator
