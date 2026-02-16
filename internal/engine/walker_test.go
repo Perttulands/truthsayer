@@ -169,13 +169,35 @@ func TestWalk_FindsSupportedExtensions(t *testing.T) {
 	os.WriteFile(filepath.Join(tmp, "deploy.sh"), []byte("#!/bin/bash"), 0o644)
 	os.WriteFile(filepath.Join(tmp, "readme.md"), []byte("# readme"), 0o644) // unsupported
 	os.WriteFile(filepath.Join(tmp, "config.toml"), []byte("[x]"), 0o644)
+	os.WriteFile(filepath.Join(tmp, "script.py"), []byte("print('hi')"), 0o644)
+	os.WriteFile(filepath.Join(tmp, "stubs.pyi"), []byte("def f() -> int: ..."), 0o644)
 
 	files, err := Walk(tmp, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if len(files) != 5 {
-		t.Fatalf("expected 5 supported files, got %d: %v", len(files), files)
+	if len(files) != 7 {
+		t.Fatalf("expected 7 supported files, got %d: %v", len(files), files)
+	}
+}
+
+func TestWalk_SkipsPycacheAndVenv(t *testing.T) {
+	tmp := t.TempDir()
+	os.MkdirAll(filepath.Join(tmp, "src"), 0o755)
+	os.WriteFile(filepath.Join(tmp, "src", "app.py"), []byte("print('hi')"), 0o644)
+
+	for _, dir := range []string{"__pycache__", ".venv", "dist", "build"} {
+		os.MkdirAll(filepath.Join(tmp, dir), 0o755)
+		os.WriteFile(filepath.Join(tmp, dir, "cached.py"), []byte("x=1"), 0o644)
+	}
+
+	files, err := Walk(tmp, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(files) != 1 {
+		t.Fatalf("expected 1 file (src/app.py), got %d: %v", len(files), files)
 	}
 }

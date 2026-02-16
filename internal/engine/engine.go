@@ -24,6 +24,11 @@ type Engine struct {
 	regexScanner    *scanner.RegexScanner
 	excludeDirs     map[string]bool
 	excludePatterns []string
+
+	jsOnce sync.Once
+	js     *scanner.JSScanner
+	pyOnce sync.Once
+	py     *scanner.PyScanner
 }
 
 // New creates a scan engine from a rule registry.
@@ -43,6 +48,73 @@ func (e *Engine) SetExcludeDirs(dirs map[string]bool) {
 // SetExcludePatterns sets glob patterns for files to exclude from scanning.
 func (e *Engine) SetExcludePatterns(patterns []string) {
 	e.excludePatterns = patterns
+}
+
+// jsExt maps JS/TS file extensions for routing.
+var jsExts = map[string]bool{
+	".js":  true,
+	".jsx": true,
+	".ts":  true,
+	".tsx": true,
+	".mjs": true,
+	".cjs": true,
+}
+
+func isJSExt(ext string) bool {
+	return jsExts[ext]
+}
+
+func isPyExt(ext string) bool {
+	return ext == ".py" || ext == ".pyi"
+}
+
+func (e *Engine) getJSScanner() *scanner.JSScanner {
+	e.jsOnce.Do(func() {
+		e.js = scanner.NewJSScanner(e.reg.JSASTCheckers())
+	})
+	return e.js
+}
+
+func (e *Engine) getPyScanner() *scanner.PyScanner {
+	e.pyOnce.Do(func() {
+		e.py = scanner.NewPyScanner(e.reg.PyASTCheckers())
+	})
+	return e.py
+}
+
+// scanFileFindings scans a single file and returns findings.
+func (e *Engine) scanFileFindings(path string) ([]finding.Finding, error) {
+	ext := filepath.Ext(path)
+
+	switch {
+	case ext == ".go":
+		results, lines, err := e.goScanner.Scan(path)
+		if err != nil {
+			return nil, err
+		}
+		return append(results, e.regexScanner.ScanLines(path, lines)...), nil
+
+	case isJSExt(ext):
+		results, lines, err := e.getJSScanner().Scan(path)
+		if err != nil {
+			return nil, err
+		}
+		return append(results, e.regexScanner.ScanLines(path, lines)...), nil
+
+	case isPyExt(ext):
+		results, lines, err := e.getPyScanner().Scan(path)
+		if err != nil {
+			return nil, err
+		}
+		return append(results, e.regexScanner.ScanLines(path, lines)...), nil
+
+	default:
+		results, err := e.regexScanner.Scan(path)
+		if err != nil {
+			return nil, err
+		}
+		return results, nil
+	}
 }
 
 // Scan walks the path and scans all matching files concurrently.
@@ -75,23 +147,10 @@ func (e *Engine) Scan(root string) (*Result, error) {
 		go func() {
 			defer wg.Done()
 			for path := range jobs {
-				var fileFindings []finding.Finding
-				ext := filepath.Ext(path)
-
-				if ext == ".go" {
-					results, lines, err := e.goScanner.Scan(path)
-					if err == nil {
-						fileFindings = append(fileFindings, results...)
-						// Reuse lines already read for AST parsing
-						fileFindings = append(fileFindings, e.regexScanner.ScanLines(path, lines)...)
-					}
-				} else {
-					results, err := e.regexScanner.Scan(path)
-					if err == nil {
-						fileFindings = append(fileFindings, results...)
-					}
+				fileFindings, err := e.scanFileFindings(path)
+				if err != nil {
+					continue
 				}
-
 				if len(fileFindings) > 0 {
 					mu.Lock()
 					allFindings = append(allFindings, fileFindings...)
@@ -115,23 +174,9 @@ func (e *Engine) Scan(root string) (*Result, error) {
 
 // ScanFile scans a single file and returns findings.
 func (e *Engine) ScanFile(path string) (*Result, error) {
-	var allFindings []finding.Finding
-	ext := filepath.Ext(path)
-
-	if ext == ".go" {
-		results, lines, err := e.goScanner.Scan(path)
-		if err != nil {
-			return nil, fmt.Errorf("scan go file %s: %w", path, err)
-		}
-		allFindings = append(allFindings, results...)
-		// Reuse lines already read for AST parsing
-		allFindings = append(allFindings, e.regexScanner.ScanLines(path, lines)...)
-	} else {
-		results, err := e.regexScanner.Scan(path)
-		if err != nil {
-			return nil, fmt.Errorf("scan text rules in %s: %w", path, err)
-		}
-		allFindings = append(allFindings, results...)
+	allFindings, err := e.scanFileFindings(path)
+	if err != nil {
+		return nil, fmt.Errorf("scan %s: %w", path, err)
 	}
 
 	allFindings = finding.Dedup(allFindings)

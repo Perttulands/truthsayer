@@ -174,6 +174,189 @@ func handler() error {
 	}
 }
 
+func TestEngine_ScanFile_JS(t *testing.T) {
+	tmp := t.TempDir()
+	jsCode := `
+function doWork() {
+    try {
+        riskyOp();
+    } catch (e) {
+        console.error(e);
+        throw e;
+    }
+}
+`
+	path := filepath.Join(tmp, "app.js")
+	os.WriteFile(path, []byte(jsCode), 0o644)
+
+	reg := rules.DefaultRegistry()
+	eng := New(reg)
+
+	result, err := eng.ScanFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.FilesScanned != 1 {
+		t.Errorf("expected 1 file scanned, got %d", result.FilesScanned)
+	}
+	// Engine should not error — it routes to JSScanner
+}
+
+func TestEngine_ScanFile_TS(t *testing.T) {
+	tmp := t.TempDir()
+	tsCode := `
+interface User {
+    name: string;
+    age: number;
+}
+
+function greet(user: User): string {
+    return "Hello, " + user.name;
+}
+`
+	path := filepath.Join(tmp, "app.ts")
+	os.WriteFile(path, []byte(tsCode), 0o644)
+
+	reg := rules.DefaultRegistry()
+	eng := New(reg)
+
+	result, err := eng.ScanFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.FilesScanned != 1 {
+		t.Errorf("expected 1 file scanned, got %d", result.FilesScanned)
+	}
+}
+
+func TestEngine_ScanFile_Python(t *testing.T) {
+	tmp := t.TempDir()
+	pyCode := `
+def greet(name):
+    return f"Hello, {name}"
+
+if __name__ == "__main__":
+    print(greet("world"))
+`
+	path := filepath.Join(tmp, "app.py")
+	os.WriteFile(path, []byte(pyCode), 0o644)
+
+	reg := rules.DefaultRegistry()
+	eng := New(reg)
+
+	result, err := eng.ScanFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.FilesScanned != 1 {
+		t.Errorf("expected 1 file scanned, got %d", result.FilesScanned)
+	}
+}
+
+func TestEngine_RoutesFilesByExtension(t *testing.T) {
+	tmp := t.TempDir()
+	os.WriteFile(filepath.Join(tmp, "main.go"), []byte("package main\n"), 0o644)
+	os.WriteFile(filepath.Join(tmp, "app.js"), []byte("console.log('hi');\n"), 0o644)
+	os.WriteFile(filepath.Join(tmp, "types.ts"), []byte("const x: number = 1;\n"), 0o644)
+	os.WriteFile(filepath.Join(tmp, "script.py"), []byte("print('hi')\n"), 0o644)
+	os.WriteFile(filepath.Join(tmp, "deploy.sh"), []byte("#!/bin/bash\necho hi\n"), 0o644)
+
+	reg := rules.DefaultRegistry()
+	eng := New(reg)
+
+	result, err := eng.Scan(tmp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.FilesScanned != 5 {
+		t.Errorf("expected 5 files scanned, got %d", result.FilesScanned)
+	}
+}
+
+func TestEngine_ScanSkipsNewExcludedDirs(t *testing.T) {
+	tmp := t.TempDir()
+	os.MkdirAll(filepath.Join(tmp, "src"), 0o755)
+	os.WriteFile(filepath.Join(tmp, "src", "main.py"), []byte("print('hi')\n"), 0o644)
+
+	for _, dir := range []string{"__pycache__", ".venv", "dist", "build"} {
+		os.MkdirAll(filepath.Join(tmp, dir), 0o755)
+		os.WriteFile(filepath.Join(tmp, dir, "cached.py"), []byte("print('cached')\n"), 0o644)
+	}
+
+	reg := rules.DefaultRegistry()
+	eng := New(reg)
+
+	result, err := eng.Scan(tmp)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if result.FilesScanned != 1 {
+		t.Errorf("expected 1 file scanned (src/main.py only), got %d", result.FilesScanned)
+	}
+}
+
+func TestEngine_LazyInit_NoJSFiles(t *testing.T) {
+	// When scanning only Go files, JS/Python scanners should not be initialized
+	tmp := t.TempDir()
+	os.WriteFile(filepath.Join(tmp, "main.go"), []byte("package main\n"), 0o644)
+
+	reg := rules.DefaultRegistry()
+	eng := New(reg)
+
+	_, err := eng.Scan(tmp)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// js and py fields should still be nil (lazy init not triggered)
+	if eng.js != nil {
+		t.Error("JSScanner should not be initialized when no JS files are scanned")
+	}
+	if eng.py != nil {
+		t.Error("PyScanner should not be initialized when no Python files are scanned")
+	}
+}
+
+func TestIsJSExt(t *testing.T) {
+	tests := []struct {
+		ext  string
+		want bool
+	}{
+		{".js", true},
+		{".jsx", true},
+		{".ts", true},
+		{".tsx", true},
+		{".mjs", true},
+		{".cjs", true},
+		{".go", false},
+		{".py", false},
+		{".sh", false},
+	}
+	for _, tt := range tests {
+		if got := isJSExt(tt.ext); got != tt.want {
+			t.Errorf("isJSExt(%q) = %v, want %v", tt.ext, got, tt.want)
+		}
+	}
+}
+
+func TestIsPyExt(t *testing.T) {
+	tests := []struct {
+		ext  string
+		want bool
+	}{
+		{".py", true},
+		{".pyi", true},
+		{".go", false},
+		{".js", false},
+	}
+	for _, tt := range tests {
+		if got := isPyExt(tt.ext); got != tt.want {
+			t.Errorf("isPyExt(%q) = %v, want %v", tt.ext, got, tt.want)
+		}
+	}
+}
+
 func TestEngine_ScanEmptyDirectory(t *testing.T) {
 	tmp := t.TempDir()
 	reg := rules.DefaultRegistry()

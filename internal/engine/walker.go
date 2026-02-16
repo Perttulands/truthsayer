@@ -12,6 +12,10 @@ var defaultExcludeDirs = map[string]bool{
 	"vendor":       true,
 	"node_modules": true,
 	"testdata":     true,
+	"__pycache__":  true,
+	".venv":        true,
+	"dist":         true,
+	"build":        true,
 }
 
 // DefaultExcludeDirs returns a copy of the default excluded directories map.
@@ -31,6 +35,8 @@ var supportedExts = map[string]bool{
 	".tsx":  true,
 	".mjs":  true,
 	".cjs":  true,
+	".py":   true,
+	".pyi":  true,
 	".sh":   true,
 	".bash": true,
 	".toml": true,

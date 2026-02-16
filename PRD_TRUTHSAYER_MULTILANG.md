@@ -60,7 +60,7 @@
   - **Files**: `internal/scanner/py_scanner.go`, `internal/scanner/py_scanner_test.go`
   - **Acceptance**: PyScanner parses `.py` files, dispatches to checkers, concurrent test with `-race` passes
 
-- [ ] **US-105** Extend engine routing and walker for JS/TS/Python
+- [x] **US-105** Extend engine routing and walker for JS/TS/Python
   - Modify `internal/engine/engine.go`:
     - Add `jsScanner` and `pyScanner` fields with lazy initialization (`sync.Once`)
     - Route `.js/.jsx/.ts/.tsx/.mjs/.cjs` → JSScanner + RegexScanner
