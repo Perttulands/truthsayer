@@ -91,7 +91,7 @@
 ---
 
 ## Sprint 2: JS/TS Rules
-**Status:** IN PROGRESS
+**Status:** COMPLETE
 
 - [x] **US-200** JS silent-fallback rules: empty-catch, catch-return-null, floating-promise
   - Implement `internal/rules/js_empty_catch.go` — detect `catch (e) {}` with empty body
@@ -174,7 +174,7 @@
   - **Files**: `internal/engine/js_integration_test.go`, verify all `testdata/js/` fixtures are complete
   - **Acceptance**: Integration test passes; all JS/TS rule IDs present in scan results for positive fixtures
 
-- [ ] **US-REVIEW-S2** Review Sprint 2
+- [x] **US-REVIEW-S2** Review Sprint 2
   - All 21+ JS/TS rules implemented and tested
   - `go test ./... -count=1` green
   - No regressions in Go/bash rules
