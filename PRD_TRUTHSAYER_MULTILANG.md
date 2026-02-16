@@ -258,7 +258,7 @@
 ---
 
 ## Sprint 4: Config, CLI, Integration & Polish
-**Status:** IN PROGRESS
+**Status:** COMPLETE
 
 - [x] **US-400** Config extensions: per-language enable/disable
   - Add `LanguageConfig` struct with `*bool` fields for Go, JavaScript, TypeScript, Python, Bash
@@ -321,7 +321,7 @@
   - **Files**: `internal/cli/lang.go`, `internal/cli/lang_test.go`
   - **Acceptance**: No duplicate parsing logic; all existing lang_test.go tests pass
 
-- [ ] **US-REVIEW-S4** Review Sprint 4
+- [x] **US-REVIEW-S4** Review Sprint 4
   - All config/CLI changes working
   - Full test suite green: `go test ./... -count=1`
   - `go test -race ./...` clean

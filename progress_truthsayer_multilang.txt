@@ -438,3 +438,12 @@
 - Learnings: Extracting a shared resolver that returns canonical names is the cleanest decomposition — each caller only needs to transform names into their own output type.
 **Summary:** Task: US-405a | Files: internal/cli/lang.go | Tests: PASS | Review: PASSED | Next: US-REVIEW-S4
 ---
+
+## Iteration 35 - US-REVIEW-S4: Review Sprint 4 (final)
+- Fix task US-405a completed: shared `resolveLanguages` eliminates parsing duplication in lang.go
+- Re-verified: `go test ./... -count=1` — all 11 packages green
+- Re-verified: `go test -race ./internal/scanner/...` — clean
+- Sprint 4 complete: config extensions, --lang CLI flag, doctor multi-language, cross-language integration tests, benchmarks (<5s for 10k LOC), documentation and CI updates
+- No remaining issues
+**Summary:** Task: US-REVIEW-S4 | Files: [all Sprint 4 files re-verified] | Tests: PASS | Review: PASSED | Next: COMPLETE
+---
