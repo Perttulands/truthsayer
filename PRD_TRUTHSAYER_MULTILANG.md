@@ -52,7 +52,7 @@
   - **Files**: `internal/scanner/js_scanner.go`, `internal/scanner/js_scanner_test.go`
   - **Acceptance**: JSScanner parses JS/TS files, dispatches to checkers, concurrent test with `-race` passes
 
-- [ ] **US-104** Implement PyScanner with parser pooling
+- [x] **US-104** Implement PyScanner with parser pooling
   - Create `internal/scanner/py_scanner.go`:
     - `PyScanner` struct with parser pool and checker list
     - `Scan(path) ([]Finding, []string, error)` — same pattern as JSScanner
