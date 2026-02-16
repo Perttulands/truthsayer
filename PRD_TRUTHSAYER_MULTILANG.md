@@ -229,7 +229,7 @@
   - **Files**: 3 rule files + 3 test files + 6 fixture files
   - **Acceptance**: Rules detect anti-patterns; test files with mock imports are ignored
 
-- [ ] **US-305** Python regex rules (all categories)
+- [x] **US-305** Python regex rules (all categories)
   - Implement regex rules:
     - `trace-gaps.print-debug` — `print()` in non-test/non-script files
     - `trace-gaps.no-logging-config` — no `logging.basicConfig()` or `logging.getLogger()` in entry points

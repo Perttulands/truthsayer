@@ -328,5 +328,14 @@ func DefaultRegistry() *Registry {
 	// Python trace-gaps rules
 	reg.RegisterPyAST(&PySilentRequest{})
 
+	// Python regex rules
+	reg.RegisterRegex(&PyPrintDebug{})
+	reg.RegisterRegex(&PyNoLoggingConfig{})
+	reg.RegisterRegex(&PyPytestFixtureInSrc{})
+	reg.RegisterRegex(&PyTypeIgnoreBare{})
+	reg.RegisterRegex(&PyNoqaBare{})
+	reg.RegisterRegex(&PyHardcodedCredentials{})
+	reg.RegisterRegex(&PyRequirementsUnpinned{})
+
 	return reg
 }
