@@ -44,6 +44,9 @@ func runHook(args []string) int {
 	filesScanned := 0
 
 	for _, f := range staged {
+		if isTestdata(f) {
+			continue
+		}
 		path := filepath.Join(repoDir, f)
 		result, err := eng.ScanFile(path)
 		if err != nil {
@@ -80,6 +83,16 @@ func stagedFiles(repoDir string) ([]string, error) {
 		}
 	}
 	return files, nil
+}
+
+// isTestdata returns true if the file path is inside a testdata directory.
+func isTestdata(path string) bool {
+	for _, seg := range strings.Split(filepath.ToSlash(path), "/") {
+		if seg == "testdata" {
+			return true
+		}
+	}
+	return false
 }
 
 const preCommitHook = `#!/bin/bash

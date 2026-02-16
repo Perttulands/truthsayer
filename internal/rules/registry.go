@@ -299,5 +299,10 @@ func DefaultRegistry() *Registry {
 	reg.RegisterRegex(&JSHardcodedAPIURL{})
 	reg.RegisterRegex(&JSDotenvNoExample{})
 
+	// Python AST rules
+	reg.RegisterPyAST(&PyBareExcept{})
+	reg.RegisterPyAST(&PyExceptPass{})
+	reg.RegisterPyAST(&PyExceptBroad{})
+
 	return reg
 }

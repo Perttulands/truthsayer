@@ -183,9 +183,9 @@
 ---
 
 ## Sprint 3: Python Rules
-**Status:** NOT STARTED
+**Status:** IN PROGRESS
 
-- [ ] **US-300** Python silent-fallback rules: bare-except, except-pass, except-broad
+- [x] **US-300** Python silent-fallback rules: bare-except, except-pass, except-broad
   - Implement `internal/rules/py_bare_except.go` — `except:` without exception type
   - Implement `internal/rules/py_except_pass.go` — `except SomeError: pass`
   - Implement `internal/rules/py_except_broad.go` — `except Exception:` (overly broad)
