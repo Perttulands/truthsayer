@@ -183,7 +183,7 @@
 ---
 
 ## Sprint 3: Python Rules
-**Status:** IN PROGRESS
+**Status:** COMPLETE
 
 - [x] **US-300** Python silent-fallback rules: bare-except, except-pass, except-broad
   - Implement `internal/rules/py_bare_except.go` — `except:` without exception type
@@ -250,7 +250,7 @@
   - **Files**: `internal/engine/py_integration_test.go`, verify all `testdata/python/` fixtures complete
   - **Acceptance**: Integration test passes; all Python rule IDs present in results for positive fixtures
 
-- [ ] **US-REVIEW-S3** Review Sprint 3
+- [x] **US-REVIEW-S3** Review Sprint 3
   - All 15+ Python rules implemented and tested
   - `go test ./... -count=1` green
   - No regressions in Go/bash/JS rules

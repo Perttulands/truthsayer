@@ -285,3 +285,51 @@
 - Learnings: Python tree-sitter `expression_statement > assignment > call` nesting means sibling search must operate at the `expression_statement` level (not the assignment level). `import_statement` children can be `dotted_name` (bare import) or `aliased_import` (import X as Y) — handle both via type switch. `requestsMethods` map shared across rules avoids duplication.
 **Summary:** Task: US-304 | Files: py_unittest_import.go, py_debug_flag.go, py_silent_request.go + 3 tests + 6 fixtures | Tests: PASS | Review: PASSED | Next: US-305
 ---
+
+## Iteration 24 - US-305: Python regex rules (all categories)
+- Implemented 7 regex rules across 4 files grouped by category:
+  - `py_regex_trace_gaps.go`: `print-debug` (print() in non-test/non-script files, skips scripts/bin dirs), `no-logging-config` (entry point with `if __name__` but no logging.basicConfig/getLogger)
+  - `py_regex_mock_leakage.go`: `pytest-fixture-in-src` (@pytest.fixture in non-test files)
+  - `py_regex_bad_defaults.go`: `type-ignore-bare` (# type: ignore without [code]), `noqa-bare` (# noqa without : code)
+  - `py_regex_config_smells.go`: `hardcoded-credentials-py` (password/api_key/secret/token = "value" in source), `requirements-unpinned` (requirements*.txt without == pinning)
+- All 7 rules registered in DefaultRegistry(); 4 test files with 41 tests; 14 fixture files (positive + negative)
+- `pyIsScript` helper created for print-debug: checks directory segments for `scripts/` or `bin/`
+- `hardcodedCredentialPattern` uses `strings.ToLower(line)` for case-insensitive matching across PASSWORD/password/Password variants
+- `requirementLinePattern` filters to valid package name lines, then checks for `==` — handles comments, options (-r, --index-url), and empty lines
+- Post-review: fixed misleading `pyIsScript` docstring. No other issues.
+- Learnings: Regex patterns for `type: ignore` and `noqa` use `\s*$` anchor to match only bare forms (without error codes). Requirements file detection via `filepath.Base` + prefix/suffix check handles `requirements.txt`, `requirements-dev.txt`, etc. Comment-skip pattern (trimmed HasPrefix "#") is consistent with Python's comment syntax and matches existing codebase convention.
+**Summary:** Task: US-305 | Files: py_regex_trace_gaps.go, py_regex_mock_leakage.go, py_regex_bad_defaults.go, py_regex_config_smells.go + 4 tests + 14 fixtures | Tests: PASS | Review: PASSED | Next: US-306
+---
+
+## Iteration 25 - US-306: Python integration test suite
+- Created `internal/engine/py_integration_test.go` with 6 test functions covering all 26 Python rules:
+  - `TestPyIntegration_PositiveFixtures`: scans each positive fixture via `ScanFile`, verifies expected rule ID appears
+  - `TestPyIntegration_NegativeFixtures`: scans each negative fixture, verifies no findings for the targeted rule
+  - `TestPyIntegration_RequirementsUnpinned`: separate test for `.txt` fixtures (not in walker's `supportedExts`)
+  - `TestPyIntegration_DirectoryScan`: scans entire `testdata/python/` directory, verifies all rule IDs appear at least once
+  - `TestPyIntegration_NoGoJSInterference`: mixed Go+JS+Python directory scan, verifies no cross-language contamination
+  - `TestPyIntegration_SeverityLevels`: verifies all three severity levels (error/warning/info) appear in Python findings
+- Data-driven via `pyRuleFixtures` table — same pattern as JS integration test
+- Fixed `isGoRuleID` in js_integration_test.go to also exclude Python rules (`!isPyRuleID(id)`)
+- `requirements-unpinned` correctly separated from main fixture table since `.txt` is not in walker's `supportedExts`
+- Full test suite passes with zero regressions
+- Learnings: `isGoRuleID` must exclude ALL language-specific rules (JS and Python) — the original implementation only excluded JS. When adding new language-specific rule ID helpers, update cross-language interference checks in all integration tests. `.txt` files require `ScanFile` not directory scan since walker only walks known extensions.
+**Summary:** Task: US-306 | Files: internal/engine/py_integration_test.go, internal/engine/js_integration_test.go | Tests: PASS | Review: PASSED | Next: US-REVIEW-S3
+---
+
+## Iteration 26 - US-REVIEW-S3: Review Sprint 3
+- Reviewed all Sprint 3 code: US-300 through US-306 (7 tasks, 26 Python rules total)
+- Files reviewed: py_helpers.go, 19 AST rule files, 7 regex rule files, py_ast_rule_test_helpers_test.go, registry.go, py_integration_test.go
+- `go test ./... -count=1` — all green, no regressions
+- `go test -race ./internal/scanner/...` — clean
+- Linus criteria analysis:
+  - Good taste: Consistent Meta() + Check pattern across all 26 rules, clean helper extraction (exceptBody, isMutableDefault, hasKeywordArg, namedArgs shared across rules)
+  - No special cases: Extension routing via FileTypes, test-file skipping via pyIsTestFile — no ad-hoc branching
+  - Simplicity: Straightforward AST traversal, conservative heuristics avoid false positives
+  - No duplication: py_helpers.go mirrors js_helpers.go (import cycle avoidance), shared helpers across rules (exceptBody, isMutableDefault, hasKeywordArg, requestsMethods, namedArgs)
+  - Data flow: Clean source→parser→tree→checkers→findings, no shared mutable state between rules
+  - Cross-task consistency: All rule IDs follow category.py-name pattern, severities match PRD spec, all 26 rules properly registered
+- No issues found requiring fix tasks
+- Learnings: Sprint 3 Python rules follow identical structural patterns as Sprint 2 JS rules. The helper extraction pattern (shared functions like exceptBody, isMutableDefault) prevents duplication within the Python rule set. py_helpers.go duplication from scanner is acceptable trade-off vs import cycles.
+**Summary:** Task: US-REVIEW-S3 | Files: [all Sprint 3 files reviewed] | Tests: PASS | Review: PASSED | Next: US-400
+---
