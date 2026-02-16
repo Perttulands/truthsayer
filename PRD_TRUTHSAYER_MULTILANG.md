@@ -258,9 +258,9 @@
 ---
 
 ## Sprint 4: Config, CLI, Integration & Polish
-**Status:** NOT STARTED
+**Status:** IN PROGRESS
 
-- [ ] **US-400** Config extensions: per-language enable/disable
+- [x] **US-400** Config extensions: per-language enable/disable
   - Add `LanguageConfig` struct with `*bool` fields for Go, JavaScript, TypeScript, Python, Bash
   - Parse `[scan.languages]` section from `.truthsayer.toml`
   - Wire language config into engine: skip scanner initialization for disabled languages

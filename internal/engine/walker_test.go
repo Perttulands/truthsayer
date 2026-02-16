@@ -201,3 +201,22 @@ func TestWalk_SkipsPycacheAndVenv(t *testing.T) {
 		t.Fatalf("expected 1 file (src/app.py), got %d: %v", len(files), files)
 	}
 }
+
+func TestWalk_DefaultExcludePatterns(t *testing.T) {
+	tmp := t.TempDir()
+	os.WriteFile(filepath.Join(tmp, "app.js"), []byte("var x = 1;"), 0o644)
+	os.WriteFile(filepath.Join(tmp, "app.min.js"), []byte("var x=1;"), 0o644)
+	os.WriteFile(filepath.Join(tmp, "vendor.bundle.js"), []byte("var x=1;"), 0o644)
+
+	files, err := Walk(tmp, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(files) != 1 {
+		t.Fatalf("expected 1 file (app.js only), got %d: %v", len(files), files)
+	}
+	if filepath.Base(files[0]) != "app.js" {
+		t.Errorf("expected app.js, got %s", filepath.Base(files[0]))
+	}
+}

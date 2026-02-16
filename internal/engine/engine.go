@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"sync"
 
+	"github.com/perttulands/truthsayer/internal/config"
 	"github.com/perttulands/truthsayer/internal/finding"
 	"github.com/perttulands/truthsayer/internal/rules"
 	"github.com/perttulands/truthsayer/internal/scanner"
@@ -24,6 +25,7 @@ type Engine struct {
 	regexScanner    *scanner.RegexScanner
 	excludeDirs     map[string]bool
 	excludePatterns []string
+	langs           *config.LanguageConfig
 
 	jsOnce sync.Once
 	js     *scanner.JSScanner
@@ -48,6 +50,18 @@ func (e *Engine) SetExcludeDirs(dirs map[string]bool) {
 // SetExcludePatterns sets glob patterns for files to exclude from scanning.
 func (e *Engine) SetExcludePatterns(patterns []string) {
 	e.excludePatterns = patterns
+}
+
+// SetLanguages configures which languages are enabled for scanning.
+func (e *Engine) SetLanguages(lc *config.LanguageConfig) {
+	e.langs = lc
+}
+
+func (e *Engine) langEnabled(lang string) bool {
+	if e.langs == nil {
+		return true
+	}
+	return e.langs.IsEnabled(lang)
 }
 
 // jsExt maps JS/TS file extensions for routing.
@@ -82,9 +96,32 @@ func (e *Engine) getPyScanner() *scanner.PyScanner {
 	return e.py
 }
 
+// extLang maps file extensions to language names for config filtering.
+func extLang(ext string) string {
+	switch ext {
+	case ".go":
+		return "go"
+	case ".js", ".jsx", ".mjs", ".cjs":
+		return "javascript"
+	case ".ts", ".tsx":
+		return "typescript"
+	case ".py", ".pyi":
+		return "python"
+	case ".sh", ".bash":
+		return "bash"
+	default:
+		return ""
+	}
+}
+
 // scanFileFindings scans a single file and returns findings.
 func (e *Engine) scanFileFindings(path string) ([]finding.Finding, error) {
 	ext := filepath.Ext(path)
+
+	lang := extLang(ext)
+	if lang != "" && !e.langEnabled(lang) {
+		return nil, nil
+	}
 
 	switch {
 	case ext == ".go":

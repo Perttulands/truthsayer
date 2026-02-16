@@ -42,6 +42,8 @@ func buildEngine(scanDir, configPath string) (*engine.Engine, error) {
 
 	eng := engine.New(reg)
 
+	eng.SetLanguages(&cfg.Scan.Languages)
+
 	// Apply scan exclusions from config
 	if len(cfg.Scan.ExcludeDirs) > 0 {
 		merged := make(map[string]bool)

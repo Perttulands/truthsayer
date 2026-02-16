@@ -16,8 +16,42 @@ type Config struct {
 
 // ScanConfig holds file/directory exclusion settings.
 type ScanConfig struct {
-	ExcludeDirs     []string `toml:"exclude_dirs"`
-	ExcludePatterns []string `toml:"exclude_patterns"`
+	ExcludeDirs     []string       `toml:"exclude_dirs"`
+	ExcludePatterns []string       `toml:"exclude_patterns"`
+	Languages       LanguageConfig `toml:"languages"`
+}
+
+// LanguageConfig controls which languages are scanned.
+// nil (unset) means enabled (all languages on by default).
+type LanguageConfig struct {
+	Go         *bool `toml:"go"`
+	JavaScript *bool `toml:"javascript"`
+	TypeScript *bool `toml:"typescript"`
+	Python     *bool `toml:"python"`
+	Bash       *bool `toml:"bash"`
+}
+
+// IsEnabled returns whether a language is enabled. Unset (nil) defaults to true.
+func (lc *LanguageConfig) IsEnabled(lang string) bool {
+	var p *bool
+	switch lang {
+	case "go":
+		p = lc.Go
+	case "javascript":
+		p = lc.JavaScript
+	case "typescript":
+		p = lc.TypeScript
+	case "python":
+		p = lc.Python
+	case "bash":
+		p = lc.Bash
+	default:
+		return true
+	}
+	if p == nil {
+		return true
+	}
+	return *p
 }
 
 // RulesConfig holds rule enable/disable and severity settings.

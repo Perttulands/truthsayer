@@ -208,3 +208,103 @@ func TestLoad_EmptyConfig(t *testing.T) {
 		t.Errorf("expected no severity overrides, got %v", cfg.Rules.Severity)
 	}
 }
+
+func TestLoad_LanguageConfig_DisablePython(t *testing.T) {
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "lang.toml")
+	os.WriteFile(cfgPath, []byte(`
+[scan.languages]
+python = false
+`), 0644)
+
+	cfg, err := Load(".", cfgPath)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.Scan.Languages.Python == nil || *cfg.Scan.Languages.Python {
+		t.Error("expected python disabled")
+	}
+	if !cfg.Scan.Languages.IsEnabled("go") {
+		t.Error("go should be enabled by default")
+	}
+	if !cfg.Scan.Languages.IsEnabled("javascript") {
+		t.Error("javascript should be enabled by default")
+	}
+	if cfg.Scan.Languages.IsEnabled("python") {
+		t.Error("python should be disabled")
+	}
+}
+
+func TestLoad_LanguageConfig_DisableMultiple(t *testing.T) {
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "lang.toml")
+	os.WriteFile(cfgPath, []byte(`
+[scan.languages]
+javascript = false
+typescript = false
+`), 0644)
+
+	cfg, err := Load(".", cfgPath)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.Scan.Languages.IsEnabled("javascript") {
+		t.Error("javascript should be disabled")
+	}
+	if cfg.Scan.Languages.IsEnabled("typescript") {
+		t.Error("typescript should be disabled")
+	}
+	if !cfg.Scan.Languages.IsEnabled("go") {
+		t.Error("go should still be enabled")
+	}
+	if !cfg.Scan.Languages.IsEnabled("python") {
+		t.Error("python should still be enabled")
+	}
+}
+
+func TestLoad_LanguageConfig_NoSection_AllEnabled(t *testing.T) {
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "nolang.toml")
+	os.WriteFile(cfgPath, []byte(`
+[rules]
+disable = []
+`), 0644)
+
+	cfg, err := Load(".", cfgPath)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	for _, lang := range []string{"go", "javascript", "typescript", "python", "bash"} {
+		if !cfg.Scan.Languages.IsEnabled(lang) {
+			t.Errorf("%s should be enabled by default", lang)
+		}
+	}
+}
+
+func TestLanguageConfig_IsEnabled_UnknownLang(t *testing.T) {
+	lc := &LanguageConfig{}
+	if !lc.IsEnabled("rust") {
+		t.Error("unknown languages should default to enabled")
+	}
+}
+
+func TestLoad_LanguageConfig_ExplicitEnable(t *testing.T) {
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "lang.toml")
+	os.WriteFile(cfgPath, []byte(`
+[scan.languages]
+go = true
+python = false
+`), 0644)
+
+	cfg, err := Load(".", cfgPath)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !cfg.Scan.Languages.IsEnabled("go") {
+		t.Error("go should be explicitly enabled")
+	}
+	if cfg.Scan.Languages.IsEnabled("python") {
+		t.Error("python should be disabled")
+	}
+}

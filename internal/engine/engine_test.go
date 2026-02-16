@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/perttulands/truthsayer/internal/config"
 	"github.com/perttulands/truthsayer/internal/finding"
 	"github.com/perttulands/truthsayer/internal/rules"
 )
@@ -371,5 +372,158 @@ func TestEngine_ScanEmptyDirectory(t *testing.T) {
 	}
 	if len(result.Findings) != 0 {
 		t.Errorf("expected 0 findings, got %d", len(result.Findings))
+	}
+}
+
+func boolPtr(b bool) *bool { return &b }
+
+func TestEngine_DisablePython_NoFindings(t *testing.T) {
+	tmp := t.TempDir()
+	// Python file with anti-pattern (bare except)
+	pyCode := "try:\n    x = 1\nexcept:\n    pass\n"
+	path := filepath.Join(tmp, "bad.py")
+	os.WriteFile(path, []byte(pyCode), 0o644)
+
+	reg := rules.DefaultRegistry()
+	eng := New(reg)
+	eng.SetLanguages(&config.LanguageConfig{Python: boolPtr(false)})
+
+	result, err := eng.ScanFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Findings) != 0 {
+		t.Errorf("expected 0 findings with python disabled, got %d", len(result.Findings))
+	}
+}
+
+func TestEngine_DisableJS_NoFindings(t *testing.T) {
+	tmp := t.TempDir()
+	// JS file with anti-pattern (empty catch)
+	jsCode := "try { risky(); } catch (e) {}\n"
+	path := filepath.Join(tmp, "bad.js")
+	os.WriteFile(path, []byte(jsCode), 0o644)
+
+	reg := rules.DefaultRegistry()
+	eng := New(reg)
+	eng.SetLanguages(&config.LanguageConfig{JavaScript: boolPtr(false)})
+
+	result, err := eng.ScanFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Findings) != 0 {
+		t.Errorf("expected 0 findings with javascript disabled, got %d", len(result.Findings))
+	}
+}
+
+func TestEngine_DisableGo_NoFindings(t *testing.T) {
+	tmp := t.TempDir()
+	goCode := `package main
+
+import "fmt"
+
+func handler() error {
+	err := fmt.Errorf("fail")
+	if err != nil {
+		return nil
+	}
+	return nil
+}
+`
+	path := filepath.Join(tmp, "bad.go")
+	os.WriteFile(path, []byte(goCode), 0o644)
+
+	reg := rules.DefaultRegistry()
+	eng := New(reg)
+	eng.SetLanguages(&config.LanguageConfig{Go: boolPtr(false)})
+
+	result, err := eng.ScanFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Findings) != 0 {
+		t.Errorf("expected 0 findings with go disabled, got %d", len(result.Findings))
+	}
+}
+
+func TestEngine_DisablePython_ScanDir_NoPyFindings(t *testing.T) {
+	tmp := t.TempDir()
+	// Go file with anti-pattern
+	goCode := `package main
+
+import "fmt"
+
+func handler() error {
+	err := fmt.Errorf("fail")
+	if err != nil {
+		return nil
+	}
+	return nil
+}
+`
+	os.WriteFile(filepath.Join(tmp, "bad.go"), []byte(goCode), 0o644)
+	// Python file with anti-pattern
+	pyCode := "try:\n    x = 1\nexcept:\n    pass\n"
+	os.WriteFile(filepath.Join(tmp, "bad.py"), []byte(pyCode), 0o644)
+
+	reg := rules.DefaultRegistry()
+	eng := New(reg)
+	eng.SetLanguages(&config.LanguageConfig{Python: boolPtr(false)})
+
+	result, err := eng.Scan(tmp)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Should have Go findings but no Python findings
+	for _, f := range result.Findings {
+		if filepath.Ext(f.File) == ".py" {
+			t.Errorf("found Python finding with python disabled: %s", f.Rule)
+		}
+	}
+	if len(result.Findings) == 0 {
+		t.Error("expected Go findings, got 0")
+	}
+}
+
+func TestEngine_NilLangs_AllEnabled(t *testing.T) {
+	reg := rules.DefaultRegistry()
+	eng := New(reg)
+	// No SetLanguages call — all should be enabled
+	if !eng.langEnabled("go") {
+		t.Error("go should be enabled by default")
+	}
+	if !eng.langEnabled("python") {
+		t.Error("python should be enabled by default")
+	}
+	if !eng.langEnabled("javascript") {
+		t.Error("javascript should be enabled by default")
+	}
+}
+
+func TestExtLang(t *testing.T) {
+	tests := []struct {
+		ext  string
+		want string
+	}{
+		{".go", "go"},
+		{".js", "javascript"},
+		{".jsx", "javascript"},
+		{".mjs", "javascript"},
+		{".cjs", "javascript"},
+		{".ts", "typescript"},
+		{".tsx", "typescript"},
+		{".py", "python"},
+		{".pyi", "python"},
+		{".sh", "bash"},
+		{".bash", "bash"},
+		{".toml", ""},
+		{".json", ""},
+	}
+	for _, tt := range tests {
+		if got := extLang(tt.ext); got != tt.want {
+			t.Errorf("extLang(%q) = %q, want %q", tt.ext, got, tt.want)
+		}
 	}
 }

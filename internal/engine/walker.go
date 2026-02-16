@@ -27,6 +27,12 @@ func DefaultExcludeDirs() map[string]bool {
 	return m
 }
 
+var defaultExcludePatterns = []string{
+	"*.min.js",
+	"*.bundle.js",
+	"*.pyc",
+}
+
 var supportedExts = map[string]bool{
 	".go":   true,
 	".js":   true,
@@ -53,6 +59,10 @@ func Walk(root string, excludeDirs map[string]bool, excludePatterns []string) ([
 		excludeDirs = defaultExcludeDirs
 	}
 
+	allPatterns := make([]string, 0, len(defaultExcludePatterns)+len(excludePatterns))
+	allPatterns = append(allPatterns, defaultExcludePatterns...)
+	allPatterns = append(allPatterns, excludePatterns...)
+
 	var files []string
 	err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
@@ -69,7 +79,7 @@ func Walk(root string, excludeDirs map[string]bool, excludePatterns []string) ([
 		if !supportedExts[ext] {
 			return nil
 		}
-		matched, matchErr := matchesAnyPattern(d.Name(), excludePatterns)
+		matched, matchErr := matchesAnyPattern(d.Name(), allPatterns)
 		if matchErr != nil {
 			return fmt.Errorf("match exclude patterns for %s: %w", path, matchErr)
 		}
