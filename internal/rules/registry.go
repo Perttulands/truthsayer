@@ -281,6 +281,10 @@ func DefaultRegistry() *Registry {
 	reg.RegisterJSAST(&JSTestImportInSrc{})
 	reg.RegisterJSAST(&JSEnvTestCheck{})
 	reg.RegisterJSAST(&JSMissingCorrelationID{})
+	reg.RegisterJSAST(&JSNoTimeoutFetch{})
+	reg.RegisterJSAST(&JSAnyAssertion{})
+	reg.RegisterJSAST(&JSNonNullAssertion{})
+	reg.RegisterJSAST(&JSEvalUsage{})
 
 	return reg
 }

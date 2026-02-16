@@ -135,7 +135,7 @@
   - **Files**: 4 rule files + 4 test files + 8 fixture files
   - **Acceptance**: All rules detect their anti-patterns accurately
 
-- [ ] **US-205** JS bad-defaults AST rules: no-timeout-fetch, any-type-assertion, non-null-assertion, eval-usage
+- [x] **US-205** JS bad-defaults AST rules: no-timeout-fetch, any-type-assertion, non-null-assertion, eval-usage
   - Implement `internal/rules/js_no_timeout_fetch.go` — `fetch()` without `AbortController`/`signal`
   - Implement `internal/rules/js_any_assertion.go` — `as any` type assertion (TS files only)
   - Implement `internal/rules/js_non_null_assertion.go` — `variable!` non-null assertion (TS files only)
