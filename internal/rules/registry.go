@@ -303,6 +303,9 @@ func DefaultRegistry() *Registry {
 	reg.RegisterPyAST(&PyBareExcept{})
 	reg.RegisterPyAST(&PyExceptPass{})
 	reg.RegisterPyAST(&PyExceptBroad{})
+	reg.RegisterPyAST(&PySubprocessNoCheck{})
+	reg.RegisterPyAST(&PyGetattrSilentDefault{})
+	reg.RegisterPyAST(&PyDictGetNone{})
 
 	return reg
 }

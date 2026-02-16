@@ -193,7 +193,7 @@
   - **Files**: 3 rule files + 3 test files + 6 fixture files in `testdata/python/`
   - **Acceptance**: Each rule triggers on its anti-pattern; `except ValueError:` with handling is clean
 
-- [ ] **US-301** Python silent-fallback rules: subprocess-no-check, getattr-silent-default, dict-get-none
+- [x] **US-301** Python silent-fallback rules: subprocess-no-check, getattr-silent-default, dict-get-none
   - Implement `internal/rules/py_subprocess_no_check.go` — `subprocess.run()`/`subprocess.call()` without `check=True`
   - Implement `internal/rules/py_getattr_silent_default.go` — `getattr(obj, 'attr', None)` in bug-indicating contexts
   - Implement `internal/rules/py_dict_get_none.go` — `dict.get(key)` without explicit default where None causes downstream failure
