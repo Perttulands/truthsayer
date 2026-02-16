@@ -242,7 +242,7 @@
   - **Files**: Rule files in `internal/rules/`, test files, fixtures in `testdata/python/`
   - **Acceptance**: All 7 regex rules trigger correctly
 
-- [ ] **US-306** Python integration test suite
+- [x] **US-306** Python integration test suite
   - Create full integration test: scan `testdata/python/` directory with full engine
   - Verify all expected findings from all Python rules appear
   - Verify no false positives on negative fixtures

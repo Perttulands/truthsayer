@@ -259,7 +259,7 @@ func isGoRuleID(id string) bool {
 		"silent-fallback.", "error-context.", "trace-gaps.", "bad-defaults.",
 	}
 	for _, prefix := range goRules {
-		if strings.HasPrefix(id, prefix) && !isJSRuleID(id) {
+		if strings.HasPrefix(id, prefix) && !isJSRuleID(id) && !isPyRuleID(id) {
 			return true
 		}
 	}
