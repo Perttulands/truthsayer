@@ -314,5 +314,12 @@ func DefaultRegistry() *Registry {
 	reg.RegisterPyAST(&PyStringException{})
 	reg.RegisterPyAST(&PyLogAndRaise{})
 
+	// Python bad-defaults rules
+	reg.RegisterPyAST(&PyMutableDefault{})
+	reg.RegisterPyAST(&PyNoTimeoutRequests{})
+	reg.RegisterPyAST(&PyStarImport{})
+	reg.RegisterPyAST(&PyGlobalState{})
+	reg.RegisterPyAST(&PyNoEncodingOpen{})
+
 	return reg
 }

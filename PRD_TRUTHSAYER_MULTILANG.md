@@ -211,7 +211,7 @@
   - **Files**: 5 rule files + 5 test files + 10 fixture files
   - **Acceptance**: All five rules trigger on anti-patterns, silent on proper exception handling
 
-- [ ] **US-303** Python bad-defaults AST rules: mutable-default-arg, no-timeout-requests, star-import, global-state, no-encoding-open
+- [x] **US-303** Python bad-defaults AST rules: mutable-default-arg, no-timeout-requests, star-import, global-state, no-encoding-open
   - Implement `internal/rules/py_mutable_default.go` — `def f(items=[])` mutable default
   - Implement `internal/rules/py_no_timeout_requests.go` — `requests.get/post()` without `timeout=`
   - Implement `internal/rules/py_star_import.go` — `from module import *`
