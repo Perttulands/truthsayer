@@ -299,6 +299,14 @@ func DefaultRegistry() *Registry {
 	reg.RegisterRegex(&JSHardcodedAPIURL{})
 	reg.RegisterRegex(&JSDotenvNoExample{})
 
+	// Cross-language security and code-health regex rules
+	reg.RegisterRegex(&UnusedVariable{})
+	reg.RegisterRegex(&UnreachableCode{})
+	reg.RegisterRegex(&ErrorSwallowing{})
+	reg.RegisterRegex(&HardcodedCredentials{})
+	reg.RegisterRegex(&SQLInjection{})
+	reg.RegisterRegex(&CommandInjection{})
+
 	// Python AST rules
 	reg.RegisterPyAST(&PyBareExcept{})
 	reg.RegisterPyAST(&PyExceptPass{})
