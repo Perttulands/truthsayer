@@ -151,7 +151,7 @@
   - **Files**: 2 rule files + 2 test files + 4 fixture files
   - **Acceptance**: Rules detect missing cleanup and misplaced test imports
 
-- [ ] **US-207** JS/TS regex rules (all categories)
+- [x] **US-207** JS/TS regex rules (all categories)
   - Implement regex rules (can be individual rule files or grouped by category):
     - `mock-leakage.jest-mock-in-src` — `jest.mock(`, `jest.fn(`, `jest.spyOn(` in non-test files
     - `mock-leakage.storybook-in-src` — `.stories.` import in non-story files

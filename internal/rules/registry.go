@@ -288,5 +288,16 @@ func DefaultRegistry() *Registry {
 	reg.RegisterJSAST(&JSNoAfterallCleanup{})
 	reg.RegisterJSAST(&JSTestOnlyImport{})
 
+	// JS/TS regex rules
+	reg.RegisterRegex(&JSJestMockInSrc{})
+	reg.RegisterRegex(&JSStorybookInSrc{})
+	reg.RegisterRegex(&JSTsIgnore{})
+	reg.RegisterRegex(&JSEslintDisableNoReason{})
+	reg.RegisterRegex(&JSNoStrictMode{})
+	reg.RegisterRegex(&JSNoUnhandledRejection{})
+	reg.RegisterRegex(&JSConsoleLogInProduction{})
+	reg.RegisterRegex(&JSHardcodedAPIURL{})
+	reg.RegisterRegex(&JSDotenvNoExample{})
+
 	return reg
 }
