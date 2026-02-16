@@ -297,7 +297,7 @@
   - **Files**: `internal/engine/integration_test.go`, `testdata/mixed/` fixtures
   - **Acceptance**: Mixed-language scan produces correct findings for each language; disable/filter works
 
-- [ ] **US-404** Performance benchmarks
+- [x] **US-404** Performance benchmarks
   - Create benchmark corpus: `testdata/bench/js-10k/` and `testdata/bench/python-10k/` (generated or curated, ~10k LOC each)
   - Implement benchmarks: `BenchmarkJSScan10k`, `BenchmarkPythonScan10k`
   - Run and verify performance target: <5 seconds for 10k LOC per language
