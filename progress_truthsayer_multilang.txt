@@ -1,0 +1,98 @@
+# Progress Log
+
+## Learnings
+(Patterns discovered during implementation)
+
+---
+
+## Iteration 1 - US-100: Add tree-sitter dependencies and verify build
+- Added `github.com/smacker/go-tree-sitter` v0.0.0-20240827094217-dd81d9e9be82 to go.mod
+- Language grammars (JS, TS, TSX, Python) are sub-packages of the main module, no separate go.mod entries needed
+- Created `internal/scanner/treesitter_test.go` with 4 smoke tests (one per language)
+- All parsers initialize successfully; JS/TS/TSX root node type is "program", Python is "module"
+- cgo build works; full test suite passes with no regressions
+- Learnings: go-tree-sitter language grammars are imported from sub-packages (e.g., `github.com/smacker/go-tree-sitter/javascript`), ParseCtx with t.Context() works, pre-commit hook requires `PATH="$PWD:$PATH"` for truthsayer binary
+**Summary:** Task: US-100 | Files: go.mod, go.sum, internal/scanner/treesitter_test.go | Tests: PASS | Review: PASSED | Next: US-101
+---
+
+## Iteration 2 - US-101: Implement shared tree-sitter utilities
+- Created `internal/scanner/treesitter.go` with 7 utility functions: FindNodesByType, NodeText, LineNumber, SourceLine, HasChildOfType, IsInsideFunction, IsTestFile
+- Added walkNode helper for recursive tree traversal (uses NamedChildCount/NamedChild to skip anonymous nodes)
+- Extended `treesitter_test.go` with 15 new tests covering all utilities with JS, Python, and edge cases
+- IsTestFile checks directory-based detection (`__tests__/`, `test/`, `tests/`) before filename patterns
+- Node.Content(source) is the go-tree-sitter way to get text for a node
+- Learnings: IsTestFile directory check must come before extension-based filename check, otherwise files in test directories with non-test names get missed. walkNode should traverse NamedChild not Child to avoid anonymous syntax tokens.
+**Summary:** Task: US-101 | Files: internal/scanner/treesitter.go, internal/scanner/treesitter_test.go | Tests: PASS | Review: PASSED | Next: US-102
+---
+
+## Iteration 3 - US-102: Define JSASTChecker/PyASTChecker interfaces + extend Registry
+- Added `JSASTChecker` interface to `rule.go`: `CheckJSAST(tree *sitter.Tree, source []byte, path string) []Finding`
+- Added `PyASTChecker` interface to `rule.go`: `CheckPyAST(tree *sitter.Tree, source []byte, path string) []Finding`
+- Extended `Registry` with `jsAST`/`pyAST` slices and `RegisterJSAST`/`RegisterPyAST`/`JSASTCheckers`/`PyASTCheckers` methods
+- Updated `SetSeverity`, `AllRules`, `EnabledRules` to include JS/Python AST checkers
+- Added 8 new tests using mock checkers: register, retrieve, disable, AllRules inclusion, EnabledRules, SetSeverity for both JS and Python
+- Full test suite passes with no regressions
+- Learnings: New checker types follow the exact same pattern as existing `ast`/`regex` slices — consistent pattern makes extension straightforward. The `sitter.Tree` import in `rule.go` is the only new dependency coupling.
+**Summary:** Task: US-102 | Files: internal/rules/rule.go, internal/rules/registry.go, internal/rules/registry_test.go | Tests: PASS | Review: PASSED | Next: US-103
+---
+
+## Iteration 4 - US-103: Implement JSScanner with parser pooling
+- Created `internal/scanner/js_scanner.go` with JSScanner struct, NewJSScanner, and Scan method
+- Parser pooling via `sync.Pool` per language (JS, TS, TSX) — parsers are pre-configured with correct grammar
+- Extension map: `.js/.mjs/.cjs/.jsx` → JS grammar, `.ts` → TS grammar, `.tsx` → TSX grammar
+- Returns `([]Finding, []string, error)` matching GoScanner pattern for regex scanner reuse
+- Created `internal/scanner/js_scanner_test.go` with 8 tests: basic scan, TS/TSX, findings, language detection (all 6 exts), concurrent access (10 goroutines), nonexistent file, unsupported extension
+- `go test -race` passes clean
+- Learnings: sync.Pool with per-language New funcs avoids SetLanguage overhead. Pre-commit hook warns about unchecked type assertion from pool.Get() — safe since we control the pool. context.Background() is fine for now; engine will provide context in US-105.
+**Summary:** Task: US-103 | Files: internal/scanner/js_scanner.go, internal/scanner/js_scanner_test.go | Tests: PASS | Review: PASSED | Next: US-104
+---
+
+## Iteration 5 - US-104: Implement PyScanner with parser pooling
+- Created `internal/scanner/py_scanner.go` with PyScanner struct, NewPyScanner, and Scan method
+- Simpler than JSScanner: Python has one grammar, so single `sync.Pool` instead of per-language pool map
+- Returns `([]Finding, []string, error)` matching GoScanner/JSScanner pattern
+- Created `internal/scanner/py_scanner_test.go` with 6 tests: basic scan, findings, multiple checkers, concurrent access (10 goroutines), nonexistent file, modern Python syntax
+- `go test -race` passes clean; full test suite passes with no regressions
+- Learnings: Python only needs one grammar, so no extension map needed — simpler design than JSScanner. The `writeTestFile` helper from js_scanner_test.go is shared within the package.
+**Summary:** Task: US-104 | Files: internal/scanner/py_scanner.go, internal/scanner/py_scanner_test.go | Tests: PASS | Review: PASSED | Next: US-105
+---
+
+## Iteration 6 - US-105: Extend engine routing and walker for JS/TS/Python
+- Extended `engine.go`: added `jsScanner`/`pyScanner` fields with lazy init via `sync.Once`, `isJSExt()`/`isPyExt()` helpers, extracted `scanFileFindings()` to eliminate duplicated routing logic between `Scan` and `ScanFile`
+- Extended `walker.go`: added `.py`/`.pyi` to `supportedExts`, added `__pycache__`, `.venv`, `dist`, `build` to `defaultExcludeDirs`
+- Added 9 new engine tests: JS/TS/Python ScanFile, multi-extension routing, new excluded dirs, lazy init verification, isJSExt/isPyExt unit tests
+- Added 2 new walker tests: Python extension support, __pycache__/.venv/dist/build exclusion
+- All 25 engine tests pass, full test suite green with zero regressions
+- Learnings: CGO_ENABLED=1 needed and PATH must include /usr/bin for C compiler. `scanFileFindings` pattern eliminates duplication between Scan/ScanFile. sync.Once gives lazy init with zero overhead for unused scanners.
+**Summary:** Task: US-105 | Files: internal/engine/engine.go, internal/engine/walker.go, internal/engine/engine_test.go, internal/engine/walker_test.go | Tests: PASS | Review: PASSED | Next: US-106
+---
+
+## Iteration 7 - US-106: Tree-sitter parser correctness and edge case tests
+- Created `internal/scanner/treesitter_parse_test.go` with 33 tests across 4 categories:
+  - Modern JS syntax (7 tests): optional chaining, nullish coalescing, class fields, async/await, dynamic import, generators
+  - Modern TS syntax (8 tests): generics, enums, type assertions, satisfies, decorators, non-null assertion, JSX/TSX
+  - Modern Python syntax (8 tests): match/case, walrus operator, f-strings, type hints, async/await, decorators, comprehensions
+  - Error-tolerant parsing (3 tests × multiple subtests): broken JS/TS/Python syntax parses without crashing
+  - Concurrent parsing (3 tests): 10-20 goroutines per test, mixed languages, race-clean
+  - Edge cases (3 tests): empty files, comments-only files
+- Created test fixtures: `testdata/js/syntax_modern.js`, `testdata/js/syntax_modern.ts`, `testdata/python/syntax_modern.py`
+- `go test -race ./internal/scanner/...` passes clean
+- Full test suite passes with zero regressions
+- Learnings: tree-sitter's `HasError()` method on root node is the key way to verify clean parse. Error-tolerant parsing always returns nodes even on broken syntax (tree.RootNode() is never nil). Each goroutine needs its own parser instance for race safety.
+**Summary:** Task: US-106 | Files: internal/scanner/treesitter_parse_test.go, testdata/js/syntax_modern.js, testdata/js/syntax_modern.ts, testdata/python/syntax_modern.py | Tests: PASS | Review: PASSED | Next: US-REVIEW-S1
+---
+
+## Iteration 8 - US-REVIEW-S1: Review Sprint 1
+- Reviewed all Sprint 1 code: US-100 through US-106 (7 tasks)
+- Files reviewed: treesitter.go, js_scanner.go, py_scanner.go, rule.go, registry.go, engine.go, walker.go
+- `go test ./... -count=1` — all green, no regressions
+- `go test -race ./internal/scanner/...` — clean
+- Linus criteria analysis:
+  - Good taste: Clean dispatch via scanFileFindings, appropriate abstraction level
+  - No special cases: Extension routing is straightforward switch
+  - Duplication: JSScanner/PyScanner Scan methods are similar but serve different parser pools — acceptable. Registry EnabledRules/SetSeverity have repetitive blocks but this is pre-existing pattern.
+  - Consistency: Naming, patterns, and data flow are consistent across all Sprint 1 code
+  - No issues found requiring fix tasks
+- Learnings: Pre-existing duplication in registry (EnabledRules iterates 4 checker slices) will compound — consider generic refactor in Sprint 4 polish. jsExts map exists in both engine.go and js_scanner.go but maps to different value types (bool vs grammar enum), so it's intentional.
+**Summary:** Task: US-REVIEW-S1 | Files: [all Sprint 1 files reviewed] | Tests: PASS | Review: PASSED | Next: US-200
+---

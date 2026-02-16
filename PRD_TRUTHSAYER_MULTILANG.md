@@ -11,7 +11,7 @@
 ---
 
 ## Sprint 1: Tree-sitter Infrastructure
-**Status:** IN PROGRESS
+**Status:** COMPLETE
 
 - [x] **US-100** Add tree-sitter dependencies and verify build
   - Add `github.com/smacker/go-tree-sitter` and language grammars (javascript, typescript, tsx, python) to `go.mod`
@@ -82,7 +82,7 @@
   - **Files**: `internal/scanner/treesitter_parse_test.go`, `testdata/js/syntax_modern.js`, `testdata/js/syntax_modern.ts`, `testdata/python/syntax_modern.py`
   - **Acceptance**: All parse tests pass including broken syntax; `-race` clean
 
-- [ ] **US-REVIEW-S1** Review Sprint 1
+- [x] **US-REVIEW-S1** Review Sprint 1
   - All tree-sitter infrastructure compiles and tests pass
   - `go test ./... -count=1` green
   - `go test -race ./internal/scanner/...` clean
