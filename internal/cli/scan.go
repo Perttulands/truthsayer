@@ -13,6 +13,7 @@ import (
 type scanOptions struct {
 	format        string
 	path          string
+	lang          string
 	createBeads   bool
 	beadThreshold int
 }
@@ -45,6 +46,16 @@ func runScan(args []string) int {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		return 2
+	}
+
+	// --lang flag overrides config language settings
+	if opts.lang != "" {
+		lc, err := parseLangFlag(opts.lang)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			return 2
+		}
+		eng.SetLanguages(lc)
 	}
 
 	start := time.Now()
@@ -97,6 +108,12 @@ func parseScanOptions(args []string) (scanOptions, error) {
 				return scanOptions{}, fmt.Errorf("--format requires a value")
 			}
 			opts.format = args[i+1]
+			i++
+		case "--lang":
+			if i+1 >= len(args) {
+				return scanOptions{}, fmt.Errorf("--lang requires a value")
+			}
+			opts.lang = args[i+1]
 			i++
 		case "--create-beads":
 			opts.createBeads = true

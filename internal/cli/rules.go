@@ -14,11 +14,20 @@ import (
 func runRules(args []string) int {
 	configPath, remaining := parseConfigFlag(args)
 
-	// Check for --enabled flag
+	// Parse --enabled and --lang flags
 	enabled := false
-	for _, arg := range remaining {
-		if arg == "--enabled" {
+	var langFilter string
+	for i := 0; i < len(remaining); i++ {
+		switch remaining[i] {
+		case "--enabled":
 			enabled = true
+		case "--lang":
+			if i+1 >= len(remaining) {
+				fmt.Fprintln(os.Stderr, "error: --lang requires a value")
+				return 2
+			}
+			langFilter = remaining[i+1]
+			i++
 		}
 	}
 
@@ -45,6 +54,16 @@ func runRules(args []string) int {
 		ruleList = reg.EnabledRules()
 	} else {
 		ruleList = reg.AllRules()
+	}
+
+	// Filter by language if --lang is specified
+	if langFilter != "" {
+		exts, err := langFilterExts(langFilter)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			return 2
+		}
+		ruleList = filterRulesByExts(ruleList, exts)
 	}
 
 	sort.Slice(ruleList, func(i, j int) bool {
@@ -75,4 +94,18 @@ func runRules(args []string) int {
 	}
 	fmt.Fprintf(os.Stdout, "\n%d rules %s\n", len(ruleList), label)
 	return 0
+}
+
+// filterRulesByExts returns rules whose FileTypes overlap with the given extensions.
+func filterRulesByExts(ruleList []rules.Rule, exts map[string]bool) []rules.Rule {
+	var filtered []rules.Rule
+	for _, r := range ruleList {
+		for _, ft := range r.FileTypes {
+			if exts[ft] {
+				filtered = append(filtered, r)
+				break
+			}
+		}
+	}
+	return filtered
 }

@@ -333,3 +333,30 @@
 - Learnings: Sprint 3 Python rules follow identical structural patterns as Sprint 2 JS rules. The helper extraction pattern (shared functions like exceptBody, isMutableDefault) prevents duplication within the Python rule set. py_helpers.go duplication from scanner is acceptable trade-off vs import cycles.
 **Summary:** Task: US-REVIEW-S3 | Files: [all Sprint 3 files reviewed] | Tests: PASS | Review: PASSED | Next: US-400
 ---
+
+## Iteration 27 - US-400: Config extensions for per-language enable/disable
+- Added `LanguageConfig` struct to `config.go` with `*bool` fields for Go, JavaScript, TypeScript, Python, Bash; `IsEnabled(lang)` method returns true for nil (unset) pointers
+- Added `[scan.languages]` TOML section parsing — each language defaults to enabled when unset
+- Added `SetLanguages()` and `langEnabled()` to engine; `extLang()` maps extensions to language names
+- Language check is a single early return at the top of `scanFileFindings` — no scattered special cases
+- Added `defaultExcludePatterns` to walker: `*.min.js`, `*.bundle.js`, `*.pyc` — merged with user patterns using safe allocation
+- Wired language config from CLI's `buildEngine` through to engine via `SetLanguages`
+- 5 new config tests (disable python, disable multiple, no section defaults, unknown lang, explicit enable)
+- 7 new engine tests (disable python/JS/Go ScanFile, disable python dir scan, nil langs, extLang mapping)
+- 1 new walker test (default exclude patterns)
+- Fixed `append(defaultExcludePatterns, ...)` potential mutation bug with explicit `make` + two-step append
+- Full test suite passes with zero regressions
+- Learnings: `*bool` in TOML config with nil-as-default is the idiomatic Go pattern for optional booleans. `append(slice, items...)` can mutate the original slice if capacity allows — always copy first when appending to package-level vars. `extLang` provides a clean single-source mapping from extension to language name without duplicating the isJSExt/isPyExt routing logic.
+**Summary:** Task: US-400 | Files: config.go, config_test.go, engine.go, engine_test.go, walker.go, walker_test.go, registry.go | Tests: PASS | Review: PASSED | Next: US-401
+---
+
+## Iteration 28 - US-401: CLI --lang flag for scan and rules commands
+- Created `internal/cli/lang.go` with language alias resolution: `langAliases` map (10 aliases → 5 canonical names), `langExts` map (canonical → file extensions), `parseLangFlag()` (→ LanguageConfig for scan), `langFilterExts()` (→ extension set for rules)
+- Modified `internal/cli/scan.go`: added `lang` field to `scanOptions`, `--lang` parsing in `parseScanOptions`, applies `parseLangFlag` result via `eng.SetLanguages()` to override config language settings
+- Modified `internal/cli/rules.go`: added `--lang` flag parsing alongside `--enabled`, `filterRulesByExts()` filters rules by FileTypes intersection with resolved extensions; works with `--enabled` for combined filtering
+- Updated `internal/cli/root.go`: help text updated to mention `--lang` flag for both scan and rules, added language aliases section
+- Created `internal/cli/lang_test.go` with 20 tests: alias resolution (10 aliases), multi-language, case insensitivity, whitespace tolerance, error cases, rules --lang filter (Python/Go/JS/multiple/with-enabled/unknown), scan --lang filter (Python-only scan), parseScanOptions --lang
+- Full test suite passes with zero regressions
+- Learnings: Rule IDs use `py-` and `js-` prefixes (e.g., `silent-fallback.py-bare-except`), not the PRD's unqualified names. The `--lang` flag for scan reuses the existing `SetLanguages` mechanism on the engine — no new dispatch path needed. `filterRulesByExts` uses FileTypes overlap for clean language-based rule filtering.
+**Summary:** Task: US-401 | Files: lang.go, lang_test.go, scan.go, rules.go, root.go | Tests: PASS | Review: PASSED | Next: US-402
+---

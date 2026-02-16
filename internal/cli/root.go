@@ -48,7 +48,7 @@ func Run() int {
 }
 
 func printUsage() {
-	fmt.Fprintln(os.Stderr, "truthsayer — development anti-pattern scanner for Go and bash")
+	fmt.Fprintln(os.Stderr, "truthsayer — development anti-pattern scanner for Go, JS/TS, Python, and bash")
 	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "Usage: truthsayer <command> [options]")
 	fmt.Fprintln(os.Stderr, "")
@@ -59,6 +59,7 @@ func printUsage() {
 	fmt.Fprintln(os.Stderr, "  report <path>        Generate JSON report to file")
 	fmt.Fprintln(os.Stderr, "  rules                List all detection rules")
 	fmt.Fprintln(os.Stderr, "  rules --enabled      List only enabled rules (respects config)")
+	fmt.Fprintln(os.Stderr, "  rules --lang <langs>  List rules for specific languages")
 	fmt.Fprintln(os.Stderr, "  doctor               Check installation, config, and readiness")
 	fmt.Fprintln(os.Stderr, "  hook <path>          Run as pre-commit hook (scan staged files)")
 	fmt.Fprintln(os.Stderr, "  hook install <path>  Install git pre-commit hook")
@@ -69,8 +70,12 @@ func printUsage() {
 	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "Scan options:")
 	fmt.Fprintln(os.Stderr, "  --format json        Output JSON instead of terminal format")
+	fmt.Fprintln(os.Stderr, "  --lang <langs>       Scan only specific languages (e.g., go,python,js)")
 	fmt.Fprintln(os.Stderr, "  --config <path>      Use a custom config file (default: .truthsayer.toml)")
 	fmt.Fprintln(os.Stderr, "  --create-beads       Create problem beads for errors")
+	fmt.Fprintln(os.Stderr, "")
+	fmt.Fprintln(os.Stderr, "Language aliases:")
+	fmt.Fprintln(os.Stderr, "  go, js/javascript, ts/typescript, python/py, bash/shell/sh")
 	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "Exit codes:")
 	fmt.Fprintln(os.Stderr, "  0  No error-severity findings")

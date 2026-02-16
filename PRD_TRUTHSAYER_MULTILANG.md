@@ -270,7 +270,7 @@
   - **Files**: `internal/config/config.go`, `internal/engine/engine.go`, `internal/config/config_test.go`
   - **Acceptance**: Language enable/disable works via TOML config; defaults are all-enabled
 
-- [ ] **US-401** CLI --lang flag for scan and rules commands
+- [x] **US-401** CLI --lang flag for scan and rules commands
   - Add `--lang` flag to `scan` command: comma-separated language filter (`go,python`, `js,ts`, etc.)
   - Add `--lang` flag to `rules` command: list only rules matching specified languages
   - Implement language aliases: `js`/`javascript`, `ts`/`typescript`, `py`/`python`, `sh`/`bash`/`shell`
