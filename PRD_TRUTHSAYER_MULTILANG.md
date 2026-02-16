@@ -221,7 +221,7 @@
   - **Files**: 5 rule files + 5 test files + 10 fixture files
   - **Acceptance**: All rules trigger correctly; `def f(items=None)` and `requests.get(url, timeout=30)` are clean
 
-- [ ] **US-304** Python mock-leakage + trace-gaps AST rules
+- [x] **US-304** Python mock-leakage + trace-gaps AST rules
   - Implement `internal/rules/py_unittest_import.go` — `from unittest.mock import ...` in non-test files
   - Implement `internal/rules/py_debug_flag.go` — `if __debug__:` or `if DEBUG:` in production code with side effects
   - Implement `internal/rules/py_silent_request.go` — `requests.get/post()` without `raise_for_status()` or status check

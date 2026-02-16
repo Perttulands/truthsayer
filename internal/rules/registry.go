@@ -321,5 +321,12 @@ func DefaultRegistry() *Registry {
 	reg.RegisterPyAST(&PyGlobalState{})
 	reg.RegisterPyAST(&PyNoEncodingOpen{})
 
+	// Python mock-leakage rules
+	reg.RegisterPyAST(&PyUnittestImport{})
+	reg.RegisterPyAST(&PyDebugFlag{})
+
+	// Python trace-gaps rules
+	reg.RegisterPyAST(&PySilentRequest{})
+
 	return reg
 }

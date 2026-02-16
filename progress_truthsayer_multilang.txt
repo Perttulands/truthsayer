@@ -221,3 +221,67 @@
 - Learnings: The js_helpers.go duplication from scanner package is an acceptable trade-off vs import cycles. isJSRuleID in integration test is a maintenance burden but acceptable for test code — could be derived from jsRuleFixtures table in future. Severity adjustments from PRD spec (e.g., empty-catch → warning instead of error) are reasonable engineering judgment calls.
 **Summary:** Task: US-REVIEW-S2 | Files: [all Sprint 2 files reviewed] | Tests: PASS | Review: PASSED | Next: US-300
 ---
+
+## Iteration 19 - US-300: Python silent-fallback rules (bare-except, except-pass, except-broad)
+- Created `py_helpers.go` with Python-specific helper functions (pyFindNodesByType, pyNodeText, pyLineNumber, pySourceLine, pyIsTestFile, pyWalkNode) — same pattern as js_helpers.go to avoid import cycles
+- Created `py_ast_rule_test_helpers_test.go` with `runPyCheckerOnSource()` test helper using Python tree-sitter grammar
+- Implemented `py_bare_except.go`: detects `except:` without exception type via `isBareExcept` helper that checks for absence of named children other than `block`; severity=error since bare except catches SystemExit/KeyboardInterrupt
+- Implemented `py_except_pass.go`: detects `except X: pass` via `exceptBody` helper + pass_statement check; only triggers when body has exactly one pass_statement
+- Implemented `py_except_broad.go`: detects `except Exception:` and `except BaseException:` via `exceptType` helper that handles both direct identifier and as_pattern nodes; `broadExceptions` map is cleanly extensible
+- Registered all 3 rules in DefaultRegistry()
+- Created 6 test fixture files in testdata/python/ (positive + negative for each rule)
+- 20 new tests total, all passing; full test suite green with zero regressions
+- Fixed pre-commit hook to skip testdata files — `isTestdata()` function added to `hook.go`. Testdata fixtures are intentionally bad code and should not block commits.
+- Learnings: Python tree-sitter `except_clause` has no field names — use NamedChild iteration and type checking. `as_pattern` wraps "Exception as e" with first named child being the exception type identifier. Pre-commit hook scans staged files directly (bypasses walker exclusions), so testdata needs explicit exclusion in hook.
+**Summary:** Task: US-300 | Files: py_helpers.go, py_bare_except.go, py_except_pass.go, py_except_broad.go, py_ast_rule_test_helpers_test.go + 3 tests + 6 fixtures + hook.go | Tests: PASS | Review: PASSED | Next: US-301
+---
+
+## Iteration 20 - US-301: Python silent-fallback rules (subprocess-no-check, getattr-silent-default, dict-get-none)
+- Implemented `py_subprocess_no_check.go`: detects `subprocess.run()`/`subprocess.call()` without `check=True`; `hasCheckTrue` helper inspects keyword_argument nodes; skips `check_output`/`check_call` (already raise by default)
+- Implemented `py_getattr_silent_default.go`: detects `getattr(obj, 'attr', None)` with 3 positional args where 3rd is None; `namedArgs` helper extracts positional args from argument_list; severity=info
+- Implemented `py_dict_get_none.go`: detects `dict.get(key)` with 1 positional arg (no explicit default); object must be plain identifier to skip `requests.get()` false positives; `looksLikeURL` heuristic filters URL args
+- Registered all 3 rules in DefaultRegistry()
+- Created 6 test fixture files in testdata/python/ (positive + negative for each rule)
+- 20 new tests total, all passing; full test suite green with zero regressions
+- Learnings: `requests.get("url")` is a false positive for dict.get rule because `requests` is an `identifier` node — use URL arg heuristic to filter. `namedArgs` is a useful shared helper for extracting positional args from `argument_list` nodes. Python tree-sitter keyword_argument has `name` and `value` fields accessible via `ChildByFieldName`.
+**Summary:** Task: US-301 | Files: py_subprocess_no_check.go, py_getattr_silent_default.go, py_dict_get_none.go + 3 tests + 6 fixtures | Tests: PASS | Review: PASSED | Next: US-302
+---
+
+## Iteration 21 - US-302: Python error-context rules (raise-from-none, bare-raise-different, generic-exception, string-exception, log-and-raise)
+- Implemented `py_raise_from_none.go`: detects `raise X from None` — checks if last named child of `raise_statement` is `none` type node
+- Implemented `py_bare_raise_different.go`: detects `except ErrorA: raise ErrorB()` without `from`; uses `directChildrenOfType` to avoid double-counting from nested try/except; `isRaiseDifferentWithoutFrom` cleanly handles 3 cases (0 children=bare raise, 2+=has from, 1=new exception)
+- Implemented `py_generic_exception.go`: detects `raise Exception("failed")` and `raise BaseException()`; checks `function` field of `call` node against `pyGenericExceptions` map
+- Implemented `py_string_exception.go`: detects `raise "error"` Python 2 idiom; checks for `string` or `concatenated_string` node types; severity=error
+- Implemented `py_log_and_raise.go`: detects `logging.error(e); raise` duplicate reporting; checks direct children of except body for both logging calls and raise statements; matches `logging`/`logger`/`log` objects with error-level methods
+- Added `directChildrenOfType` helper to `py_helpers.go` — non-recursive alternative to `pyFindNodesByType` for scoping to direct children only
+- Registered all 5 rules in DefaultRegistry()
+- Created 10 test fixture files in testdata/python/ (positive + negative for each rule)
+- 30 new tests total, all passing; full test suite green with zero regressions
+- Learnings: `pyFindNodesByType` is recursive and will find nodes in nested scopes — use `directChildrenOfType` when you need to scope to direct children of a block (e.g., raise statements in an except body, not in nested try/except). Tree-sitter `raise_statement` with `from None` has a `none` type node as the last named child; `from e` has an `identifier`. NamedChildCount distinguishes bare raise (0), raise X (1), and raise X from Y (2+).
+**Summary:** Task: US-302 | Files: py_raise_from_none.go, py_bare_raise_different.go, py_generic_exception.go, py_string_exception.go, py_log_and_raise.go + 5 tests + 10 fixtures + py_helpers.go | Tests: PASS | Review: PASSED | Next: US-303
+---
+
+## Iteration 22 - US-303: Python bad-defaults AST rules (mutable-default-arg, no-timeout-requests, star-import, global-state, no-encoding-open)
+- Implemented `py_mutable_default.go`: detects `def f(items=[])` mutable defaults; handles both literal forms (`[]`, `{}`, `{1,2}`) and call forms (`set()`, `list()`, `dict()`) via `isMutableDefault` helper; checks `default_parameter` children of `parameters` node
+- Implemented `py_no_timeout_requests.go`: detects `requests.get/post/put/delete/patch/head/options/request()` without `timeout=`; `hasKeywordArg` helper shared with `py_no_encoding_open`; skips `**kwargs` spreads (might contain timeout)
+- Implemented `py_star_import.go`: detects `from module import *` via `import_from_statement` with `wildcard_import` child; skips test files
+- Implemented `py_global_state.go`: detects module-level mutable globals (`ITEMS = []`, `CACHE = {}`); only checks direct children of root `module` node (not nested); reuses `isMutableDefault` from py_mutable_default; skips test files
+- Implemented `py_no_encoding_open.go`: detects bare `open()` without `encoding=`; `isBinaryMode` checks both positional and keyword `mode` arg for binary modes (`rb`, `wb`); skips `io.open` (only matches bare `open` identifier)
+- Registered all 5 rules in DefaultRegistry()
+- Created 10 test fixture files in testdata/python/ (positive + negative for each rule)
+- 38 new tests total, all passing; full test suite green with zero regressions
+- Learnings: tree-sitter parses `set()` as `call` node (not `set` literal), same for `list()` and `dict()`. Must check both literal node types AND call expressions with mutable constructor names. `isMutableDefault` cleanly handles this and is reusable across both mutable-default and global-state rules. `hasKeywordArg` is also shared between no-timeout-requests and no-encoding-open rules.
+**Summary:** Task: US-303 | Files: py_mutable_default.go, py_no_timeout_requests.go, py_star_import.go, py_global_state.go, py_no_encoding_open.go + 5 tests + 10 fixtures | Tests: PASS | Review: PASSED | Next: US-304
+---
+
+## Iteration 23 - US-304: Python mock-leakage + trace-gaps AST rules (unittest-import, debug-flag, silent-request)
+- Implemented `py_unittest_import.go`: detects `from unittest.mock import ...`, `import mock`, `import unittest.mock`, `from pytest import ...` in non-test files; handles both `import_from_statement` and `import_statement` (including aliased imports); `isPyTestModule` uses exact+prefix matching to avoid false positives on modules like `mockery`
+- Implemented `py_debug_flag.go`: detects `if __debug__:` and `if DEBUG:` with side effects in production code; `pyBlockHasSideEffects` checks for expression_statement, return, raise, assert — skips pass-only bodies; only matches exact `__debug__` and `DEBUG` identifiers (not `DEBUG_MODE`)
+- Implemented `py_silent_request.go`: detects `requests.get/post()` without `raise_for_status()`, `status_code`, or `.ok` check; reuses `requestsMethods` map from `py_no_timeout_requests.go`; handles three patterns: chained calls (`requests.get(url).raise_for_status()`), assigned + checked (`resp = requests.get(); resp.raise_for_status()`), and bare calls
+- Registered all 3 rules in DefaultRegistry()
+- Created 6 test fixture files in testdata/python/ (positive + negative for each rule)
+- 25 new tests total, all passing; full test suite green with zero regressions
+- Post-review: removed unused `source` param from `pyBlockHasSideEffects`. No other issues.
+- Learnings: Python tree-sitter `expression_statement > assignment > call` nesting means sibling search must operate at the `expression_statement` level (not the assignment level). `import_statement` children can be `dotted_name` (bare import) or `aliased_import` (import X as Y) — handle both via type switch. `requestsMethods` map shared across rules avoids duplication.
+**Summary:** Task: US-304 | Files: py_unittest_import.go, py_debug_flag.go, py_silent_request.go + 3 tests + 6 fixtures | Tests: PASS | Review: PASSED | Next: US-305
+---
