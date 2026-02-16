@@ -33,7 +33,7 @@
   - **Files**: `internal/scanner/treesitter.go`, `internal/scanner/treesitter_test.go`
   - **Acceptance**: All utility functions tested with representative JS/TS/Python AST nodes
 
-- [ ] **US-102** Define JSASTChecker and PyASTChecker interfaces + extend Registry
+- [x] **US-102** Define JSASTChecker and PyASTChecker interfaces + extend Registry
   - Add `JSASTChecker` interface to `internal/rules/rule.go`: `Meta() Rule` + `CheckJSAST(tree, source, path) []Finding`
   - Add `PyASTChecker` interface to `internal/rules/rule.go`: `Meta() Rule` + `CheckPyAST(tree, source, path) []Finding`
   - Extend `Rule` struct if needed (ensure `FileTypes` and `ScanType` fields exist)
@@ -42,7 +42,7 @@
   - **Files**: `internal/rules/rule.go`, `internal/rules/registry.go`, `internal/rules/registry_test.go`
   - **Acceptance**: Can register and retrieve JS/Python AST checkers from registry
 
-- [ ] **US-103** Implement JSScanner with parser pooling
+- [x] **US-103** Implement JSScanner with parser pooling
   - Create `internal/scanner/js_scanner.go`:
     - `ParserPool` using `sync.Pool` for thread-safe parser reuse
     - `JSScanner` struct with parser pool and checker list
