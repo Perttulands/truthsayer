@@ -11,6 +11,8 @@ type Registry struct {
 	mu                sync.RWMutex
 	ast               []ASTChecker
 	regex             []RegexChecker
+	jsAST             []JSASTChecker
+	pyAST             []PyASTChecker
 	disabled          map[string]bool
 	severityOverrides map[string]finding.Severity
 }
@@ -37,6 +39,20 @@ func (r *Registry) RegisterRegex(c RegexChecker) {
 	r.regex = append(r.regex, c)
 }
 
+// RegisterJSAST adds a JS/TS AST-based checker.
+func (r *Registry) RegisterJSAST(c JSASTChecker) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.jsAST = append(r.jsAST, c)
+}
+
+// RegisterPyAST adds a Python AST-based checker.
+func (r *Registry) RegisterPyAST(c PyASTChecker) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.pyAST = append(r.pyAST, c)
+}
+
 // Disable marks a rule ID as disabled.
 func (r *Registry) Disable(id string) {
 	r.mu.Lock()
@@ -58,6 +74,18 @@ func (r *Registry) SetSeverity(id string, severity string) bool {
 		}
 	}
 	for _, c := range r.regex {
+		if c.Meta().ID == id {
+			r.severityOverrides[id] = sev
+			return true
+		}
+	}
+	for _, c := range r.jsAST {
+		if c.Meta().ID == id {
+			r.severityOverrides[id] = sev
+			return true
+		}
+	}
+	for _, c := range r.pyAST {
 		if c.Meta().ID == id {
 			r.severityOverrides[id] = sev
 			return true
@@ -106,6 +134,32 @@ func (r *Registry) RegexCheckers() []RegexChecker {
 	return out
 }
 
+// JSASTCheckers returns all enabled JS/TS AST checkers.
+func (r *Registry) JSASTCheckers() []JSASTChecker {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	var out []JSASTChecker
+	for _, c := range r.jsAST {
+		if !r.disabled[c.Meta().ID] {
+			out = append(out, c)
+		}
+	}
+	return out
+}
+
+// PyASTCheckers returns all enabled Python AST checkers.
+func (r *Registry) PyASTCheckers() []PyASTChecker {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	var out []PyASTChecker
+	for _, c := range r.pyAST {
+		if !r.disabled[c.Meta().ID] {
+			out = append(out, c)
+		}
+	}
+	return out
+}
+
 // AllRules returns metadata for all registered rules.
 func (r *Registry) AllRules() []Rule {
 	r.mu.RLock()
@@ -115,6 +169,12 @@ func (r *Registry) AllRules() []Rule {
 		out = append(out, c.Meta())
 	}
 	for _, c := range r.regex {
+		out = append(out, c.Meta())
+	}
+	for _, c := range r.jsAST {
+		out = append(out, c.Meta())
+	}
+	for _, c := range r.pyAST {
 		out = append(out, c.Meta())
 	}
 	return out
@@ -136,6 +196,24 @@ func (r *Registry) EnabledRules() []Rule {
 		}
 	}
 	for _, c := range r.regex {
+		m := c.Meta()
+		if !r.disabled[m.ID] {
+			if sev, ok := r.severityOverrides[m.ID]; ok {
+				m.Severity = sev
+			}
+			out = append(out, m)
+		}
+	}
+	for _, c := range r.jsAST {
+		m := c.Meta()
+		if !r.disabled[m.ID] {
+			if sev, ok := r.severityOverrides[m.ID]; ok {
+				m.Severity = sev
+			}
+			out = append(out, m)
+		}
+	}
+	for _, c := range r.pyAST {
 		m := c.Meta()
 		if !r.disabled[m.ID] {
 			if sev, ok := r.severityOverrides[m.ID]; ok {

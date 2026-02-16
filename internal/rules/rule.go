@@ -4,6 +4,8 @@ import (
 	"go/ast"
 	"go/token"
 
+	sitter "github.com/smacker/go-tree-sitter"
+
 	"github.com/perttulands/truthsayer/internal/finding"
 )
 
@@ -37,4 +39,16 @@ type ASTChecker interface {
 type RegexChecker interface {
 	Meta() Rule
 	CheckLines(path string, lines []string) []finding.Finding
+}
+
+// JSASTChecker is implemented by rules that analyze JS/TS AST nodes.
+type JSASTChecker interface {
+	Meta() Rule
+	CheckJSAST(tree *sitter.Tree, source []byte, path string) []finding.Finding
+}
+
+// PyASTChecker is implemented by rules that analyze Python AST nodes.
+type PyASTChecker interface {
+	Meta() Rule
+	CheckPyAST(tree *sitter.Tree, source []byte, path string) []finding.Finding
 }
