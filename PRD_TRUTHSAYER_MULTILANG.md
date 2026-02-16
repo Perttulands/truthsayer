@@ -166,7 +166,7 @@
   - **Files**: Rule files in `internal/rules/`, test files, fixtures in `testdata/js/`
   - **Acceptance**: All 9 regex rules trigger correctly on positive fixtures, silent on negative
 
-- [ ] **US-208** JS/TS integration test suite
+- [x] **US-208** JS/TS integration test suite
   - Create full integration test: scan `testdata/js/` directory with full engine
   - Verify all expected findings from all JS/TS rules appear
   - Verify no false positives on negative fixtures
