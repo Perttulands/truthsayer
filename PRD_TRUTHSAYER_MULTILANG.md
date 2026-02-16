@@ -91,9 +91,9 @@
 ---
 
 ## Sprint 2: JS/TS Rules
-**Status:** NOT STARTED
+**Status:** IN PROGRESS
 
-- [ ] **US-200** JS silent-fallback rules: empty-catch, catch-return-null, floating-promise
+- [x] **US-200** JS silent-fallback rules: empty-catch, catch-return-null, floating-promise
   - Implement `internal/rules/js_empty_catch.go` — detect `catch (e) {}` with empty body
   - Implement `internal/rules/js_catch_return_null.go` — detect `.catch(() => null)` and `.catch(() => undefined)`
   - Implement `internal/rules/js_floating_promise.go` — detect unhandled promise-returning calls (fetch, async calls) not awaited/assigned/returned

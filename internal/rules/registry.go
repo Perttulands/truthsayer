@@ -266,5 +266,10 @@ func DefaultRegistry() *Registry {
 	reg.RegisterRegex(&TestLeakedSSE{})
 	reg.RegisterRegex(&TestMissingCleanup{})
 
+	// JS/TS AST rules
+	reg.RegisterJSAST(&JSEmptyCatch{})
+	reg.RegisterJSAST(&JSCatchReturnNull{})
+	reg.RegisterJSAST(&JSFloatingPromise{})
+
 	return reg
 }
