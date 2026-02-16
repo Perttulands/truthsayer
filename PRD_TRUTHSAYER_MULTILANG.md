@@ -201,7 +201,7 @@
   - **Files**: 3 rule files + 3 test files + 6 fixture files
   - **Acceptance**: Rules trigger correctly; `subprocess.run(..., check=True)` is clean
 
-- [ ] **US-302** Python error-context rules: raise-from-none, bare-raise-different, generic-exception, string-exception, log-and-raise
+- [x] **US-302** Python error-context rules: raise-from-none, bare-raise-different, generic-exception, string-exception, log-and-raise
   - Implement `internal/rules/py_raise_from_none.go` — `raise X from None`
   - Implement `internal/rules/py_bare_raise_different.go` — `except ErrorA: raise ErrorB()` without `from`
   - Implement `internal/rules/py_generic_exception.go` — `raise Exception("failed")`

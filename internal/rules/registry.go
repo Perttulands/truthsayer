@@ -307,5 +307,12 @@ func DefaultRegistry() *Registry {
 	reg.RegisterPyAST(&PyGetattrSilentDefault{})
 	reg.RegisterPyAST(&PyDictGetNone{})
 
+	// Python error-context rules
+	reg.RegisterPyAST(&PyRaiseFromNone{})
+	reg.RegisterPyAST(&PyBareRaiseDifferent{})
+	reg.RegisterPyAST(&PyGenericException{})
+	reg.RegisterPyAST(&PyStringException{})
+	reg.RegisterPyAST(&PyLogAndRaise{})
+
 	return reg
 }

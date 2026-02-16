@@ -61,6 +61,19 @@ func pyIsTestFile(path string) bool {
 		name == "conftest"
 }
 
+// directChildrenOfType returns the direct named children of node matching the given type.
+// Unlike pyFindNodesByType, this does NOT recurse into grandchildren.
+func directChildrenOfType(node *sitter.Node, nodeType string) []*sitter.Node {
+	var result []*sitter.Node
+	for i := 0; i < int(node.NamedChildCount()); i++ {
+		child := node.NamedChild(i)
+		if child.Type() == nodeType {
+			result = append(result, child)
+		}
+	}
+	return result
+}
+
 // pyWalkNode recursively visits every named node in the tree, calling fn for each.
 func pyWalkNode(node *sitter.Node, fn func(*sitter.Node)) {
 	if node == nil {
