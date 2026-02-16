@@ -63,6 +63,83 @@ func jsIsTestFile(path string) bool {
 	return false
 }
 
+// jsUnquote strips surrounding quotes from a JS/TS string literal.
+func jsUnquote(s string) string {
+	if len(s) >= 2 && (s[0] == '"' || s[0] == '\'' || s[0] == '`') {
+		return s[1 : len(s)-1]
+	}
+	return s
+}
+
+// expressAppInfo holds detected Express/Koa app variable names and route info.
+type expressAppInfo struct {
+	appNames       map[string]bool
+	hasRoute       bool
+	firstRouteNode *sitter.Node
+}
+
+// jsFindExpressApp scans for express()/Koa() variable declarations and route definitions.
+func jsFindExpressApp(root *sitter.Node, source []byte) *expressAppInfo {
+	calls := jsFindNodesByType(root, "call_expression")
+
+	var appVarNames []string
+	for _, call := range calls {
+		fn := call.ChildByFieldName("function")
+		if fn == nil {
+			continue
+		}
+		fnText := jsNodeText(fn, source)
+		if fnText == "express" || fnText == "Koa" {
+			parent := call.Parent()
+			if parent != nil && parent.Type() == "variable_declarator" {
+				nameNode := parent.ChildByFieldName("name")
+				if nameNode != nil {
+					appVarNames = append(appVarNames, jsNodeText(nameNode, source))
+				}
+			}
+		}
+	}
+
+	if len(appVarNames) == 0 {
+		return nil
+	}
+
+	info := &expressAppInfo{
+		appNames: make(map[string]bool, len(appVarNames)),
+	}
+	for _, n := range appVarNames {
+		info.appNames[n] = true
+	}
+
+	routeMethods := map[string]bool{
+		"get": true, "post": true, "put": true, "delete": true,
+		"patch": true, "all": true,
+	}
+
+	for _, call := range calls {
+		fn := call.ChildByFieldName("function")
+		if fn == nil || fn.Type() != "member_expression" {
+			continue
+		}
+		obj := fn.ChildByFieldName("object")
+		prop := fn.ChildByFieldName("property")
+		if obj == nil || prop == nil {
+			continue
+		}
+		if !info.appNames[jsNodeText(obj, source)] {
+			continue
+		}
+		if routeMethods[jsNodeText(prop, source)] {
+			if !info.hasRoute {
+				info.hasRoute = true
+				info.firstRouteNode = call
+			}
+		}
+	}
+
+	return info
+}
+
 // jsWalkNode recursively visits every named node in the tree, calling fn for each.
 func jsWalkNode(node *sitter.Node, fn func(*sitter.Node)) {
 	if node == nil {

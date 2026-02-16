@@ -277,6 +277,10 @@ func DefaultRegistry() *Registry {
 	reg.RegisterJSAST(&JSPromiseReject{})
 	reg.RegisterJSAST(&JSConsoleErrorNoThrow{})
 	reg.RegisterJSAST(&JSHTTP200OnError{})
+	reg.RegisterJSAST(&JSNoErrorHandlerExpress{})
+	reg.RegisterJSAST(&JSTestImportInSrc{})
+	reg.RegisterJSAST(&JSEnvTestCheck{})
+	reg.RegisterJSAST(&JSMissingCorrelationID{})
 
 	return reg
 }

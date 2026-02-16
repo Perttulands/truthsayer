@@ -126,7 +126,7 @@
   - **Files**: `internal/rules/js_http_200_on_error.go`, `internal/rules/js_http_200_on_error_test.go`, `testdata/js/http_200_on_error.js`, `testdata/js/http_200_on_error_negative.js`
   - **Acceptance**: Detects status 200 after error in Express-style handlers, clean on proper error responses
 
-- [ ] **US-204** JS trace-gaps + mock-leakage AST rules
+- [x] **US-204** JS trace-gaps + mock-leakage AST rules
   - Implement `internal/rules/js_no_error_handler_express.go` — Express app without error middleware `(err, req, res, next)`
   - Implement `internal/rules/js_test_import_in_src.go` — import from `@testing-library/*`, `vitest`, `jest` in non-test files
   - Implement `internal/rules/js_env_test_check.go` — `process.env.NODE_ENV === 'test'` in production code
