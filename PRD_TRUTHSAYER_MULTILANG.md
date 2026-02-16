@@ -110,7 +110,7 @@
   - **Files**: `internal/rules/js_callback_err_ignored.go`, `internal/rules/js_optional_chain_silence.go`, corresponding `_test.go` and `testdata/js/` fixtures
   - **Acceptance**: Rules trigger correctly, no false positives on normal callback patterns and reasonable optional chaining
 
-- [ ] **US-202** JS error-context rules: rethrow-no-wrap, generic-error-message, promise-reject-non-error, console-error-no-throw
+- [x] **US-202** JS error-context rules: rethrow-no-wrap, generic-error-message, promise-reject-non-error, console-error-no-throw
   - Implement `internal/rules/js_rethrow_no_wrap.go` — `catch (e) { throw e }` without wrapping
   - Implement `internal/rules/js_generic_error_message.go` — `throw new Error("failed")` with no interpolation
   - Implement `internal/rules/js_promise_reject.go` — `Promise.reject("string")` or `reject(42)` with non-Error values

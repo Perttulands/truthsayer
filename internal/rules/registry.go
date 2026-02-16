@@ -272,6 +272,10 @@ func DefaultRegistry() *Registry {
 	reg.RegisterJSAST(&JSFloatingPromise{})
 	reg.RegisterJSAST(&JSCallbackErrIgnored{})
 	reg.RegisterJSAST(&JSOptionalChainSilence{})
+	reg.RegisterJSAST(&JSRethrowNoWrap{})
+	reg.RegisterJSAST(&JSGenericErrorMessage{})
+	reg.RegisterJSAST(&JSPromiseReject{})
+	reg.RegisterJSAST(&JSConsoleErrorNoThrow{})
 
 	return reg
 }
