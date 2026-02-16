@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	defaultBRCommand = "/home/perttu/.cargo/bin/br"
+	defaultBRCommand = "br"
 	defaultTimeout   = 5 * time.Second
 
 	errorPriority   = 1
