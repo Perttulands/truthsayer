@@ -144,7 +144,7 @@
   - **Files**: 4 rule files + 4 test files + 8 fixture files (TS fixtures for type-specific rules)
   - **Acceptance**: Rules trigger on anti-patterns; TS-specific rules only fire on `.ts/.tsx` files
 
-- [ ] **US-206** JS test-isolation AST rules
+- [x] **US-206** JS test-isolation AST rules
   - Implement `internal/rules/js_no_afterall_cleanup.go` — `beforeAll`/`beforeEach` without matching `afterAll`/`afterEach` cleanup
   - Implement `internal/rules/js_test_only_import.go` — imports exclusively used in test setup living in `src/`
   - Register in `DefaultRegistry()`, test fixtures + unit tests

@@ -119,3 +119,60 @@
 - Learnings: tree-sitter node type for anonymous functions is `function_expression`, not `function`. `optional_chain` is a named child node with type `"optional_chain"` — need to check all children (not just named) via `ChildCount()`/`Child(i)` since it's a token. Parent-type check is the cleanest way to only report outermost chains.
 **Summary:** Task: US-201 | Files: js_callback_err_ignored.go, js_optional_chain_silence.go + tests + fixtures | Tests: PASS | Review: PASSED | Next: US-202
 ---
+
+## Iteration 11 - US-202: JS error-context rules (rethrow-no-wrap, generic-error-message, promise-reject-non-error, console-error-no-throw)
+- Implemented `js_rethrow_no_wrap.go`: detects `catch (e) { throw e }` without wrapping; matches catch parameter name against thrown identifier; skips parameterless catch
+- Implemented `js_generic_error_message.go`: detects `throw new Error("failed")` with generic static messages; allowlist of 13 generic messages; case-insensitive; only flags plain string literals (not template literals/concatenation); checks built-in Error constructors (Error, TypeError, etc.)
+- Implemented `js_promise_reject.go`: detects `Promise.reject("string")` and `reject(42)` with non-Error values; checks both `Promise.reject()` and bare `reject()` calls; `isNonErrorValue` uses node type switch
+- Implemented `js_console_error_no_throw.go`: detects `console.error()` in catch blocks without re-throw; walks catch body for both console.error calls and throw statements
+- Registered all 4 rules in `DefaultRegistry()`
+- 30 new tests, all passing; full test suite green with zero regressions
+- Learnings: tree-sitter parses `undefined` as node type `"undefined"` (not `"identifier"`), same for `true`/`false`/`null`. Must use node type, not text comparison for these JS literals. `isNonErrorValue` and `isErrorConstructor` are clean helper extraction patterns for this rule set.
+**Summary:** Task: US-202 | Files: js_rethrow_no_wrap.go, js_generic_error_message.go, js_promise_reject.go, js_console_error_no_throw.go + 4 tests + 8 fixtures | Tests: PASS | Review: PASSED | Next: US-203
+---
+
+## Iteration 12 - US-203: JS error-context rule: http-200-on-error
+- Implemented `js_http_200_on_error.go`: detects `res.status(200)` and `res.json()` inside catch blocks in Express/Koa/Fastify handlers
+- Covers success status codes (200, 201, 202, 204) via `isSuccessStatusCall`; skips error status (4xx/5xx) via `isErrorStatusCode`
+- `isResJsonCall` flags `res.json()`/`ctx.json()`/`response.json()` in catch blocks but correctly skips `res.status(500).json()` chains
+- 10 tests covering: status 200/201 in catch, res.json in catch, ctx/response identifiers, multiple catches, negative cases (error status, no catch, test files)
+- Registered in DefaultRegistry(); full test suite green with zero regressions
+- Learnings: `fn.Parent()` from a member_expression goes to the call_expression — useful for checking args of the status call. Chained calls like `res.status(500).json()` have the call_expression as the object of the outer member_expression, making chain detection straightforward.
+**Summary:** Task: US-203 | Files: js_http_200_on_error.go, js_http_200_on_error_test.go, testdata/js/http_200_on_error.js, testdata/js/http_200_on_error_negative.js | Tests: PASS | Review: PASSED | Next: US-204
+---
+
+## Iteration 13 - US-204: JS trace-gaps + mock-leakage AST rules
+- Implemented 4 rules: `js_no_error_handler_express.go` (Express app without error middleware), `js_test_import_in_src.go` (test library imports in non-test files), `js_env_test_check.go` (NODE_ENV === 'test' in production code), `js_missing_correlation_id.go` (middleware chain without correlation ID)
+- Extracted shared `jsFindExpressApp()` helper into `js_helpers.go` to eliminate ~40 lines of duplicated Express app detection logic between the two Express-related rules
+- Moved `unquote` → `jsUnquote` into `js_helpers.go` for consistency with other JS helper functions
+- Fixed `isTestLibrary` bug: bare `HasPrefix` without trailing `/` would false-positive on modules like `"jestify"` matching prefix `"jest"`
+- Collapsed duplicate if/else branches in `js_env_test_check.go` for left/right operand order
+- Added `isErrorMiddleware` helper for detecting Express 4-param error handlers
+- 32 new tests across 4 test files, all passing; full test suite green with zero regressions
+- Created 8 test fixture files in `testdata/js/` (positive + negative for each rule)
+- Learnings: When defining string prefix lists for matching, always think about false positives from partial matches (e.g., "jest" matching "jestify"). Use `modPath == prefix || HasPrefix(modPath, prefix+"/")` pattern. Shared Express app detection in `jsFindExpressApp` makes adding future Express-related rules trivial. `jsUnquote` belongs in helpers since multiple rules need it for import/require string extraction.
+**Summary:** Task: US-204 | Files: js_no_error_handler_express.go, js_test_import_in_src.go, js_env_test_check.go, js_missing_correlation_id.go + js_helpers.go + 4 tests + 8 fixtures | Tests: PASS | Review: PASSED | Next: US-205
+---
+
+## Iteration 14 - US-205: JS bad-defaults AST rules (no-timeout-fetch, any-type-assertion, non-null-assertion, eval-usage)
+- Implemented `js_no_timeout_fetch.go`: detects `fetch()` without `signal` option; conservative on spreads (assumes might contain signal); checks object literal `pair`, `shorthand_property_identifier`, and `spread_element`
+- Implemented `js_any_assertion.go`: detects `as any` via `as_expression` node with `predefined_type` child == "any"; TS-only (`.ts/.tsx` extension guard)
+- Implemented `js_non_null_assertion.go`: detects `variable!` via `non_null_expression` node type; TS-only
+- Implemented `js_eval_usage.go`: detects `eval()` (call_expression) and `new Function()` (new_expression with "constructor" field); does not trigger on `obj.eval()` (member_expression fnText != "eval")
+- Registered all 4 rules in `DefaultRegistry()`; 36 new tests across 4 test files, all passing
+- Created 8 test fixture files in `testdata/js/` (positive + negative for each rule)
+- Full test suite passes with zero regressions
+- Learnings: tree-sitter TS uses `as_expression` for type assertions with `predefined_type` for built-in types. `non_null_expression` is the node type for `!` assertions. `new_expression` uses "constructor" field instead of "function". `hasSignalArg`/`objectHasProperty` are clean helper extractions for fetch rule without over-abstracting.
+**Summary:** Task: US-205 | Files: js_no_timeout_fetch.go, js_any_assertion.go, js_non_null_assertion.go, js_eval_usage.go + 4 tests + 8 fixtures | Tests: PASS | Review: PASSED | Next: US-206
+---
+
+## Iteration 15 - US-206: JS test-isolation AST rules (no-afterall-cleanup, test-only-import)
+- Implemented `js_no_afterall_cleanup.go`: detects `beforeAll`/`beforeEach` without matching `afterAll`/`afterEach` in test files; recursive `checkNode` traverses nested `describe`/`context` blocks independently; only checks test files via `jsIsTestFile`; handles top-level and nested setups
+- Implemented `js_test_only_import.go`: detects imports/requires of test-only modules in production source; checks both ES module `import` statements and CommonJS `require()` calls; `isTestOnlyModule` uses layered heuristics (directory segments, suffixes, prefixes, exact matches)
+- Registered both rules in `DefaultRegistry()`
+- Created 4 test fixture files in `testdata/js/` (positive + negative for each rule)
+- 20 new tests across 2 test files, all passing; full test suite green with zero regressions
+- Post-review: merged duplicate `if callNode.Type() == "call_expression"` blocks into single block with early-continue pattern
+- Learnings: `isTestOnlyModule` needs to check suffixes on raw segment before stripping extension — `./user.test` has `.test` as its "extension" so `LastIndex(".")` strips the very suffix we want to detect. Check raw first, then strip and recheck for double extensions like `user.test.js`.
+**Summary:** Task: US-206 | Files: js_no_afterall_cleanup.go, js_test_only_import.go + 2 tests + 4 fixtures | Tests: PASS | Review: PASSED | Next: US-207
+---

@@ -285,6 +285,8 @@ func DefaultRegistry() *Registry {
 	reg.RegisterJSAST(&JSAnyAssertion{})
 	reg.RegisterJSAST(&JSNonNullAssertion{})
 	reg.RegisterJSAST(&JSEvalUsage{})
+	reg.RegisterJSAST(&JSNoAfterallCleanup{})
+	reg.RegisterJSAST(&JSTestOnlyImport{})
 
 	return reg
 }
