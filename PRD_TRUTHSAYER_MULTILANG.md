@@ -119,7 +119,7 @@
   - **Files**: 4 rule files + 4 test files + 8 fixture files in `testdata/js/`
   - **Acceptance**: All four rules trigger on anti-patterns, silent on proper error handling
 
-- [ ] **US-203** JS error-context rule: http-200-on-error
+- [x] **US-203** JS error-context rule: http-200-on-error
   - Implement `internal/rules/js_http_200_on_error.go` — detect `res.status(200)` or `res.json(...)` after error detection in Express/Koa/Fastify handlers
   - Heuristic: look for `res.status(200)` inside catch blocks, or `res.json()` following error variable checks
   - Register in `DefaultRegistry()`, test fixtures + unit tests

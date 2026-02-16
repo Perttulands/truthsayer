@@ -276,6 +276,7 @@ func DefaultRegistry() *Registry {
 	reg.RegisterJSAST(&JSGenericErrorMessage{})
 	reg.RegisterJSAST(&JSPromiseReject{})
 	reg.RegisterJSAST(&JSConsoleErrorNoThrow{})
+	reg.RegisterJSAST(&JSHTTP200OnError{})
 
 	return reg
 }
