@@ -102,7 +102,7 @@
   - **Files**: `internal/rules/js_empty_catch.go`, `internal/rules/js_catch_return_null.go`, `internal/rules/js_floating_promise.go`, `internal/rules/js_empty_catch_test.go`, `internal/rules/js_catch_return_null_test.go`, `internal/rules/js_floating_promise_test.go`, `testdata/js/empty_catch.js`, `testdata/js/empty_catch_negative.js`, `testdata/js/catch_return_null.js`, `testdata/js/catch_return_null_negative.js`, `testdata/js/floating_promise.ts`, `testdata/js/floating_promise_negative.ts`
   - **Acceptance**: Each rule triggers on positive fixtures, silent on negative fixtures
 
-- [ ] **US-201** JS silent-fallback rules: callback-err-ignored, optional-chain-silence
+- [x] **US-201** JS silent-fallback rules: callback-err-ignored, optional-chain-silence
   - Implement `internal/rules/js_callback_err_ignored.go` — detect `(err, data) => { ... }` callbacks where `err` is never referenced
   - Implement `internal/rules/js_optional_chain_silence.go` — detect deep optional chaining `a?.b?.c?.d?.e` (>3 levels)
   - Register in `DefaultRegistry()`

@@ -270,6 +270,8 @@ func DefaultRegistry() *Registry {
 	reg.RegisterJSAST(&JSEmptyCatch{})
 	reg.RegisterJSAST(&JSCatchReturnNull{})
 	reg.RegisterJSAST(&JSFloatingPromise{})
+	reg.RegisterJSAST(&JSCallbackErrIgnored{})
+	reg.RegisterJSAST(&JSOptionalChainSilence{})
 
 	return reg
 }

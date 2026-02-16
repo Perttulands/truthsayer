@@ -96,3 +96,26 @@
 - Learnings: Pre-existing duplication in registry (EnabledRules iterates 4 checker slices) will compound — consider generic refactor in Sprint 4 polish. jsExts map exists in both engine.go and js_scanner.go but maps to different value types (bool vs grammar enum), so it's intentional.
 **Summary:** Task: US-REVIEW-S1 | Files: [all Sprint 1 files reviewed] | Tests: PASS | Review: PASSED | Next: US-200
 ---
+
+## Iteration 9 - US-200: JS silent-fallback rules (empty-catch, catch-return-null, floating-promise)
+- Created `js_helpers.go` with tree-sitter utility functions for rules package (jsFindNodesByType, jsNodeText, jsLineNumber, jsSourceLine, jsIsTestFile, jsWalkNode) — duplicated from scanner package to avoid import cycle
+- Created `js_ast_rule_test_helpers_test.go` with runJSCheckerOnSource/runTSCheckerOnSource test helpers
+- Implemented `js_empty_catch.go`: detects `catch (e) {}` with empty body, skips comment-only catches, handles parameterless catch (ES2019+)
+- Implemented `js_catch_return_null.go`: detects `.catch(() => null)` and `.catch(() => undefined)` patterns, handles both expression and block arrow function bodies
+- Implemented `js_floating_promise.go`: detects unhandled `fetch()` calls as expression_statement (not awaited/assigned/returned/chained), conservative approach using known promise function allowlist
+- Registered all three rules in DefaultRegistry()
+- Created 6 test fixture files in testdata/js/ (positive + negative for each rule)
+- 22 new tests total, all passing; full test suite green
+- Learnings: rules package cannot import scanner (import cycle: scanner→rules). Created js_helpers.go with duplicated utility functions. For future JS rules, use these helpers. hasJSComment is acceptable for empty catch bodies since statements would appear as NamedChild. expression_statement parent in tree-sitter cleanly identifies standalone (floating) calls.
+**Summary:** Task: US-200 | Files: js_helpers.go, js_empty_catch.go, js_catch_return_null.go, js_floating_promise.go + tests + fixtures | Tests: PASS | Review: PASSED | Next: US-201
+---
+
+## Iteration 10 - US-201: JS silent-fallback rules (callback-err-ignored, optional-chain-silence)
+- Implemented `js_callback_err_ignored.go`: detects `(err, data) => { ... }` callbacks where err/error/e first param is never referenced in body; matches both `arrow_function` and `function_expression` node types; requires >=2 params and being inside `arguments` node (i.e., actual callback)
+- Implemented `js_optional_chain_silence.go`: detects deep optional chaining (>3 `?.` operators) by counting `optional_chain` children in nested `member_expression` chains; only reports outermost chain (skips nested member_expressions with member_expression parent); deduplicates by start byte
+- Registered both rules in `DefaultRegistry()`
+- Created 4 test fixture files (positive + negative for each rule)
+- 17 new tests total, all passing; full test suite green
+- Learnings: tree-sitter node type for anonymous functions is `function_expression`, not `function`. `optional_chain` is a named child node with type `"optional_chain"` — need to check all children (not just named) via `ChildCount()`/`Child(i)` since it's a token. Parent-type check is the cleanest way to only report outermost chains.
+**Summary:** Task: US-201 | Files: js_callback_err_ignored.go, js_optional_chain_silence.go + tests + fixtures | Tests: PASS | Review: PASSED | Next: US-202
+---
