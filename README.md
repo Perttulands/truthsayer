@@ -1,4 +1,4 @@
-# 🔍 Truthsayer — The Oracle's Apprentice
+# 🔍 Truthsayer — The Law Keeper
 
 _It sees the bugs your linter pretends don't exist._
 
@@ -135,7 +135,7 @@ ids = ["bad-defaults.magic-number"]
 | 1 | Error-severity findings present |
 | 2 | Tool error (bad config, invalid path) |
 
-## Part of [Athena's Forge](https://github.com/Perttulands/athena-workspace)
+## Part of [Athena's Agora](https://github.com/Perttulands/athena-workspace)
 
 Truthsayer is part of the quality gate — it runs before Centurion to catch the things that tests can't. See the [mythology](https://github.com/Perttulands/athena-workspace/blob/main/mythology.md) for the full story.
 
