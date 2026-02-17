@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	defaultBRCommand = "br"
+	defaultBRCommand = "bd"
 	defaultTimeout   = 5 * time.Second
 
 	errorPriority   = 1
@@ -19,19 +19,19 @@ const (
 
 type commandRunner func(ctx context.Context, name string, args ...string) ([]byte, error)
 
-// BeadCreator creates beads by shelling out to the br CLI.
+// BeadCreator creates beads by shelling out to the bd CLI.
 type BeadCreator struct {
 	command string
 	timeout time.Duration
 	run     commandRunner
 }
 
-// NewBeadCreator returns a creator configured to use the default br binary.
+// NewBeadCreator returns a creator configured to use the default bd binary.
 func NewBeadCreator() *BeadCreator {
 	return NewBeadCreatorWithCommand(defaultBRCommand)
 }
 
-// NewBeadCreatorWithCommand returns a creator using a custom br command path.
+// NewBeadCreatorWithCommand returns a creator using a custom bd command path.
 func NewBeadCreatorWithCommand(command string) *BeadCreator {
 	if strings.TrimSpace(command) == "" {
 		command = defaultBRCommand
@@ -71,14 +71,14 @@ func (b *BeadCreator) create(title string, priority int) (string, error) {
 	out, err := b.run(ctx, b.command, args...)
 	if err != nil {
 		if ctx.Err() != nil {
-			return "", fmt.Errorf("br create timed out: %w", ctx.Err())
+			return "", fmt.Errorf("bd create timed out: %w", ctx.Err())
 		}
-		return "", fmt.Errorf("br create failed: %w", err)
+		return "", fmt.Errorf("bd create failed: %w", err)
 	}
 
 	id := strings.TrimSpace(string(out))
 	if id == "" {
-		return "", fmt.Errorf("br create returned empty output")
+		return "", fmt.Errorf("bd create returned empty output")
 	}
 	return id, nil
 }
