@@ -12,7 +12,7 @@ import (
 func TestCreateProblemBead_UsesExpectedTitleAndPriority(t *testing.T) {
 	dir := t.TempDir()
 	argsFile := filepath.Join(dir, "args.txt")
-	mockBR := writeMockBR(t, dir, argsFile, `echo "br-123"`)
+	mockBR := writeMockBD(t, dir, argsFile, `echo "bd-123"`)
 
 	creator := NewBeadCreatorWithCommand(mockBR)
 
@@ -20,8 +20,8 @@ func TestCreateProblemBead_UsesExpectedTitleAndPriority(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateProblemBead returned error: %v", err)
 	}
-	if id != "br-123" {
-		t.Fatalf("expected bead ID br-123, got %q", id)
+	if id != "bd-123" {
+		t.Fatalf("expected bead ID bd-123, got %q", id)
 	}
 
 	args := readArgs(t, argsFile)
@@ -40,7 +40,7 @@ func TestCreateProblemBead_UsesExpectedTitleAndPriority(t *testing.T) {
 func TestCreateWarningBead_UsesWarningPriority(t *testing.T) {
 	dir := t.TempDir()
 	argsFile := filepath.Join(dir, "args.txt")
-	mockBR := writeMockBR(t, dir, argsFile, `echo "br-456"`)
+	mockBR := writeMockBD(t, dir, argsFile, `echo "bd-456"`)
 
 	creator := NewBeadCreatorWithCommand(mockBR)
 
@@ -48,8 +48,8 @@ func TestCreateWarningBead_UsesWarningPriority(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateWarningBead returned error: %v", err)
 	}
-	if id != "br-456" {
-		t.Fatalf("expected bead ID br-456, got %q", id)
+	if id != "bd-456" {
+		t.Fatalf("expected bead ID bd-456, got %q", id)
 	}
 
 	args := readArgs(t, argsFile)
@@ -61,7 +61,7 @@ func TestCreateWarningBead_UsesWarningPriority(t *testing.T) {
 func TestCreateProblemBead_Timeout(t *testing.T) {
 	dir := t.TempDir()
 	argsFile := filepath.Join(dir, "args.txt")
-	mockBR := writeMockBR(t, dir, argsFile, `sleep 2; echo "br-late"`)
+	mockBR := writeMockBD(t, dir, argsFile, `sleep 2; echo "bd-late"`)
 
 	creator := NewBeadCreatorWithCommand(mockBR)
 	creator.SetTimeout(100 * time.Millisecond)
@@ -75,15 +75,15 @@ func TestCreateProblemBead_Timeout(t *testing.T) {
 	}
 }
 
-func writeMockBR(t *testing.T, dir string, argsFile string, body string) string {
+func writeMockBD(t *testing.T, dir string, argsFile string, body string) string {
 	t.Helper()
-	path := filepath.Join(dir, "br")
+	path := filepath.Join(dir, "bd")
 	script := fmt.Sprintf(`#!/bin/sh
 printf "%%s\n" "$@" > %q
 %s
 `, argsFile, body)
 	if err := os.WriteFile(path, []byte(script), 0o755); err != nil {
-		t.Fatalf("write mock br: %v", err)
+		t.Fatalf("write mock bd: %v", err)
 	}
 	return path
 }
