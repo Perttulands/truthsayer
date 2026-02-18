@@ -1,5 +1,8 @@
 # 🔍 Truthsayer — The Law Keeper
 
+![Banner](banner.jpg)
+
+
 _It sees the bugs your linter pretends don't exist._
 
 ---
