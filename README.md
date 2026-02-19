@@ -130,6 +130,48 @@ ids = ["bad-defaults.magic-number"]
 
 Set `[scan.languages]` values to `false` to skip scanning for that language entirely. Omitted languages default to enabled.
 
+## Precedents (File-Based)
+
+Truthsayer can store past violation decisions in `precedents.json` so future scans can reuse prior judgments.
+
+Schema:
+
+```json
+[
+  {
+    "rule_id": "error-context.http-200-on-error",
+    "violation_hash": "f8d31f4d8e7c...",
+    "decision": "deny",
+    "rationale": "Returning 200 in catch hides failures from clients.",
+    "created_at": "2026-02-19T00:00:00Z"
+  }
+]
+```
+
+- `rule_id`: Truthsayer rule identifier
+- `violation_hash`: stable hash for a specific violation instance
+- `decision`: `allow` or `deny`
+- `rationale`: human explanation for the decision
+- `created_at`: RFC3339 timestamp (UTC recommended)
+
+Package: `internal/precedent`
+
+```go
+store := precedent.NewStore("precedents.json")
+
+_ = store.Add(precedent.Precedent{
+    RuleID:        "error-context.http-200-on-error",
+    ViolationHash: "f8d31f4d8e7c...",
+    Decision:      precedent.DecisionDeny,
+    Rationale:     "Returning 200 in catch hides failures from clients.",
+})
+
+match, ok, err := store.Query("error-context.http-200-on-error", "f8d31f4d8e7c...")
+_ = match
+_ = ok
+_ = err
+```
+
 ## Exit Codes
 
 | Code | Meaning |
