@@ -73,6 +73,7 @@ func printUsage() {
 	fmt.Fprintln(os.Stderr, "  --lang <langs>       Scan only specific languages (e.g., go,python,js)")
 	fmt.Fprintln(os.Stderr, "  --parallel [n]       Scan files concurrently (default workers: NumCPU)")
 	fmt.Fprintln(os.Stderr, "  --config <path>      Use a custom config file (default: .truthsayer.toml)")
+	fmt.Fprintln(os.Stderr, "  --use-precedents     Suppress findings explicitly allowed in precedents.json")
 	fmt.Fprintln(os.Stderr, "  --create-beads       Create problem beads for errors")
 	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "Language aliases:")

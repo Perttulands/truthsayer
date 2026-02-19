@@ -3,12 +3,14 @@ package cli
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/perttulands/truthsayer/internal/finding"
+	"github.com/perttulands/truthsayer/internal/precedent"
 	"github.com/perttulands/truthsayer/internal/report"
 )
 
@@ -19,6 +21,7 @@ type scanOptions struct {
 	parallel      int
 	createBeads   bool
 	beadThreshold int
+	usePrecedents bool
 }
 
 func runScan(args []string) int {
@@ -62,6 +65,15 @@ func runScan(args []string) int {
 	}
 	if opts.parallel > 0 {
 		eng.SetParallelism(opts.parallel)
+	}
+	if opts.usePrecedents {
+		store := precedent.NewStore(filepath.Join(opts.path, precedent.DefaultPath))
+		precedents, err := store.Load()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			return 2
+		}
+		eng.SetPrecedents(precedents)
 	}
 
 	start := time.Now()
@@ -123,6 +135,8 @@ func parseScanOptions(args []string) (scanOptions, error) {
 			i++
 		case "--create-beads":
 			opts.createBeads = true
+		case "--use-precedents":
+			opts.usePrecedents = true
 		case "--parallel":
 			opts.parallel = runtime.NumCPU()
 			if i+1 < len(args) {
