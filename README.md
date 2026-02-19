@@ -1,17 +1,16 @@
-# 🔍 Truthsayer — The Law Keeper
+# 🔍 Truthsayer — 88 Laws, Zero Mercy
 
 ![Banner](banner.jpg)
 
-
-_It sees the bugs your linter pretends don't exist._
+_Your linter sees valid syntax. Truthsayer sees the lies underneath._
 
 ---
 
-Every codebase has a layer of lies. The swallowed exception that silently corrupts data three hours later. The test that passes because it's mocking the thing it's supposed to test. The fallback that "handles" errors by pretending they didn't happen. Your linter sees valid syntax and moves on. Truthsayer sees the truth underneath.
+There's a figure in the Agora in dark robes stitched with golden text — all 88 rules, woven into the fabric itself. The law is literally part of him. A bronze monocle covers one eye, oversized and unmistakable. In one hand, a red quill that marks violations in permanent ink. Chained to his belt, a heavy codex — the law, which he carries everywhere. And in the other hand, a cracked mirror that shows two layers at once: the beautiful surface, and the rot underneath.
 
-Truthsayer is a multi-language anti-pattern scanner that detects **failure-hiding patterns** — the kind of bugs that are technically valid code but practically ticking time bombs. It uses tree-sitter AST parsing for deep analysis and regex patterns for the stuff that doesn't need a parse tree.
+Every codebase has a layer of lies. The swallowed exception that silently corrupts data three hours later. The test that passes because it's mocking the thing it's supposed to test. The fallback that "handles" errors by pretending they didn't happen. Your linter sees valid syntax and moves on.
 
-**88 rules. 5 languages. Zero tolerance for code that lies about being fine.**
+Truthsayer sees the truth underneath. **88 rules. 5 languages. Zero tolerance for code that lies about being fine.**
 
 ## What It Catches
 
@@ -140,7 +139,7 @@ ids = ["bad-defaults.magic-number"]
 
 ## For Agents
 
-### Install
+This repo includes `AGENTS.md`. Your agent knows what to do.
 
 ```bash
 cd /home/perttu/truthsayer
@@ -149,37 +148,13 @@ cd /home/perttu/truthsayer
 
 Dependencies: Go 1.21+, a C compiler (`gcc` or `clang`) for tree-sitter cgo bindings. On Debian/Ubuntu: `sudo apt-get install build-essential`.
 
-### What This Is
+## 🏛️ Part of the Agora
 
-Truthsayer is a multi-language anti-pattern scanner that catches failure-hiding patterns — swallowed errors, empty catch blocks, missing timeouts, test imports in production code, and 80+ other ways code lies about being fine. It uses tree-sitter AST parsing for deep analysis across Go, JavaScript, TypeScript, Python, and Bash. In the Agora, Truthsayer is the quality gate that runs before merge. Your linter checks syntax; Truthsayer checks honesty.
+Truthsayer was forged in **[Athena's Agora](https://github.com/Perttulands/athena-workspace)** — where ancient mythology meets modern engineering and nobody pretends the code is fine when it isn't.
 
-### Runtime Usage
+He's the quality gate. Nothing ships without passing his 88 laws. [Oathkeeper](https://github.com/Perttulands/oathkeeper) checks the promises. [Argus](https://github.com/Perttulands/argus) watches the server. Truthsayer watches the code. The red quill marks what the red eye misses.
 
-```bash
-# Scan a repo for anti-patterns (the one you'll use most)
-truthsayer scan /path/to/repo
-
-# Scan specific languages only
-truthsayer scan --lang go,python .
-
-# Check a single file
-truthsayer check path/to/file.go
-
-# JSON output (for piping into other tools)
-truthsayer scan --format json .
-
-# List all rules and their severities
-truthsayer rules
-
-# Verify installation and dependencies
-truthsayer doctor
-```
-
-Exit code 0 = clean. Exit code 1 = findings. Use this in CI gates and pre-merge checks.
-
-## Part of [Athena's Agora](https://github.com/Perttulands/athena-workspace)
-
-Truthsayer is part of the quality gate — it runs before Centurion to catch the things that tests can't. See the [mythology](https://github.com/Perttulands/athena-workspace/blob/main/mythology.md) for the full story.
+Read the [mythology](https://github.com/Perttulands/athena-workspace/blob/main/mythology.md) if you want the full story.
 
 ## License
 
