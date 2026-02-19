@@ -1,6 +1,2 @@
 [scan]
-exclude_dirs = ["vendor", "node_modules", "testdata"]
-exclude_patterns = ["*_test.go"]
-
-[rules]
-disable = ["security.command-injection", "security.sql-injection"]
+exclude_dirs = ["vendor", "node_modules", "testdata", ".beads"]
