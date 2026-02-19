@@ -1,28 +1,32 @@
-# 🔍 Truthsayer — 88 Laws, Zero Mercy
+# 🔍 Truthsayer
 
 ![Banner](banner.jpg)
 
-_Your linter sees valid syntax. Truthsayer sees the lies underneath._
+*88 rules. No mercy. No exceptions.*
 
 ---
 
-There's a figure in the Agora in dark robes stitched with golden text — all 88 rules, woven into the fabric itself. The law is literally part of him. A bronze monocle covers one eye, oversized and unmistakable. In one hand, a red quill that marks violations in permanent ink. Chained to his belt, a heavy codex — the law, which he carries everywhere. And in the other hand, a cracked mirror that shows two layers at once: the beautiful surface, and the rot underneath.
+Every codebase is a crime scene. The developers are gone. The git blame points everywhere and nowhere. Somewhere in the wreckage, someone wrote `catch (Exception e) {}` and thought nobody would notice.
 
-Every codebase has a layer of lies. The swallowed exception that silently corrupts data three hours later. The test that passes because it's mocking the thing it's supposed to test. The fallback that "handles" errors by pretending they didn't happen. Your linter sees valid syntax and moves on.
+Truthsayer noticed.
 
-Truthsayer sees the truth underneath. **88 rules. 5 languages. Zero tolerance for code that lies about being fine.**
+He walks the Agora in dark robes stitched with golden text — all 88 rules, woven into the fabric. The law is literally part of him. A bronze monocle over one eye, a red quill in his hand, and a cracked mirror that shows two layers at once: the beautiful surface, and the rot underneath. Your linter sees valid syntax and moves on. Truthsayer sees the `except: pass` hiding behind it and starts writing in permanent ink.
+
+It scans your code across 5 languages, matches against 88 anti-pattern rules that were written in blood (metaphorical — mostly), and tells you exactly where you're lying to yourself. Some of the rules are obvious. Some will hurt your feelings. All of them exist because someone shipped the thing they warn about and regretted it at 3am.
+
+It's the friend who tells you there's spinach in your teeth. Except the spinach is an unchecked type assertion and your teeth are production.
 
 ## What It Catches
 
-| Category | Examples |
-|----------|---------|
-| **silent-fallback** | Swallowed errors, empty catch blocks, bare except, floating promises, ignored callbacks |
-| **error-context** | Generic error messages, unwrapped errors, HTTP 200 on error, raise-from-none |
-| **trace-gaps** | Functions without logging, missing request IDs, no unhandled rejection handler |
-| **mock-leakage** | Test imports in production, debug guards, jest.mock in source, pytest fixtures in source |
-| **bad-defaults** | Missing timeouts, no pipefail, eval usage, mutable default args, star imports |
-| **config-smells** | Hardcoded paths, secrets in config, missing .gitignore, unpinned requirements |
-| **test-isolation** | Missing cleanup in beforeAll/afterAll, test-only imports in source |
+| Category | What you did wrong |
+|----------|--------------------|
+| **silent-fallback** | Swallowed errors, empty catch blocks, bare except, floating promises. The code equivalent of putting a rug over a hole in the floor. |
+| **error-context** | Generic error messages, unwrapped errors, HTTP 200 on error. "Something went wrong" is not a diagnostic. |
+| **trace-gaps** | Functions without logging, missing request IDs. When it breaks at 3am, how exactly were you planning to debug it? |
+| **mock-leakage** | Test imports in production, jest.mock in source. Congratulations, you're shipping your test harness. |
+| **bad-defaults** | Missing timeouts, no pipefail, eval usage, mutable default args. The "works on my machine" starter pack. |
+| **config-smells** | Hardcoded paths, secrets in config, unpinned requirements. Future you is going to be very upset with past you. |
+| **test-isolation** | Missing cleanup, test-only imports in source. Your tests pass because they're lying, not because they're right. |
 
 ## Supported Languages
 
@@ -36,125 +40,98 @@ Truthsayer sees the truth underneath. **88 rules. 5 languages. Zero tolerance fo
 
 ## Install
 
-Requires a C compiler (gcc or clang) for tree-sitter parsing.
-
 ```bash
+# You need a C compiler. If that surprises you, tree-sitter has opinions about parsing.
+sudo apt-get install build-essential  # Debian/Ubuntu
+
+# Then:
 go install github.com/Perttulands/truthsayer/cmd/truthsayer@latest
-```
 
-Or build from source:
-
-```bash
+# Or from source:
 git clone https://github.com/Perttulands/truthsayer.git
 cd truthsayer
 go build -o truthsayer ./cmd/truthsayer
 ```
 
-On Debian/Ubuntu:
-```bash
-sudo apt-get install build-essential
-```
-
 ## Usage
 
 ```bash
-# Scan a directory (all languages)
+# The main event. Scan everything. Fear nothing.
 truthsayer scan .
 
-# Specific languages
+# Be selective about your suffering
 truthsayer scan --lang go,python .
 
-# Single file
+# Single file therapy session
 truthsayer check path/to/file.go
 
-# Watch mode
+# Watch mode — real-time judgment
 truthsayer watch .
 
-# JSON output
+# JSON output for the machines
 truthsayer scan --format json .
 
-# List all rules
+# Read the law before you break it
 truthsayer rules
 
-# Rules for one language
-truthsayer rules --lang python
-
-# Verify installation
-truthsayer doctor
+# Quality gate — exits 1 on errors. Put this in CI.
+# Sleep well knowing nothing ships without passing 88 checks.
+truthsayer scan .
 ```
-
-### Language Aliases
-
-| Alias | Extensions |
-|-------|-----------|
-| `go` | `.go` |
-| `js`, `javascript` | `.js`, `.jsx`, `.mjs`, `.cjs` |
-| `ts`, `typescript` | `.ts`, `.tsx` |
-| `python`, `py` | `.py`, `.pyi` |
-| `bash`, `shell`, `sh` | `.sh`, `.bash` |
 
 ## CI Integration
 
 ```bash
-# Pre-commit hook
+# Pre-commit hook (installs to .git/hooks/)
 truthsayer hook install .
 
-# GitHub Actions workflow
+# GitHub Actions — generates workflow file
 truthsayer ci init .
-
-# Quality gate (exits 1 on errors)
-truthsayer scan .
 ```
 
 ## Configuration
 
-Create `.truthsayer.toml` in your project root:
+Create `.truthsayer.toml` if you want to adjust the rules. You can't disable them all. That's not how laws work.
 
 ```toml
 [scan]
-exclude_dirs = ["vendor", "node_modules", "testdata", "__pycache__", ".venv"]
-exclude_patterns = ["*_generated.go", "*.pb.go", "*.min.js"]
-
-[scan.languages]
-go = true
-javascript = true
-typescript = true
-python = true
-bash = true
+exclude_dirs = ["vendor", "node_modules", "testdata"]
+exclude_patterns = ["*_generated.go", "*.pb.go"]
 
 [rules.disable]
-ids = ["bad-defaults.magic-number"]
+ids = ["bad-defaults.magic-number"]  # Fine, but we're judging you
 
 [rules]
-"trace-gaps.long-function-no-log" = "error"
+"trace-gaps.long-function-no-log" = "error"  # Promote to error severity
 ```
 
 ## Exit Codes
 
 | Code | Meaning |
 |------|---------|
-| 0 | No error-severity findings |
-| 1 | Error-severity findings present |
-| 2 | Tool error (bad config, invalid path) |
+| 0 | Clean. Truthsayer respects you today. |
+| 1 | Findings. The red quill has been busy. |
+| 2 | Tool error. Even the law keeper has bad days. |
 
 ## For Agents
 
-This repo includes `AGENTS.md`. Your agent knows what to do.
+This repo includes `AGENTS.md` with operational instructions.
 
 ```bash
-cd /home/perttu/truthsayer
-/usr/local/go/bin/go build -o ~/go/bin/truthsayer ./cmd/truthsayer
+git clone https://github.com/Perttulands/truthsayer.git
+cd truthsayer
+go build -o ~/go/bin/truthsayer ./cmd/truthsayer
 ```
 
-Dependencies: Go 1.21+, a C compiler (`gcc` or `clang`) for tree-sitter cgo bindings. On Debian/Ubuntu: `sudo apt-get install build-essential`.
+Dependencies: Go 1.21+, C compiler (`gcc`/`clang`) for tree-sitter. On Debian/Ubuntu: `sudo apt-get install build-essential`.
 
-## 🏛️ Part of the Agora
+## Part of the Agora
 
-Truthsayer was forged in **[Athena's Agora](https://github.com/Perttulands/athena-workspace)** — where ancient mythology meets modern engineering and nobody pretends the code is fine when it isn't.
+Truthsayer was forged in **[Athena's Agora](https://github.com/Perttulands/athena-workspace)** — an autonomous coding system where AI agents build software under the watch of Greek mythology and cyberpunk engineering.
 
-He's the quality gate. Nothing ships without passing his 88 laws. [Oathkeeper](https://github.com/Perttulands/oathkeeper) checks the promises. [Argus](https://github.com/Perttulands/argus) watches the server. Truthsayer watches the code. The red quill marks what the red eye misses.
+He's not alone. [Oathkeeper](https://github.com/Perttulands/oathkeeper) checks whether agents kept their promises. [Argus](https://github.com/Perttulands/argus) watches the server with one red eye that never closes. [Relay](https://github.com/Perttulands/relay) carries messages between agents at 26,000/sec with zero lost. Truthsayer watches the code. The red quill marks what the red eye misses.
 
-Read the [mythology](https://github.com/Perttulands/athena-workspace/blob/main/mythology.md) if you want the full story.
+There are others. The [mythology](https://github.com/Perttulands/athena-workspace/blob/main/mythology.md) has the full story.
 
 ## License
 
