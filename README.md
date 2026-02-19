@@ -45,6 +45,9 @@ truthsayer watch .
 # JSON report
 truthsayer scan --format json .
 
+# Reuse past allow/deny decisions from precedents.json
+truthsayer scan --use-precedents .
+
 # List all rules
 truthsayer rules
 
@@ -133,6 +136,7 @@ Set `[scan.languages]` values to `false` to skip scanning for that language enti
 ## Precedents (File-Based)
 
 Truthsayer can store past violation decisions in `precedents.json` so future scans can reuse prior judgments.
+Enable it during scans with `--use-precedents`.
 
 Schema:
 
@@ -153,6 +157,9 @@ Schema:
 - `decision`: `allow` or `deny`
 - `rationale`: human explanation for the decision
 - `created_at`: RFC3339 timestamp (UTC recommended)
+
+When `--use-precedents` is enabled, findings with matching `rule_id` + `violation_hash`
+and decision `allow` are suppressed from scan output.
 
 Package: `internal/precedent`
 

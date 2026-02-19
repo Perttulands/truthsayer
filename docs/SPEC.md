@@ -74,6 +74,7 @@ Truthsayer scans codebases and configurations for anti-patterns that hide proble
 ```
 truthsayer scan <path>           # Full scan of directory/repo
 truthsayer scan --fix <path>     # Scan + suggest fixes (no auto-apply)
+truthsayer scan --use-precedents <path>  # Suppress findings allowed in precedents.json
 truthsayer watch <path>          # Passive mode — watch for changes
 truthsayer check <file>          # Single file check
 truthsayer report <path>         # Generate structured JSON report
@@ -139,6 +140,10 @@ Implementation package: `internal/precedent`
 - `(*Store).Add(Precedent) error`
 - `(*Store).Query(ruleID, violationHash string) (Precedent, bool, error)`
 - `QueryByRule(precedents []Precedent, ruleID string) []Precedent`
+
+Runtime integration:
+- `truthsayer scan --use-precedents <path>` loads precedents at scan start.
+- Findings with matching `rule_id` + `violation_hash` and decision `allow` are not reported.
 
 ## Severity Levels
 - **error**: Must fix. Actively hides problems (empty catch, swallowed errors, secrets in code)
