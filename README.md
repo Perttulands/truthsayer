@@ -138,6 +138,45 @@ ids = ["bad-defaults.magic-number"]
 | 1 | Error-severity findings present |
 | 2 | Tool error (bad config, invalid path) |
 
+## For Agents
+
+### Install
+
+```bash
+cd /home/perttu/truthsayer
+/usr/local/go/bin/go build -o ~/go/bin/truthsayer ./cmd/truthsayer
+```
+
+Dependencies: Go 1.21+, a C compiler (`gcc` or `clang`) for tree-sitter cgo bindings. On Debian/Ubuntu: `sudo apt-get install build-essential`.
+
+### What This Is
+
+Truthsayer is a multi-language anti-pattern scanner that catches failure-hiding patterns — swallowed errors, empty catch blocks, missing timeouts, test imports in production code, and 80+ other ways code lies about being fine. It uses tree-sitter AST parsing for deep analysis across Go, JavaScript, TypeScript, Python, and Bash. In the Agora, Truthsayer is the quality gate that runs before merge. Your linter checks syntax; Truthsayer checks honesty.
+
+### Runtime Usage
+
+```bash
+# Scan a repo for anti-patterns (the one you'll use most)
+truthsayer scan /path/to/repo
+
+# Scan specific languages only
+truthsayer scan --lang go,python .
+
+# Check a single file
+truthsayer check path/to/file.go
+
+# JSON output (for piping into other tools)
+truthsayer scan --format json .
+
+# List all rules and their severities
+truthsayer rules
+
+# Verify installation and dependencies
+truthsayer doctor
+```
+
+Exit code 0 = clean. Exit code 1 = findings. Use this in CI gates and pre-merge checks.
+
 ## Part of [Athena's Agora](https://github.com/Perttulands/athena-workspace)
 
 Truthsayer is part of the quality gate — it runs before Centurion to catch the things that tests can't. See the [mythology](https://github.com/Perttulands/athena-workspace/blob/main/mythology.md) for the full story.
