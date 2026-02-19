@@ -136,7 +136,7 @@ func (s *Store) Add(p Precedent) error {
 
 	precedents, err := s.Load()
 	if err != nil {
-		return err
+		return fmt.Errorf("precedent: load before add: %w", err)
 	}
 	precedents = append(precedents, p)
 	return s.Save(precedents)
@@ -146,7 +146,7 @@ func (s *Store) Add(p Precedent) error {
 func (s *Store) Query(ruleID, violationHash string) (Precedent, bool, error) {
 	precedents, err := s.Load()
 	if err != nil {
-		return Precedent{}, false, err
+		return Precedent{}, false, fmt.Errorf("precedent: load before query: %w", err)
 	}
 	p, ok := Query(precedents, ruleID, violationHash)
 	return p, ok, nil
