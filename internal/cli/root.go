@@ -31,6 +31,8 @@ func Run() int {
 		return runDebt(os.Args[2:])
 	case "senate":
 		return runSenate(os.Args[2:])
+	case "warmup":
+		return runWarmup(os.Args[2:])
 	case "hook":
 		if len(os.Args) > 2 && os.Args[2] == "install" {
 			return runHookInstall(os.Args[3:])
@@ -67,6 +69,7 @@ func printUsage() {
 	fmt.Fprintln(os.Stderr, "  debt [path]          List advisory debt entries")
 	fmt.Fprintln(os.Stderr, "  senate parse <file>  Parse and validate Senate verdict file")
 	fmt.Fprintln(os.Stderr, "  senate apply <file> [repo]  Apply approved Senate amendments")
+	fmt.Fprintln(os.Stderr, "  warmup <path>        Run full-repo scan+judge to build precedent base")
 	fmt.Fprintln(os.Stderr, "  rules                List all detection rules")
 	fmt.Fprintln(os.Stderr, "  rules --enabled      List only enabled rules (respects config)")
 	fmt.Fprintln(os.Stderr, "  rules --lang <langs>  List rules for specific languages")

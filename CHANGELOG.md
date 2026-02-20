@@ -15,6 +15,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 - Senate amendment application: new `truthsayer senate apply <file> [repo]` persists approved amendments + audit trail, and scan engine now enforces applied `set_severity`/`disable_rule`/`enable_rule` amendments
 - Judgment cost tracking: `truthsayer judge` now logs token/cost metrics to `.truthsayer-cost.jsonl`, reports spend in summary output, and supports `--budget` caps with precedent fallback on exhaustion
 - Similar-finding batching in judgment pipeline: findings are grouped by `rule + pattern` so one LLM decision can fan out to matching findings, reducing LLM call volume and surfacing `batches` in summary
+- Warmup mode: new `truthsayer warmup <repo>` command runs full-repo `scan -> judge` to build precedent history and reports warmup statistics
 - `finding.Finding.Context` with ±10-line source windows and highlighted violation line, populated across Go, JS/TS, Python, bash, and config scans
 - Pattern hashing for judgments via `precedent.HashPattern`/`precedent.HashFindingPattern`, with normalization of variable names, literals, and whitespace for stable precedent matching
 - Precedent lookup API via `Store.Match`/`precedent.Match` using `rule_id + pattern_hash`, confidence thresholds, and confidence-first sorting for ranked match retrieval
