@@ -175,22 +175,21 @@ func runJudge(args []string) int {
 				}
 			} else {
 				// REASON: CLI command currently has no propagated context; LLM client enforces request timeout.
-				judged, err := judger.JudgeFinding(context.Background(), judge.PromptInput{
+				judged, judgeErr := judger.JudgeFinding(context.Background(), judge.PromptInput{
 					Finding:         f,
 					RuleDescription: ruleDescriptions[f.Rule],
 					Precedents:      matches,
 				})
-				if err != nil {
-					// REASON: command remains deterministic when model is unavailable by falling back to precedent.
-					if len(matches) > 0 {
-						v = verdictFromPrecedent(matches[0])
-					} else {
-						fmt.Fprintf(os.Stderr, "error: judge finding %s:%d (%s): %v\n", f.File, f.Line, f.Rule, err)
-						return 2
-					}
-				} else {
+				if judgeErr == nil {
 					output.Summary.LLMCalls++
 					v = judged
+				} else if len(matches) > 0 {
+					// REASON: command remains deterministic when model is unavailable by falling back to precedent.
+					fmt.Fprintf(os.Stderr, "warning: judge unavailable for %s:%d (%s): %v; applying precedent fallback\n", f.File, f.Line, f.Rule, judgeErr)
+					v = verdictFromPrecedent(matches[0])
+				} else {
+					fmt.Fprintf(os.Stderr, "error: judge finding %s:%d (%s): %v\n", f.File, f.Line, f.Rule, judgeErr)
+					return 2
 				}
 			}
 		}

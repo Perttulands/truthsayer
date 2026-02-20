@@ -18,6 +18,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 - AGENTS.md: changelog ground rule added (agents must update CHANGELOG on every significant commit)
 - `bd` (beads) replaces `br` (beads_rust) as the agent workflow CLI throughout AGENTS.md
 
+### Fixed
+- 2026-02-20: strengthened CLI error handling for scan-reported swallowed errors in `internal/cli/doctor.go` and `internal/cli/judge.go` by making doctor's fallback explicit and logging judge LLM failures before precedent fallback, so operational failures are visible instead of silent.
+
 ## [2.0.0] - 2026-02-16
 
 Multi-language support: JS/TS and Python rule coverage added via tree-sitter AST parsing.

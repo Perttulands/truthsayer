@@ -51,10 +51,11 @@ func runDoctor(args []string) int {
 		fmt.Printf("  Config ... unable to determine working directory: %v\n", err)
 		return 1
 	}
-	cfg, err := config.Load(dir, configPath)
-	if err != nil {
+	cfg, loadErr := config.Load(dir, configPath)
+	if loadErr != nil {
 		// REASON: doctor is diagnostic; continue collecting checks so users get one consolidated report.
-		fmt.Printf("  Config ... FAIL: %v\n", err)
+		fmt.Printf("  Config ... FAIL: %v\n", loadErr)
+		fmt.Println("            continuing with default rules for remaining checks")
 		issues++
 	} else if configPath == "" {
 		candidate := dir + "/.truthsayer.toml"
