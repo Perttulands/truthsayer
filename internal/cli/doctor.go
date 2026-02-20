@@ -53,6 +53,7 @@ func runDoctor(args []string) int {
 	}
 	cfg, err := config.Load(dir, configPath)
 	if err != nil {
+		// REASON: doctor is diagnostic; continue collecting checks so users get one consolidated report.
 		fmt.Printf("  Config ... FAIL: %v\n", err)
 		issues++
 	} else if configPath == "" {
@@ -183,6 +184,7 @@ func classifyRule(r rules.Rule) string {
 func checkParser(lang *sitter.Language, snippet string) bool {
 	parser := sitter.NewParser()
 	parser.SetLanguage(lang)
+	// REASON: this parser probe is local and short-lived; no external caller context exists here.
 	tree, err := parser.ParseCtx(context.Background(), nil, []byte(snippet))
 	if err != nil {
 		return false

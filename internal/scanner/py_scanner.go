@@ -38,9 +38,15 @@ func (s *PyScanner) Scan(path string) ([]finding.Finding, []string, error) {
 		return nil, nil, fmt.Errorf("read %s: %w", path, err)
 	}
 
-	parser := pyParserPool.Get().(*sitter.Parser)
+	rawParser := pyParserPool.Get()
+	parser, ok := rawParser.(*sitter.Parser)
+	if !ok || parser == nil {
+		parser = sitter.NewParser()
+		parser.SetLanguage(python.GetLanguage())
+	}
 	defer pyParserPool.Put(parser)
 
+	// REASON: scanner API is synchronous and currently has no caller context to propagate.
 	tree, err := parser.ParseCtx(context.Background(), nil, source)
 	if err != nil {
 		return nil, nil, fmt.Errorf("parse %s: %w", path, err)

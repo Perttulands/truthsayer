@@ -101,8 +101,8 @@ func isErrNilCheck(expr ast.Expr) bool {
 	if ident.Name != "err" {
 		return false
 	}
-	_, isNil := binExpr.Y.(*ast.Ident)
-	return isNil && binExpr.Y.(*ast.Ident).Name == "nil" && binExpr.Op.String() == "!="
+	identY, isNil := binExpr.Y.(*ast.Ident)
+	return isNil && identY.Name == "nil" && binExpr.Op.String() == "!="
 }
 
 // isNilReturn checks if a block contains only a return statement with all nil values.

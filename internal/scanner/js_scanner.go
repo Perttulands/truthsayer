@@ -39,20 +39,27 @@ var jsExtMap = map[string]jsLang{
 // grammar already set can be reused without re-initialization.
 var parserPools = map[jsLang]*sync.Pool{
 	jsLangJS: {New: func() any {
-		p := sitter.NewParser()
-		p.SetLanguage(javascript.GetLanguage())
-		return p
+		return newJSParser(jsLangJS)
 	}},
 	jsLangTS: {New: func() any {
-		p := sitter.NewParser()
-		p.SetLanguage(typescript.GetLanguage())
-		return p
+		return newJSParser(jsLangTS)
 	}},
 	jsLangTSX: {New: func() any {
-		p := sitter.NewParser()
-		p.SetLanguage(tsx.GetLanguage())
-		return p
+		return newJSParser(jsLangTSX)
 	}},
+}
+
+func newJSParser(lang jsLang) *sitter.Parser {
+	p := sitter.NewParser()
+	switch lang {
+	case jsLangJS:
+		p.SetLanguage(javascript.GetLanguage())
+	case jsLangTS:
+		p.SetLanguage(typescript.GetLanguage())
+	case jsLangTSX:
+		p.SetLanguage(tsx.GetLanguage())
+	}
+	return p
 }
 
 // JSScanner scans JavaScript and TypeScript files using tree-sitter AST analysis.
@@ -80,9 +87,14 @@ func (s *JSScanner) Scan(path string) ([]finding.Finding, []string, error) {
 	}
 
 	pool := parserPools[lang]
-	parser := pool.Get().(*sitter.Parser)
+	rawParser := pool.Get()
+	parser, ok := rawParser.(*sitter.Parser)
+	if !ok || parser == nil {
+		parser = newJSParser(lang)
+	}
 	defer pool.Put(parser)
 
+	// REASON: scanner API is synchronous and currently has no caller context to propagate.
 	tree, err := parser.ParseCtx(context.Background(), nil, source)
 	if err != nil {
 		return nil, nil, fmt.Errorf("parse %s: %w", path, err)

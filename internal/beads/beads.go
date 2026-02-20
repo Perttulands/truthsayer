@@ -65,6 +65,7 @@ func (b *BeadCreator) CreateWarningBead(rule string, file string, count int) (st
 func (b *BeadCreator) create(title string, priority int) (string, error) {
 	args := []string{"create", "--title", title, "--priority", strconv.Itoa(priority)}
 
+	// REASON: BeadCreator currently has no caller context API; timeout bounds command lifetime.
 	ctx, cancel := context.WithTimeout(context.Background(), b.timeout)
 	defer cancel()
 

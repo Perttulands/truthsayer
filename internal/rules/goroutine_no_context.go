@@ -38,9 +38,13 @@ func (g *GoroutineNoContext) CheckAST(fset *token.FileSet, file *ast.File, lines
 		}
 
 		// Get the function body of the goroutine
-		var body *ast.BlockStmt
+		var (
+			body    *ast.BlockStmt
+			funcLit *ast.FuncLit
+		)
 		switch fn := goStmt.Call.Fun.(type) {
 		case *ast.FuncLit:
+			funcLit = fn
 			body = fn.Body
 		default:
 			// go someFunc(args...) — check if any arg is a context
@@ -66,9 +70,6 @@ func (g *GoroutineNoContext) CheckAST(fset *token.FileSet, file *ast.File, lines
 		if body == nil {
 			return true
 		}
-
-		// For func literals: check if captured/param vars reference context or done channel
-		funcLit := goStmt.Call.Fun.(*ast.FuncLit)
 
 		// Check params for context.Context
 		if hasContextParam(funcLit.Type) {

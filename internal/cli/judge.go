@@ -40,6 +40,7 @@ type findingJudge interface {
 }
 
 var newFindingJudge = func() (findingJudge, error) {
+	// REASON: llm.NewClaudeClient validates missing/empty API keys and returns a descriptive error.
 	apiKey := strings.TrimSpace(os.Getenv("ANTHROPIC_API_KEY"))
 	client, err := llm.NewClaudeClient(llm.ClientOptions{
 		APIKey: apiKey,
@@ -173,13 +174,14 @@ func runJudge(args []string) int {
 					return 2
 				}
 			} else {
+				// REASON: CLI command currently has no propagated context; LLM client enforces request timeout.
 				judged, err := judger.JudgeFinding(context.Background(), judge.PromptInput{
 					Finding:         f,
 					RuleDescription: ruleDescriptions[f.Rule],
 					Precedents:      matches,
 				})
 				if err != nil {
-					// For command core reliability, if model fails and precedent exists, use the strongest precedent.
+					// REASON: command remains deterministic when model is unavailable by falling back to precedent.
 					if len(matches) > 0 {
 						v = verdictFromPrecedent(matches[0])
 					} else {
