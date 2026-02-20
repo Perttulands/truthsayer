@@ -1,7 +1,8 @@
 [scan]
 exclude_dirs = ["vendor", "node_modules", "testdata", ".beads"]
 # Exclude test files containing intentional anti-patterns for rule testing
-exclude_patterns = ["*_test.go"]
+# Exclude CI-generated report (contains code snippets that trigger false positives)
+exclude_patterns = ["*_test.go", "truthsayer-report.json"]
 
 [rules]
 # Disable rules that generate false positives when scanning a scanner
