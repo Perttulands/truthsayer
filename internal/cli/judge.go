@@ -26,6 +26,7 @@ type judgeOptions struct {
 	precedentsPath     string
 	debtPath           string
 	lawCandidatesPath  string
+	lawUpdatesPath     string
 	lawThreshold       int
 	minConfidence      float64
 	autoApplyThreshold float64
@@ -77,6 +78,7 @@ type judgeSummary struct {
 	Advisory         int `json:"advisory"`
 	AdvisoriesTracked int `json:"advisories_tracked"`
 	LawCandidates    int `json:"law_candidates"`
+	LawProposals     int `json:"law_proposals"`
 	LLMCalls         int `json:"llm_calls"`
 	AutoApplied      int `json:"auto_applied"`
 	PrecedentMatches int `json:"precedent_matches"`
@@ -102,6 +104,9 @@ func runJudge(args []string) int {
 	}
 	if opts.lawCandidatesPath == "" {
 		opts.lawCandidatesPath = filepath.Join(filepath.Dir(opts.inputPath), law.DefaultCandidatesPath)
+	}
+	if opts.lawUpdatesPath == "" {
+		opts.lawUpdatesPath = filepath.Join(filepath.Dir(opts.inputPath), law.DefaultProposalsPath)
 	}
 
 	store := precedent.NewStore(opts.precedentsPath)
@@ -210,7 +215,12 @@ func runJudge(args []string) int {
 			fmt.Fprintf(os.Stderr, "error: save law candidates: %v\n", err)
 			return 2
 		}
+		if err := law.WriteProposals(opts.lawUpdatesPath, candidates, ruleDescriptions, time.Now().UTC()); err != nil {
+			fmt.Fprintf(os.Stderr, "error: write law proposals: %v\n", err)
+			return 2
+		}
 		output.Summary.LawCandidates = len(candidates)
+		output.Summary.LawProposals = len(candidates)
 	}
 
 	accumulateJudgeSummary(&output)
@@ -301,6 +311,12 @@ func parseJudgeOptions(args []string) (judgeOptions, error) {
 				return judgeOptions{}, fmt.Errorf("--law-candidates requires a value")
 			}
 			opts.lawCandidatesPath = args[i+1]
+			i++
+		case "--law-updates":
+			if i+1 >= len(args) {
+				return judgeOptions{}, fmt.Errorf("--law-updates requires a value")
+			}
+			opts.lawUpdatesPath = args[i+1]
 			i++
 		case "--law-threshold":
 			if i+1 >= len(args) {

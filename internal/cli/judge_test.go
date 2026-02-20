@@ -177,7 +177,7 @@ func TestRunJudge_FallbackToPrecedentWhenJudgeFails(t *testing.T) {
 }
 
 func TestParseJudgeOptions(t *testing.T) {
-	opts, err := parseJudgeOptions([]string{"--precedents", "p.json", "--debt", "d.json", "--law-candidates", "c.json", "--law-threshold", "7", "--min-confidence", "0.9", "--auto-apply-threshold", "0.95", "f.json"})
+	opts, err := parseJudgeOptions([]string{"--precedents", "p.json", "--debt", "d.json", "--law-candidates", "c.json", "--law-updates", "u.md", "--law-threshold", "7", "--min-confidence", "0.9", "--auto-apply-threshold", "0.95", "f.json"})
 	if err != nil {
 		t.Fatalf("parseJudgeOptions failed: %v", err)
 	}
@@ -189,6 +189,9 @@ func TestParseJudgeOptions(t *testing.T) {
 	}
 	if opts.lawCandidatesPath != "c.json" {
 		t.Fatalf("unexpected law candidates path: %q", opts.lawCandidatesPath)
+	}
+	if opts.lawUpdatesPath != "u.md" {
+		t.Fatalf("unexpected law updates path: %q", opts.lawUpdatesPath)
 	}
 	if opts.lawThreshold != 7 {
 		t.Fatalf("unexpected law threshold: %d", opts.lawThreshold)
@@ -367,5 +370,13 @@ func TestRunJudge_LogsLawCandidateWhenThresholdReached(t *testing.T) {
 	}
 	if !strings.Contains(string(raw), `"rule_id": "silent-fallback.hidden-failure-bash"`) {
 		t.Fatalf("expected law candidate entry, got:\n%s", string(raw))
+	}
+
+	proposals, err := os.ReadFile(filepath.Join(dir, "law-updates.md"))
+	if err != nil {
+		t.Fatalf("read law updates markdown: %v", err)
+	}
+	if !strings.Contains(string(proposals), "Proposal 1") {
+		t.Fatalf("expected proposal markdown content, got:\n%s", string(proposals))
 	}
 }

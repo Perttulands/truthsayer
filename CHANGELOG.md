@@ -10,6 +10,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 - Pre-commit judgment integration: `truthsayer hook` now executes `scan -> judge`, blocks only on guilty verdicts, and persists precedents from hook judgments
 - Advisory tracking with `.truthsayer-debt.json`: advisory verdicts now create debt entries, and `truthsayer debt` lists accumulated advisory items
 - Consistent-ruling detection in `truthsayer judge`: repeated same-pattern/same-decision judgments are flagged as law candidates (default threshold 10, configurable) and logged to `.truthsayer-law-candidates.json`
+- Automatic law update proposal generation: `truthsayer judge` now writes Senate-ready `law-updates.md` proposals with rule context, pattern evidence, and suggested amendments
 - `finding.Finding.Context` with ±10-line source windows and highlighted violation line, populated across Go, JS/TS, Python, bash, and config scans
 - Pattern hashing for judgments via `precedent.HashPattern`/`precedent.HashFindingPattern`, with normalization of variable names, literals, and whitespace for stable precedent matching
 - Precedent lookup API via `Store.Match`/`precedent.Match` using `rule_id + pattern_hash`, confidence thresholds, and confidence-first sorting for ranked match retrieval

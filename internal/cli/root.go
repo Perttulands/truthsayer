@@ -87,6 +87,7 @@ func printUsage() {
 	fmt.Fprintln(os.Stderr, "  --precedents <path>  Precedent store path (default: <input-dir>/precedents.json)")
 	fmt.Fprintln(os.Stderr, "  --debt <path>        Advisory debt path (default: <input-dir>/.truthsayer-debt.json)")
 	fmt.Fprintln(os.Stderr, "  --law-candidates <path>  Consistent-ruling candidate log path")
+	fmt.Fprintln(os.Stderr, "  --law-updates <path>     Markdown law update proposals path")
 	fmt.Fprintln(os.Stderr, "  --law-threshold n    Candidate threshold for repeated same-pattern rulings (default: 10)")
 	fmt.Fprintln(os.Stderr, "  --min-confidence n   Minimum precedent confidence included in prompt context (0-1)")
 	fmt.Fprintln(os.Stderr, "  --auto-apply-threshold n  Skip LLM when matching precedent confidence is above n (default: 0.9)")
