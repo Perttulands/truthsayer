@@ -50,6 +50,7 @@ func TestJSON_WithFindings(t *testing.T) {
 			File:       "pkg/handler.go",
 			Line:       42,
 			Code:       "if err != nil { return nil }",
+			Context:    ">> 42 | if err != nil { return nil }",
 			Message:    "Error returned as nil without logging or wrapping",
 			Suggestion: "Return the error or log it",
 		},
@@ -112,6 +113,9 @@ func TestJSON_WithFindings(t *testing.T) {
 	}
 	if f.Suggestion != "Return the error or log it" {
 		t.Errorf("finding[0].suggestion = %q", f.Suggestion)
+	}
+	if f.Context == "" {
+		t.Errorf("finding[0].context should be present")
 	}
 
 	// Verify summary counts

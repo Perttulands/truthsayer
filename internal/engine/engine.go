@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/perttulands/truthsayer/internal/config"
@@ -45,6 +47,8 @@ type cachedFileFindings struct {
 	mtimeUnixNano int64
 	findings      []finding.Finding
 }
+
+const sourceContextWindow = 10
 
 // New creates a scan engine from a rule registry.
 func New(reg *rules.Registry) *Engine {
@@ -143,6 +147,40 @@ func cloneFindings(findings []finding.Finding) []finding.Finding {
 	return out
 }
 
+func buildSourceContext(lines []string, targetLine int) string {
+	if len(lines) == 0 || targetLine < 1 || targetLine > len(lines) {
+		return ""
+	}
+	start := targetLine - sourceContextWindow
+	if start < 1 {
+		start = 1
+	}
+	end := targetLine + sourceContextWindow
+	if end > len(lines) {
+		end = len(lines)
+	}
+
+	width := len(strconv.Itoa(end))
+	out := make([]string, 0, end-start+1)
+	for lineNo := start; lineNo <= end; lineNo++ {
+		marker := "  "
+		if lineNo == targetLine {
+			marker = ">>"
+		}
+		out = append(out, fmt.Sprintf("%s %*d | %s", marker, width, lineNo, lines[lineNo-1]))
+	}
+	return strings.Join(out, "\n")
+}
+
+func attachSourceContext(findings []finding.Finding, lines []string) {
+	if len(findings) == 0 || len(lines) == 0 {
+		return
+	}
+	for i := range findings {
+		findings[i].Context = buildSourceContext(lines, findings[i].Line)
+	}
+}
+
 func (e *Engine) getCachedFindings(path string, mtimeUnixNano int64) ([]finding.Finding, bool) {
 	e.cacheMu.RLock()
 	defer e.cacheMu.RUnlock()
@@ -220,26 +258,30 @@ func (e *Engine) scanFileFindings(path string) ([]finding.Finding, error) {
 	}
 
 	var fileFindings []finding.Finding
+	var lines []string
 	switch {
 	case ext == ".go":
-		results, lines, err := e.goScanner.Scan(path)
+		results, goLines, err := e.goScanner.Scan(path)
 		if err != nil {
 			return nil, err
 		}
+		lines = goLines
 		fileFindings = append(results, e.regexScanner.ScanLines(path, lines)...)
 
 	case isJSExt(ext):
-		results, lines, err := e.getJSScanner().Scan(path)
+		results, jsLines, err := e.getJSScanner().Scan(path)
 		if err != nil {
 			return nil, err
 		}
+		lines = jsLines
 		fileFindings = append(results, e.regexScanner.ScanLines(path, lines)...)
 
 	case isPyExt(ext):
-		results, lines, err := e.getPyScanner().Scan(path)
+		results, pyLines, err := e.getPyScanner().Scan(path)
 		if err != nil {
 			return nil, err
 		}
+		lines = pyLines
 		fileFindings = append(results, e.regexScanner.ScanLines(path, lines)...)
 
 	default:
@@ -247,9 +289,15 @@ func (e *Engine) scanFileFindings(path string) ([]finding.Finding, error) {
 		if err != nil {
 			return nil, err
 		}
+		source, err := os.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+		lines = strings.Split(string(source), "\n")
 		fileFindings = results
 	}
 
+	attachSourceContext(fileFindings, lines)
 	e.putCachedFindings(path, mtimeUnixNano, fileFindings)
 	return fileFindings, nil
 }
