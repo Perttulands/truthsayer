@@ -1,5 +1,8 @@
 # 🔍 Truthsayer
 
+![Truthsayer](images/truthsayer.jpg)
+
+
 *Bronze monocle. Dark robes. 88 rules stitched in gold thread. He reads your code like a confession.*
 
 ---
