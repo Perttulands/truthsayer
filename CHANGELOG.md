@@ -11,6 +11,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 - Pattern hashing for judgments via `precedent.HashPattern`/`precedent.HashFindingPattern`, with normalization of variable names, literals, and whitespace for stable precedent matching
 - Precedent lookup API via `Store.Match`/`precedent.Match` using `rule_id + pattern_hash`, confidence thresholds, and confidence-first sorting for ranked match retrieval
 - Claude LLM client (`internal/llm`) with Anthropic Messages API integration, auth validation, retry/backoff for 429/5xx responses, and request pacing for rate limiting
+- Judgment prompt template builder (`internal/judge.BuildPrompt`) with structured finding/context/precedent payload and strict parseable JSON response schema
 
 ### Changed
 - `hidden-failure-bash` rule upgraded to ERROR severity; downgraded to INFO when line has `# REASON:` comment justifying the suppression
