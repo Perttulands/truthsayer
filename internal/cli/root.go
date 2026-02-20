@@ -29,6 +29,8 @@ func Run() int {
 		return runJudge(os.Args[2:])
 	case "debt":
 		return runDebt(os.Args[2:])
+	case "senate":
+		return runSenate(os.Args[2:])
 	case "hook":
 		if len(os.Args) > 2 && os.Args[2] == "install" {
 			return runHookInstall(os.Args[3:])
@@ -63,6 +65,7 @@ func printUsage() {
 	fmt.Fprintln(os.Stderr, "  report <path>        Generate JSON report to file")
 	fmt.Fprintln(os.Stderr, "  judge <findings.json>  Judge findings with precedents + LLM")
 	fmt.Fprintln(os.Stderr, "  debt [path]          List advisory debt entries")
+	fmt.Fprintln(os.Stderr, "  senate parse <file>  Parse and validate Senate verdict file")
 	fmt.Fprintln(os.Stderr, "  rules                List all detection rules")
 	fmt.Fprintln(os.Stderr, "  rules --enabled      List only enabled rules (respects config)")
 	fmt.Fprintln(os.Stderr, "  rules --lang <langs>  List rules for specific languages")
