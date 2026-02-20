@@ -110,7 +110,6 @@ func runJudge(args []string) int {
 		Verdicts: make([]judgeFindingVerdict, 0, len(findings)),
 	}
 
-	updatedPrecedents := records
 	for _, f := range findings {
 		matches := precedent.Match(records, f, precedent.MatchOptions{
 			MinConfidence: opts.minConfidence,
@@ -157,12 +156,12 @@ func runJudge(args []string) int {
 		if err := record.AsPrecedent().Validate(); err != nil {
 			continue
 		}
-		updatedPrecedents = append(updatedPrecedents, record.AsPrecedent())
-	}
-
-	if err := store.Save(updatedPrecedents); err != nil {
-		fmt.Fprintf(os.Stderr, "error: save precedents: %v\n", err)
-		return 2
+		saved, err := store.AddOrUpdateJudgment(record.AsPrecedent())
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error: save precedents: %v\n", err)
+			return 2
+		}
+		records = append(records, saved)
 	}
 
 	accumulateJudgeSummary(&output)

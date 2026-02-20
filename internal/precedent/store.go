@@ -34,6 +34,7 @@ type Precedent struct {
 	Confidence    float64   `json:"confidence,omitempty"`
 	SeenCount     int       `json:"seen_count,omitempty"`
 	CreatedAt     time.Time `json:"created_at"`
+	LastSeen      time.Time `json:"last_seen,omitempty"`
 }
 
 // Validate checks required fields and supported decision values.
@@ -186,6 +187,17 @@ func QueryByRule(precedents []Precedent, ruleID string) []Precedent {
 	return filtered
 }
 
+// QueryByPattern returns the most recent precedent matching rule_id + pattern_hash.
+func QueryByPattern(precedents []Precedent, ruleID, patternHash string) (Precedent, bool) {
+	for i := len(precedents) - 1; i >= 0; i-- {
+		p := precedents[i]
+		if p.RuleID == ruleID && p.PatternHash == patternHash {
+			return p, true
+		}
+	}
+	return Precedent{}, false
+}
+
 // MatchOptions controls precedent lookup behavior.
 type MatchOptions struct {
 	MinConfidence float64
@@ -262,4 +274,61 @@ func (s *Store) Match(f finding.Finding, opts MatchOptions) ([]Precedent, error)
 		return nil, fmt.Errorf("precedent: load before match: %w", err)
 	}
 	return Match(precedents, f, opts), nil
+}
+
+const (
+	initialConfidence = 0.6
+	confidenceStep    = 0.1
+	overrideDecay     = 0.5
+	minConfidence     = 0.2
+)
+
+// AddOrUpdateJudgment appends a precedent with confidence updates applied from prior pattern history.
+// Same decision increments confidence/seen_count; overridden decision decays confidence and resets seen_count.
+func (s *Store) AddOrUpdateJudgment(p Precedent) (Precedent, error) {
+	if p.CreatedAt.IsZero() {
+		p.CreatedAt = time.Now().UTC()
+	}
+	if p.LastSeen.IsZero() {
+		p.LastSeen = p.CreatedAt
+	}
+
+	precedents, err := s.Load()
+	if err != nil {
+		return Precedent{}, fmt.Errorf("precedent: load before upsert: %w", err)
+	}
+
+	if prev, ok := QueryByPattern(precedents, p.RuleID, p.PatternHash); ok {
+		prevConfidence := precedenceConfidence(prev)
+		prevSeen := prev.SeenCount
+		if prevSeen <= 0 {
+			prevSeen = 1
+		}
+		if prev.Decision == p.Decision {
+			p.Confidence = prevConfidence + confidenceStep
+			if p.Confidence > 1 {
+				p.Confidence = 1
+			}
+			p.SeenCount = prevSeen + 1
+		} else {
+			p.Confidence = prevConfidence * overrideDecay
+			if p.Confidence < minConfidence {
+				p.Confidence = minConfidence
+			}
+			p.SeenCount = 1
+		}
+	} else {
+		if p.Confidence <= 0 {
+			p.Confidence = initialConfidence
+		}
+		if p.SeenCount <= 0 {
+			p.SeenCount = 1
+		}
+	}
+
+	precedents = append(precedents, p)
+	if err := s.Save(precedents); err != nil {
+		return Precedent{}, err
+	}
+	return p, nil
 }

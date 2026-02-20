@@ -14,6 +14,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 - Judgment prompt template builder (`internal/judge.BuildPrompt`) with structured finding/context/precedent payload and strict parseable JSON response schema
 - LLM judgment call logic (`internal/judge.LLMJudge`) that builds prompts, calls the LLM client, parses typed verdict JSON, and converts verdicts into precedent records
 - New `truthsayer judge` command core: reads findings JSON, retrieves precedent context, performs judgment, outputs verdicts JSON/text, and writes updated precedent records
+- Confidence scoring updates in precedent storage: repeated matching decisions increase confidence and seen-count, while overrides decay confidence and reset seen-count
 
 ### Changed
 - `hidden-failure-bash` rule upgraded to ERROR severity; downgraded to INFO when line has `# REASON:` comment justifying the suppression

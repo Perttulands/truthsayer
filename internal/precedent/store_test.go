@@ -273,6 +273,105 @@ func TestStoreMatch_LoadsFromDisk(t *testing.T) {
 	}
 }
 
+func TestAddOrUpdateJudgment_IncrementsConfidenceOnMatch(t *testing.T) {
+	store := NewStore(filepath.Join(t.TempDir(), "precedents.json"))
+	now := time.Date(2026, 2, 20, 0, 0, 0, 0, time.UTC)
+	base := Precedent{
+		RuleID:        "silent-fallback.empty-error-check",
+		ViolationHash: "v1",
+		PatternHash:   HashPattern("silent-fallback.empty-error-check", "if err != nil { return nil }"),
+		Decision:      DecisionDeny,
+		Rationale:     "first decision",
+		CreatedAt:     now,
+	}
+	first, err := store.AddOrUpdateJudgment(base)
+	if err != nil {
+		t.Fatalf("add first judgment failed: %v", err)
+	}
+	if first.Confidence != initialConfidence || first.SeenCount != 1 {
+		t.Fatalf("expected initial confidence %.1f and seen_count 1, got %.2f/%d", initialConfidence, first.Confidence, first.SeenCount)
+	}
+
+	second, err := store.AddOrUpdateJudgment(Precedent{
+		RuleID:        base.RuleID,
+		ViolationHash: "v2",
+		PatternHash:   base.PatternHash,
+		Decision:      DecisionDeny,
+		Rationale:     "same decision repeat",
+		CreatedAt:     now.Add(time.Minute),
+	})
+	if err != nil {
+		t.Fatalf("add second judgment failed: %v", err)
+	}
+	if second.Confidence <= first.Confidence {
+		t.Fatalf("expected confidence increment, got %.2f -> %.2f", first.Confidence, second.Confidence)
+	}
+	if second.SeenCount != 2 {
+		t.Fatalf("expected seen_count 2, got %d", second.SeenCount)
+	}
+}
+
+func TestAddOrUpdateJudgment_DecaysOnOverrideAndResetsSeenCount(t *testing.T) {
+	store := NewStore(filepath.Join(t.TempDir(), "precedents.json"))
+	pattern := HashPattern("silent-fallback.hidden-failure-bash", "cmd || true")
+	now := time.Date(2026, 2, 20, 0, 0, 0, 0, time.UTC)
+
+	_, err := store.AddOrUpdateJudgment(Precedent{
+		RuleID:        "silent-fallback.hidden-failure-bash",
+		ViolationHash: "a",
+		PatternHash:   pattern,
+		Decision:      DecisionAllow,
+		Rationale:     "allow",
+		CreatedAt:     now,
+	})
+	if err != nil {
+		t.Fatalf("seed add failed: %v", err)
+	}
+	same, err := store.AddOrUpdateJudgment(Precedent{
+		RuleID:        "silent-fallback.hidden-failure-bash",
+		ViolationHash: "b",
+		PatternHash:   pattern,
+		Decision:      DecisionAllow,
+		Rationale:     "allow again",
+		CreatedAt:     now.Add(time.Minute),
+	})
+	if err != nil {
+		t.Fatalf("same decision add failed: %v", err)
+	}
+	override, err := store.AddOrUpdateJudgment(Precedent{
+		RuleID:        "silent-fallback.hidden-failure-bash",
+		ViolationHash: "c",
+		PatternHash:   pattern,
+		Decision:      DecisionDeny,
+		Rationale:     "override decision",
+		CreatedAt:     now.Add(2 * time.Minute),
+	})
+	if err != nil {
+		t.Fatalf("override add failed: %v", err)
+	}
+	if override.Confidence >= same.Confidence {
+		t.Fatalf("expected confidence decay on override, got %.2f -> %.2f", same.Confidence, override.Confidence)
+	}
+	if override.SeenCount != 1 {
+		t.Fatalf("expected seen_count reset to 1, got %d", override.SeenCount)
+	}
+}
+
+func TestQueryByPattern_ReturnsLatest(t *testing.T) {
+	pattern := "hash"
+	records := []Precedent{
+		{RuleID: "x", PatternHash: pattern, Decision: DecisionAllow},
+		{RuleID: "x", PatternHash: pattern, Decision: DecisionDeny},
+	}
+	p, ok := QueryByPattern(records, "x", pattern)
+	if !ok {
+		t.Fatal("expected pattern query hit")
+	}
+	if p.Decision != DecisionDeny {
+		t.Fatalf("expected latest decision deny, got %q", p.Decision)
+	}
+}
+
 func BenchmarkMatch(b *testing.B) {
 	now := time.Date(2026, 2, 20, 0, 0, 0, 0, time.UTC)
 	f := finding.Finding{
