@@ -93,6 +93,8 @@ func printUsage() {
 	fmt.Fprintln(os.Stderr, "  --law-candidates <path>  Consistent-ruling candidate log path")
 	fmt.Fprintln(os.Stderr, "  --law-updates <path>     Markdown law update proposals path")
 	fmt.Fprintln(os.Stderr, "  --law-threshold n    Candidate threshold for repeated same-pattern rulings (default: 10)")
+	fmt.Fprintln(os.Stderr, "  --metrics <path>     Cost metrics JSONL path (default: <input-dir>/.truthsayer-cost.jsonl)")
+	fmt.Fprintln(os.Stderr, "  --budget n           Spend cap in USD for LLM judgments (0 = unlimited)")
 	fmt.Fprintln(os.Stderr, "  --min-confidence n   Minimum precedent confidence included in prompt context (0-1)")
 	fmt.Fprintln(os.Stderr, "  --auto-apply-threshold n  Skip LLM when matching precedent confidence is above n (default: 0.9)")
 	fmt.Fprintln(os.Stderr, "")

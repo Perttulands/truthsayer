@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/perttulands/truthsayer/internal/cost"
 	"github.com/perttulands/truthsayer/internal/debt"
 	"github.com/perttulands/truthsayer/internal/finding"
 	"github.com/perttulands/truthsayer/internal/judge"
@@ -28,6 +29,8 @@ type judgeOptions struct {
 	lawCandidatesPath  string
 	lawUpdatesPath     string
 	lawThreshold       int
+	metricsPath        string
+	budgetUSD          float64
 	minConfidence      float64
 	autoApplyThreshold float64
 }
@@ -79,6 +82,11 @@ type judgeSummary struct {
 	AdvisoriesTracked int `json:"advisories_tracked"`
 	LawCandidates    int `json:"law_candidates"`
 	LawProposals     int `json:"law_proposals"`
+	InputTokens      int `json:"input_tokens"`
+	OutputTokens     int `json:"output_tokens"`
+	TotalCostUSD     float64 `json:"total_cost_usd"`
+	BudgetUSD        float64 `json:"budget_usd,omitempty"`
+	BudgetExhausted  bool    `json:"budget_exhausted,omitempty"`
 	LLMCalls         int `json:"llm_calls"`
 	AutoApplied      int `json:"auto_applied"`
 	PrecedentMatches int `json:"precedent_matches"`
@@ -108,6 +116,9 @@ func runJudge(args []string) int {
 	if opts.lawUpdatesPath == "" {
 		opts.lawUpdatesPath = filepath.Join(filepath.Dir(opts.inputPath), law.DefaultProposalsPath)
 	}
+	if opts.metricsPath == "" {
+		opts.metricsPath = filepath.Join(filepath.Dir(opts.inputPath), cost.DefaultMetricsPath)
+	}
 
 	store := precedent.NewStore(opts.precedentsPath)
 	records, err := store.Load()
@@ -130,6 +141,7 @@ func runJudge(args []string) int {
 		Source:   opts.inputPath,
 		Verdicts: make([]judgeFindingVerdict, 0, len(findings)),
 	}
+	output.Summary.BudgetUSD = opts.budgetUSD
 
 	for _, f := range findings {
 		allMatches := precedent.Match(records, f, precedent.MatchOptions{
@@ -147,6 +159,16 @@ func runJudge(args []string) int {
 			v.Reasoning = "Auto-applied high-confidence precedent."
 			output.Summary.AutoApplied++
 		} else {
+			if opts.budgetUSD > 0 && output.Summary.TotalCostUSD >= opts.budgetUSD {
+				output.Summary.BudgetExhausted = true
+				if len(matches) > 0 {
+					v = verdictFromPrecedent(matches[0])
+					v.Reasoning = "Budget exhausted; applied matching precedent."
+				} else {
+					fmt.Fprintln(os.Stderr, "error: judgment budget exhausted and no precedent fallback available")
+					return 2
+				}
+			} else {
 			judged, err := judger.JudgeFinding(context.Background(), judge.PromptInput{
 				Finding:         f,
 				RuleDescription: ruleDescriptions[f.Rule],
@@ -164,6 +186,12 @@ func runJudge(args []string) int {
 				output.Summary.LLMCalls++
 				v = judged
 			}
+			}
+		}
+		if v.Source == "llm" {
+			output.Summary.InputTokens += v.InputTokens
+			output.Summary.OutputTokens += v.OutputTokens
+			output.Summary.TotalCostUSD += cost.EstimateUSD(v.InputTokens, v.OutputTokens)
 		}
 
 		output.Verdicts = append(output.Verdicts, judgeFindingVerdict{
@@ -224,6 +252,18 @@ func runJudge(args []string) int {
 	}
 
 	accumulateJudgeSummary(&output)
+	if err := cost.Append(opts.metricsPath, cost.Metrics{
+		RecordedAt:      time.Now().UTC().Format(time.RFC3339),
+		LLMCalls:        output.Summary.LLMCalls,
+		InputTokens:     output.Summary.InputTokens,
+		OutputTokens:    output.Summary.OutputTokens,
+		TotalCostUSD:    output.Summary.TotalCostUSD,
+		BudgetUSD:       output.Summary.BudgetUSD,
+		BudgetExhausted: output.Summary.BudgetExhausted,
+	}); err != nil {
+		fmt.Fprintf(os.Stderr, "error: write cost metrics: %v\n", err)
+		return 2
+	}
 
 	if opts.format == "json" {
 		enc := json.NewEncoder(os.Stdout)
@@ -285,6 +325,7 @@ func parseJudgeOptions(args []string) (judgeOptions, error) {
 		minConfidence:      0.0,
 		autoApplyThreshold: 0.9,
 		lawThreshold:       10,
+		budgetUSD:          0,
 	}
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
@@ -330,6 +371,25 @@ func parseJudgeOptions(args []string) (judgeOptions, error) {
 				return judgeOptions{}, fmt.Errorf("--law-threshold must be > 0")
 			}
 			opts.lawThreshold = n
+			i++
+		case "--metrics":
+			if i+1 >= len(args) {
+				return judgeOptions{}, fmt.Errorf("--metrics requires a value")
+			}
+			opts.metricsPath = args[i+1]
+			i++
+		case "--budget":
+			if i+1 >= len(args) {
+				return judgeOptions{}, fmt.Errorf("--budget requires a value")
+			}
+			n, err := strconv.ParseFloat(args[i+1], 64)
+			if err != nil {
+				return judgeOptions{}, fmt.Errorf("invalid --budget %q", args[i+1])
+			}
+			if n < 0 {
+				return judgeOptions{}, fmt.Errorf("--budget must be >= 0")
+			}
+			opts.budgetUSD = n
 			i++
 		case "--min-confidence":
 			if i+1 >= len(args) {

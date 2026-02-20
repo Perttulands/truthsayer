@@ -177,7 +177,7 @@ func TestRunJudge_FallbackToPrecedentWhenJudgeFails(t *testing.T) {
 }
 
 func TestParseJudgeOptions(t *testing.T) {
-	opts, err := parseJudgeOptions([]string{"--precedents", "p.json", "--debt", "d.json", "--law-candidates", "c.json", "--law-updates", "u.md", "--law-threshold", "7", "--min-confidence", "0.9", "--auto-apply-threshold", "0.95", "f.json"})
+	opts, err := parseJudgeOptions([]string{"--precedents", "p.json", "--debt", "d.json", "--law-candidates", "c.json", "--law-updates", "u.md", "--metrics", "m.jsonl", "--budget", "0.01", "--law-threshold", "7", "--min-confidence", "0.9", "--auto-apply-threshold", "0.95", "f.json"})
 	if err != nil {
 		t.Fatalf("parseJudgeOptions failed: %v", err)
 	}
@@ -195,6 +195,12 @@ func TestParseJudgeOptions(t *testing.T) {
 	}
 	if opts.lawThreshold != 7 {
 		t.Fatalf("unexpected law threshold: %d", opts.lawThreshold)
+	}
+	if opts.metricsPath != "m.jsonl" {
+		t.Fatalf("unexpected metrics path: %q", opts.metricsPath)
+	}
+	if opts.budgetUSD != 0.01 {
+		t.Fatalf("unexpected budget: %f", opts.budgetUSD)
 	}
 	if opts.minConfidence != 0.9 {
 		t.Fatalf("unexpected min confidence: %f", opts.minConfidence)
@@ -378,5 +384,64 @@ func TestRunJudge_LogsLawCandidateWhenThresholdReached(t *testing.T) {
 	}
 	if !strings.Contains(string(proposals), "Proposal 1") {
 		t.Fatalf("expected proposal markdown content, got:\n%s", string(proposals))
+	}
+}
+
+func TestRunJudge_WritesCostMetricsAndBudgetFallback(t *testing.T) {
+	dir := t.TempDir()
+	findingsPath := writeFindingsJSON(t, dir, []finding.Finding{
+		{
+			Rule:     "silent-fallback.hidden-failure-bash",
+			Severity: finding.SeverityError,
+			File:     "script.sh",
+			Line:     3,
+			Code:     "cmd || true",
+			Message:  "hidden failure",
+		},
+		{
+			Rule:     "silent-fallback.hidden-failure-bash",
+			Severity: finding.SeverityError,
+			File:     "script.sh",
+			Line:     4,
+			Code:     "cmd || true",
+			Message:  "hidden failure",
+		},
+	})
+
+	fake := &fakeFindingJudge{
+		verdict: judge.Verdict{
+			Verdict:            judge.VerdictNotGuilty,
+			Reasoning:          "approved cleanup context",
+			Confidence:         0.93,
+			PrecedentDecision:  precedent.DecisionAllow,
+			PrecedentRationale: "known acceptable cleanup",
+			Source:             "llm",
+			InputTokens:        600,
+			OutputTokens:       120,
+		},
+	}
+	oldFactory := newFindingJudge
+	newFindingJudge = func() (findingJudge, error) { return fake, nil }
+	defer func() { newFindingJudge = oldFactory }()
+
+	stdout := captureStdout(t, func() {
+		code := runJudge([]string{"--budget", "0.000001", "--auto-apply-threshold", "1", findingsPath})
+		if code != 0 {
+			t.Fatalf("expected exit code 0 with precedent fallback after budget exhaustion, got %d", code)
+		}
+	})
+	if !strings.Contains(stdout, `"budget_exhausted": true`) {
+		t.Fatalf("expected budget_exhausted true, got:\n%s", stdout)
+	}
+	if !strings.Contains(stdout, `"llm_calls": 1`) {
+		t.Fatalf("expected one llm call before fallback, got:\n%s", stdout)
+	}
+
+	raw, err := os.ReadFile(filepath.Join(dir, ".truthsayer-cost.jsonl"))
+	if err != nil {
+		t.Fatalf("read cost metrics: %v", err)
+	}
+	if !strings.Contains(string(raw), `"total_cost_usd":`) {
+		t.Fatalf("expected cost metric record, got:\n%s", string(raw))
 	}
 }
