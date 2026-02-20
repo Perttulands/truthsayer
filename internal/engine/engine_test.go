@@ -9,6 +9,7 @@ import (
 
 	"github.com/perttulands/truthsayer/internal/config"
 	"github.com/perttulands/truthsayer/internal/finding"
+	"github.com/perttulands/truthsayer/internal/precedent"
 	"github.com/perttulands/truthsayer/internal/rules"
 )
 
@@ -16,6 +17,19 @@ type countingRegexChecker struct {
 	mu    sync.Mutex
 	calls int
 }
+
+const goWithError = `package foo
+
+import "fmt"
+
+func bad() error {
+	err := fmt.Errorf("fail")
+	if err != nil {
+		return nil
+	}
+	return nil
+}
+`
 
 func (c *countingRegexChecker) Meta() rules.Rule {
 	return rules.Rule{
@@ -598,6 +612,100 @@ func TestEngine_FileCacheByMtime(t *testing.T) {
 	}
 	if counter.CallCount() != 2 {
 		t.Fatalf("expected cache invalidation after mtime change, got %d calls", counter.CallCount())
+	}
+}
+
+func TestEngine_PrecedentAllowSuppressesFinding(t *testing.T) {
+	tmp := t.TempDir()
+	path := filepath.Join(tmp, "bad.go")
+	if err := os.WriteFile(path, []byte(goWithError), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	reg := rules.DefaultRegistry()
+
+	baselineEngine := New(reg)
+	baseline, err := baselineEngine.Scan(tmp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(baseline.Findings) == 0 {
+		t.Fatal("expected baseline findings, got none")
+	}
+
+	target := baseline.Findings[0]
+	targetHash := precedent.HashViolation(target.Rule, target.File, target.Line, target.Code, tmp)
+
+	eng := New(reg)
+	eng.SetPrecedents([]precedent.Precedent{
+		{
+			RuleID:        target.Rule,
+			ViolationHash: targetHash,
+			Decision:      precedent.DecisionAllow,
+			Rationale:     "Known acceptable in this code path.",
+			CreatedAt:     time.Date(2026, 2, 19, 0, 0, 0, 0, time.UTC),
+		},
+	})
+
+	filtered, err := eng.Scan(tmp)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, f := range filtered.Findings {
+		h := precedent.HashViolation(f.Rule, f.File, f.Line, f.Code, tmp)
+		if f.Rule == target.Rule && h == targetHash {
+			t.Fatalf("expected finding %s to be suppressed by allow precedent", f.Rule)
+		}
+	}
+}
+
+func TestEngine_PrecedentDenyDoesNotSuppressFinding(t *testing.T) {
+	tmp := t.TempDir()
+	path := filepath.Join(tmp, "bad.go")
+	if err := os.WriteFile(path, []byte(goWithError), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	reg := rules.DefaultRegistry()
+	baselineEngine := New(reg)
+	baseline, err := baselineEngine.Scan(tmp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(baseline.Findings) == 0 {
+		t.Fatal("expected baseline findings, got none")
+	}
+
+	target := baseline.Findings[0]
+	targetHash := precedent.HashViolation(target.Rule, target.File, target.Line, target.Code, tmp)
+
+	eng := New(reg)
+	eng.SetPrecedents([]precedent.Precedent{
+		{
+			RuleID:        target.Rule,
+			ViolationHash: targetHash,
+			Decision:      precedent.DecisionDeny,
+			Rationale:     "This should still be reported.",
+			CreatedAt:     time.Date(2026, 2, 19, 0, 0, 0, 0, time.UTC),
+		},
+	})
+
+	filtered, err := eng.Scan(tmp)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	found := false
+	for _, f := range filtered.Findings {
+		h := precedent.HashViolation(f.Rule, f.File, f.Line, f.Code, tmp)
+		if f.Rule == target.Rule && h == targetHash {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatal("expected deny precedent to keep finding in results")
 	}
 }
 

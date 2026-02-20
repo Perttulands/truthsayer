@@ -25,6 +25,7 @@ type JSONFinding struct {
 	File       string `json:"file"`
 	Line       int    `json:"line"`
 	Code       string `json:"code"`
+	Context    string `json:"context,omitempty"`
 	Message    string `json:"message"`
 	Suggestion string `json:"suggestion,omitempty"`
 }
@@ -49,6 +50,7 @@ func JSON(w io.Writer, findings []finding.Finding, path string, scanTime time.Ti
 			File:       f.File,
 			Line:       f.Line,
 			Code:       f.Code,
+			Context:    f.Context,
 			Message:    f.Message,
 			Suggestion: f.Suggestion,
 		}

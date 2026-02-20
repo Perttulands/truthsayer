@@ -34,6 +34,7 @@ type Finding struct {
 	File       string   `json:"file"`
 	Line       int      `json:"line"`
 	Code       string   `json:"code"`
+	Context    string   `json:"context,omitempty"`
 	Message    string   `json:"message"`
 	Suggestion string   `json:"suggestion"`
 }

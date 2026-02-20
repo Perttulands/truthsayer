@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/perttulands/truthsayer/internal/finding"
+	"github.com/perttulands/truthsayer/internal/precedent"
 	"github.com/perttulands/truthsayer/internal/report"
 )
 
@@ -61,15 +62,41 @@ func runHook(args []string) int {
 
 	report.Terminal(os.Stdout, allFindings, filesScanned, durationMs)
 
-	if finding.HasErrors(allFindings) {
-		return 1
+	if len(allFindings) == 0 {
+		return 0
 	}
-	return 0
+
+	// TS-013: pre-commit now runs the scan -> judge pipeline.
+	// If judgment is unavailable, fall back to deterministic scan gating.
+	judgeInputPath, cleanup, err := writeHookFindingsReport(repoDir, allFindings, filesScanned, durationMs)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "warning: hook judge setup failed, falling back to scan gate: %v\n", err)
+		if finding.HasErrors(allFindings) {
+			return 1
+		}
+		return 0
+	}
+	defer cleanup()
+
+	judgeCode := runJudge([]string{
+		"--format", "text",
+		"--precedents", filepath.Join(repoDir, precedent.DefaultPath),
+		judgeInputPath,
+	})
+	if judgeCode == 2 {
+		fmt.Fprintln(os.Stderr, "warning: hook judgment unavailable, falling back to scan gate")
+		if finding.HasErrors(allFindings) {
+			return 1
+		}
+		return 0
+	}
+	return judgeCode
 }
 
 // stagedFiles returns the list of staged files (added, copied, modified) in the repo.
 func stagedFiles(repoDir string) ([]string, error) {
-	cmd := exec.Command("git", "diff", "--cached", "--name-only", "--diff-filter=ACM")
+	argv := []string{"git", "diff", "--cached", "--name-only", "--diff-filter=ACM"}
+	cmd := exec.Command(argv[0], argv[1:]...)
 	cmd.Dir = repoDir
 	out, err := cmd.Output()
 	if err != nil {
@@ -93,6 +120,29 @@ func isTestdata(path string) bool {
 		}
 	}
 	return false
+}
+
+func writeHookFindingsReport(repoDir string, findings []finding.Finding, filesScanned int, durationMs int64) (string, func(), error) {
+	f, err := os.CreateTemp(repoDir, ".truthsayer-hook-findings-*.json")
+	if err != nil {
+		return "", nil, fmt.Errorf("create temp findings report: %w", err)
+	}
+	path := f.Name()
+	closeAndCleanup := func() {
+		_ = f.Close()
+		_ = os.Remove(path)
+	}
+
+	if err := report.JSON(f, findings, repoDir, time.Now(), filesScanned, durationMs); err != nil {
+		closeAndCleanup()
+		return "", nil, fmt.Errorf("write temp findings report: %w", err)
+	}
+	if err := f.Close(); err != nil {
+		_ = os.Remove(path)
+		return "", nil, fmt.Errorf("close temp findings report: %w", err)
+	}
+
+	return path, func() { _ = os.Remove(path) }, nil
 }
 
 const preCommitHook = `#!/bin/bash

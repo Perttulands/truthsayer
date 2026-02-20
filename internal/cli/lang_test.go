@@ -341,6 +341,16 @@ func TestParseScanOptions_ParallelFlag_Invalid(t *testing.T) {
 	}
 }
 
+func TestParseScanOptions_UsePrecedentsFlag(t *testing.T) {
+	opts, err := parseScanOptions([]string{"--use-precedents", "/tmp"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !opts.usePrecedents {
+		t.Fatal("expected usePrecedents to be true")
+	}
+}
+
 func TestScan_LangFilterPythonOnly(t *testing.T) {
 	// Create a temporary directory with Go and Python files
 	dir := t.TempDir()

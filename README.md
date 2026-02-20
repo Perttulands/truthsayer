@@ -1,137 +1,209 @@
 # 🔍 Truthsayer
 
-![Banner](banner.jpg)
-
-*88 rules. No mercy. No exceptions.*
+*Bronze monocle. Dark robes. 88 rules stitched in gold thread. He reads your code like a confession.*
 
 ---
 
-Every codebase is a crime scene. The developers are gone. The git blame points everywhere and nowhere. Somewhere in the wreckage, someone wrote `catch (Exception e) {}` and thought nobody would notice.
+Every codebase has a layer of polite lies. Error handlers that handle nothing. Catch blocks that catch and release. Timeouts that were going to be added "later." Somewhere under the clean abstractions, something is swallowing failures and smiling about it.
 
-Truthsayer noticed.
+Truthsayer sees both layers. That's what the cracked mirror is for — beauty on the surface, rot underneath, both visible at once. He wears dark robes with every rule stitched into the fabric in gold thread. Eighty-eight of them. The Codex hangs from his belt on a bronze chain, heavy enough to use as a weapon if the Red Quill doesn't make the point clearly enough. And the monocle — oversized, bronze, always on one eye — you see it across the room and you know exactly what's coming.
 
-He walks the Agora in dark robes stitched with golden text — all 88 rules, woven into the fabric. The law is literally part of him. A bronze monocle over one eye, a red quill in his hand, and a cracked mirror that shows two layers at once: the beautiful surface, and the rot underneath. Your linter sees valid syntax and moves on. Truthsayer sees the `except: pass` hiding behind it and starts writing in permanent ink.
+He doesn't care about style. He doesn't care about naming conventions. He cares about the specific moment your code decided to lie about what happened. That `catch (e) {}` you wrote at 2am? He found it. He's been waiting.
 
-It scans your code across 5 languages, matches against 88 anti-pattern rules that were written in blood (metaphorical — mostly), and tells you exactly where you're lying to yourself. Some of the rules are obvious. Some will hurt your feelings. All of them exist because someone shipped the thing they warn about and regretted it at 3am.
+Development anti-pattern scanner for Go, JavaScript/TypeScript, Python, and bash codebases. Detects hidden failures, swallowed errors, bad defaults, mock leakage, missing traces, and configuration smells.
 
-It's the friend who tells you there's spinach in your teeth. Except the spinach is an unchecked type assertion and your teeth are production.
-
-## What It Catches
-
-| Category | What you did wrong |
-|----------|--------------------|
-| **silent-fallback** | Swallowed errors, empty catch blocks, bare except, floating promises. The code equivalent of putting a rug over a hole in the floor. |
-| **error-context** | Generic error messages, unwrapped errors, HTTP 200 on error. "Something went wrong" is not a diagnostic. |
-| **trace-gaps** | Functions without logging, missing request IDs. When it breaks at 3am, how exactly were you planning to debug it? |
-| **mock-leakage** | Test imports in production, jest.mock in source. Congratulations, you're shipping your test harness. |
-| **bad-defaults** | Missing timeouts, no pipefail, eval usage, mutable default args. The "works on my machine" starter pack. |
-| **config-smells** | Hardcoded paths, secrets in config, unpinned requirements. Future you is going to be very upset with past you. |
-| **test-isolation** | Missing cleanup, test-only imports in source. Your tests pass because they're lying, not because they're right. |
-
-## Supported Languages
-
-| Language | Parser | Rules |
-|----------|--------|-------|
-| Go | `go/ast` (stdlib) | 21 AST + 12 regex |
-| JavaScript/TypeScript | tree-sitter (cgo) | 20 AST + 9 regex |
-| Python | tree-sitter (cgo) | 19 AST + 7 regex |
-| Bash | regex | shared |
-| Config files | regex | shared |
+Truthsayer's niche is *failure-hiding anti-patterns* — the silent fallbacks, swallowed exceptions, missing observability, and production-test boundary violations that generic linters ignore.
 
 ## Install
 
+Requires a C compiler (gcc or clang) for tree-sitter parsing.
+
 ```bash
-# You need a C compiler. If that surprises you, tree-sitter has opinions about parsing.
-sudo apt-get install build-essential  # Debian/Ubuntu
+go install github.com/perttulands/truthsayer/cmd/truthsayer@latest
+```
 
-# Then:
-go install github.com/Perttulands/truthsayer/cmd/truthsayer@latest
+Or build from source:
 
-# Or from source:
+```bash
 git clone https://github.com/Perttulands/truthsayer.git
 cd truthsayer
 go build -o truthsayer ./cmd/truthsayer
 ```
 
+On Debian/Ubuntu, install C toolchain if needed:
+
+```bash
+sudo apt-get install build-essential
+```
+
 ## Usage
 
 ```bash
-# The main event. Scan everything. Fear nothing.
+# Scan a directory (all languages)
 truthsayer scan .
 
-# Be selective about your suffering
+# Scan specific languages only
 truthsayer scan --lang go,python .
+truthsayer scan --lang js,ts .
 
-# Single file therapy session
+# Scan a single file
 truthsayer check path/to/file.go
 
-# Watch mode — real-time judgment
+# Watch for changes
 truthsayer watch .
 
-# JSON output for the machines
+# JSON report
 truthsayer scan --format json .
 
-# Read the law before you break it
+# Reuse past allow/deny decisions from precedents.json
+truthsayer scan --use-precedents .
+
+# List all rules
 truthsayer rules
 
-# Quality gate — exits 1 on errors. Put this in CI.
-# Sleep well knowing nothing ships without passing 88 checks.
-truthsayer scan .
+# List rules for a specific language
+truthsayer rules --lang python
+
+# Check installation
+truthsayer doctor
 ```
+
+### Language Aliases
+
+The `--lang` flag accepts these aliases:
+
+| Alias | Extensions |
+|-------|-----------|
+| `go` | `.go` |
+| `js`, `javascript` | `.js`, `.jsx`, `.mjs`, `.cjs` |
+| `ts`, `typescript` | `.ts`, `.tsx` |
+| `python`, `py` | `.py`, `.pyi` |
+| `bash`, `shell`, `sh` | `.sh`, `.bash` |
+
+## Supported Languages
+
+| Language | Parser | Rule Count |
+|----------|--------|-----------|
+| Go | `go/ast` (stdlib) | 21 AST + 12 regex |
+| JavaScript/TypeScript | tree-sitter (cgo) | 20 AST + 9 regex |
+| Python | tree-sitter (cgo) | 19 AST + 7 regex |
+| Bash/Config | regex | (shared with above) |
+
+**Total: 88 rules** across 7 categories.
+
+## What It Detects
+
+| Category | What it catches |
+|----------|----------------|
+| **silent-fallback** | Swallowed errors, empty catch blocks, bare except, floating promises, ignored callbacks |
+| **error-context** | Generic error messages, unwrapped errors, HTTP 200 on error, raise-from-none |
+| **trace-gaps** | Functions without logging, missing request IDs, no unhandled rejection handler |
+| **mock-leakage** | Test imports in production, debug guards, jest.mock in source, pytest fixtures in source |
+| **bad-defaults** | Missing timeouts, no pipefail, eval usage, mutable default args, star imports |
+| **config-smells** | Hardcoded paths, secrets in config, missing .gitignore, unpinned requirements |
+| **test-isolation** | Missing cleanup in beforeAll/afterAll, test-only imports in source |
 
 ## CI Integration
 
 ```bash
-# Pre-commit hook (installs to .git/hooks/)
+# Install pre-commit hook
 truthsayer hook install .
 
-# GitHub Actions — generates workflow file
+# Generate GitHub Actions workflow
 truthsayer ci init .
+
+# Use as quality gate (exits 1 on errors)
+truthsayer scan .
 ```
 
 ## Configuration
 
-Create `.truthsayer.toml` if you want to adjust the rules. You can't disable them all. That's not how laws work.
+Create `.truthsayer.toml` in your project root:
 
 ```toml
 [scan]
-exclude_dirs = ["vendor", "node_modules", "testdata"]
-exclude_patterns = ["*_generated.go", "*.pb.go"]
+exclude_dirs = ["vendor", "node_modules", "testdata", "__pycache__", ".venv", "dist", "build"]
+exclude_patterns = ["*_generated.go", "*.pb.go", "*.min.js", "*.bundle.js", "*.pyc"]
+
+[scan.languages]
+# Per-language enable/disable (all enabled by default)
+go = true
+javascript = true   # .js, .jsx, .mjs, .cjs
+typescript = true   # .ts, .tsx
+python = true       # .py, .pyi
+bash = true          # .sh, .bash
 
 [rules.disable]
-ids = ["bad-defaults.magic-number"]  # Fine, but we're judging you
+ids = ["bad-defaults.magic-number"]
 
 [rules]
-"trace-gaps.long-function-no-log" = "error"  # Promote to error severity
+# Promote a warning to error
+"trace-gaps.long-function-no-log" = "error"
+```
+
+Set `[scan.languages]` values to `false` to skip scanning for that language entirely. Omitted languages default to enabled.
+
+## Precedents (File-Based)
+
+Truthsayer can store past violation decisions in `precedents.json` so future scans can reuse prior judgments.
+Enable it during scans with `--use-precedents`.
+
+Schema:
+
+```json
+[
+  {
+    "rule_id": "error-context.http-200-on-error",
+    "violation_hash": "f8d31f4d8e7c...",
+    "decision": "deny",
+    "rationale": "Returning 200 in catch hides failures from clients.",
+    "created_at": "2026-02-19T00:00:00Z"
+  }
+]
+```
+
+- `rule_id`: Truthsayer rule identifier
+- `violation_hash`: stable hash for a specific violation instance
+- `decision`: `allow` or `deny`
+- `rationale`: human explanation for the decision
+- `created_at`: RFC3339 timestamp (UTC recommended)
+
+When `--use-precedents` is enabled, findings with matching `rule_id` + `violation_hash`
+and decision `allow` are suppressed from scan output.
+
+Package: `internal/precedent`
+
+```go
+store := precedent.NewStore("precedents.json")
+
+_ = store.Add(precedent.Precedent{
+    RuleID:        "error-context.http-200-on-error",
+    ViolationHash: "f8d31f4d8e7c...",
+    Decision:      precedent.DecisionDeny,
+    Rationale:     "Returning 200 in catch hides failures from clients.",
+})
+
+match, ok, err := store.Query("error-context.http-200-on-error", "f8d31f4d8e7c...")
+_ = match
+_ = ok
+_ = err
 ```
 
 ## Exit Codes
 
 | Code | Meaning |
 |------|---------|
-| 0 | Clean. Truthsayer respects you today. |
-| 1 | Findings. The red quill has been busy. |
-| 2 | Tool error. Even the law keeper has bad days. |
-
-## For Agents
-
-This repo includes `AGENTS.md` with operational instructions.
-
-```bash
-git clone https://github.com/Perttulands/truthsayer.git
-cd truthsayer
-go build -o ~/go/bin/truthsayer ./cmd/truthsayer
-```
-
-Dependencies: Go 1.21+, C compiler (`gcc`/`clang`) for tree-sitter. On Debian/Ubuntu: `sudo apt-get install build-essential`.
+| 0 | No error-severity findings |
+| 1 | Error-severity findings present |
+| 2 | Tool error (bad config, invalid path) |
 
 ## Part of the Agora
 
-Truthsayer was forged in **[Athena's Agora](https://github.com/Perttulands/athena-workspace)** — an autonomous coding system where AI agents build software under the watch of Greek mythology and cyberpunk engineering.
+Truthsayer was forged in **[Athena's Agora](https://github.com/Perttulands/athena-workspace)** — an autonomous coding system where AI agents build software and a figure in dark robes makes sure none of it is lying.
 
-He's not alone. [Oathkeeper](https://github.com/Perttulands/oathkeeper) checks whether agents kept their promises. [Argus](https://github.com/Perttulands/argus) watches the server with one red eye that never closes. [Relay](https://github.com/Perttulands/relay) carries messages between agents at 26,000/sec with zero lost. Truthsayer watches the code. The red quill marks what the red eye misses.
+[Argus](https://github.com/Perttulands/argus) watches the server. [Oathkeeper](https://github.com/Perttulands/oathkeeper) watches the promises. [Relay](https://github.com/Perttulands/relay) carries the messages. Truthsayer watches the code. Between the four of them, your silent failures have nowhere to hide.
 
-There are others. The [mythology](https://github.com/Perttulands/athena-workspace/blob/main/mythology.md) has the full story.
+The [mythology](https://github.com/Perttulands/athena-workspace/blob/main/mythology.md) has the full story.
 
 ## License
 

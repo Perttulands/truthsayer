@@ -1,9 +1,14 @@
 package cli
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
+
+	"github.com/perttulands/truthsayer/internal/finding"
+	"github.com/perttulands/truthsayer/internal/precedent"
 )
 
 // writeFile creates a file with given content in a temp dir.
@@ -251,6 +256,54 @@ func TestScan_NoConfigMeansAllEnabled(t *testing.T) {
 	code := runScan([]string{dir})
 	if code != 1 {
 		t.Errorf("expected exit code 1 (all rules enabled by default), got %d", code)
+	}
+}
+
+func TestScan_UsePrecedents_SuppressesAllowDecisions(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "bad.go", goWithError)
+
+	// Baseline without precedents should fail.
+	if code := runScan([]string{dir}); code != 1 {
+		t.Fatalf("expected baseline scan exit code 1, got %d", code)
+	}
+
+	eng, err := buildEngine(dir, "")
+	if err != nil {
+		t.Fatalf("buildEngine failed: %v", err)
+	}
+	result, err := eng.Scan(dir)
+	if err != nil {
+		t.Fatalf("baseline engine scan failed: %v", err)
+	}
+
+	records := make([]precedent.Precedent, 0, len(result.Findings))
+	for _, f := range result.Findings {
+		if f.Severity != finding.SeverityError {
+			continue
+		}
+		records = append(records, precedent.Precedent{
+			RuleID:        f.Rule,
+			ViolationHash: precedent.HashViolation(f.Rule, f.File, f.Line, f.Code, dir),
+			Decision:      precedent.DecisionAllow,
+			Rationale:     "Accepted for this test.",
+			CreatedAt:     time.Date(2026, 2, 19, 0, 0, 0, 0, time.UTC),
+		})
+	}
+	if len(records) == 0 {
+		t.Fatal("expected at least one error finding to create precedent records")
+	}
+
+	data, err := json.Marshal(records)
+	if err != nil {
+		t.Fatalf("failed to marshal precedents: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, precedent.DefaultPath), data, 0o644); err != nil {
+		t.Fatalf("failed to write precedents.json: %v", err)
+	}
+
+	if code := runScan([]string{"--use-precedents", dir}); code != 0 {
+		t.Fatalf("expected precedence-aware scan exit code 0, got %d", code)
 	}
 }
 

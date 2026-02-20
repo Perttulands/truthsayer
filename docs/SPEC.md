@@ -64,7 +64,7 @@ Truthsayer scans codebases and configurations for anti-patterns that hide proble
 ## Tech Stack
 - **Language**: Go (CLI tool)
 - **Scanner**: AST-based for Go files, regex-based for bash/config/general
-- **Storage**: JSON report files (no database needed)
+- **Storage**: JSON report files + file-based precedent store (`precedents.json`)
 - **Runtime**: CLI tool (no daemon dependency), optional systemd for passive mode
 - **Config**: TOML
 - **LLM**: Optional `claude -p --model haiku` for ambiguous pattern classification
@@ -74,6 +74,7 @@ Truthsayer scans codebases and configurations for anti-patterns that hide proble
 ```
 truthsayer scan <path>           # Full scan of directory/repo
 truthsayer scan --fix <path>     # Scan + suggest fixes (no auto-apply)
+truthsayer scan --use-precedents <path>  # Suppress findings allowed in precedents.json
 truthsayer watch <path>          # Passive mode — watch for changes
 truthsayer check <file>          # Single file check
 truthsayer report <path>         # Generate structured JSON report
@@ -108,6 +109,41 @@ truthsayer --version             # Print version
   }
 }
 ```
+
+## Precedent Schema
+
+Truthsayer keeps historical violation decisions in a local JSON file (`precedents.json`) so past decisions can inform future judgments.
+
+```json
+[
+  {
+    "rule_id": "silent-fallback.empty-error-check",
+    "violation_hash": "3f962cc15b...",
+    "decision": "deny",
+    "rationale": "Swallowing errors in this code path caused incidents before.",
+    "created_at": "2026-02-19T00:00:00Z"
+  }
+]
+```
+
+Field definitions:
+- `rule_id`: canonical rule identifier
+- `violation_hash`: stable identifier for the violation instance
+- `decision`: `allow` or `deny`
+- `rationale`: explanation for why this precedent exists
+- `created_at`: decision timestamp in RFC3339 format
+
+Implementation package: `internal/precedent`
+- `NewStore(path string) *Store`
+- `(*Store).Load() ([]Precedent, error)`
+- `(*Store).Save([]Precedent) error`
+- `(*Store).Add(Precedent) error`
+- `(*Store).Query(ruleID, violationHash string) (Precedent, bool, error)`
+- `QueryByRule(precedents []Precedent, ruleID string) []Precedent`
+
+Runtime integration:
+- `truthsayer scan --use-precedents <path>` loads precedents at scan start.
+- Findings with matching `rule_id` + `violation_hash` and decision `allow` are not reported.
 
 ## Severity Levels
 - **error**: Must fix. Actively hides problems (empty catch, swallowed errors, secrets in code)

@@ -3,11 +3,13 @@ package cli
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/perttulands/truthsayer/internal/config"
 	"github.com/perttulands/truthsayer/internal/engine"
 	"github.com/perttulands/truthsayer/internal/finding"
 	"github.com/perttulands/truthsayer/internal/rules"
+	"github.com/perttulands/truthsayer/internal/senate"
 )
 
 // validSeverities is the set of valid severity values for config overrides.
@@ -37,6 +39,31 @@ func buildEngine(scanDir, configPath string) (*engine.Engine, error) {
 		}
 		if !reg.SetSeverity(id, sev) {
 			fmt.Fprintf(os.Stderr, "warning: unknown rule %q in severity config\n", id)
+		}
+	}
+
+	// Apply approved Senate amendments from repo-local amendment store.
+	applied, err := senate.NewAmendmentStore(filepath.Join(scanDir, senate.DefaultAmendmentsPath)).Load()
+	if err != nil {
+		return nil, fmt.Errorf("load senate amendments: %w", err)
+	}
+	for _, rec := range applied {
+		am := rec.Amendment
+		switch am.Action {
+		case senate.ActionSetSeverity:
+			if !validSeverities[am.Severity] {
+				return nil, fmt.Errorf("senate amendment: invalid severity %q for rule %q", am.Severity, am.RuleID)
+			}
+			if !reg.SetSeverity(am.RuleID, am.Severity) {
+				fmt.Fprintf(os.Stderr, "warning: unknown senate amendment rule %q for set_severity\n", am.RuleID)
+			}
+		case senate.ActionDisableRule:
+			reg.Disable(am.RuleID)
+		case senate.ActionEnableRule:
+			reg.Enable(am.RuleID)
+		case senate.ActionAddException:
+			// Rule-specific exceptions can be implemented incrementally per rule.
+			fmt.Fprintf(os.Stderr, "info: senate add_exception recorded for %s (%s)\n", am.RuleID, am.Exception)
 		}
 	}
 

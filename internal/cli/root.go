@@ -25,6 +25,14 @@ func Run() int {
 		return runRules(os.Args[2:])
 	case "doctor":
 		return runDoctor(os.Args[2:])
+	case "judge":
+		return runJudge(os.Args[2:])
+	case "debt":
+		return runDebt(os.Args[2:])
+	case "senate":
+		return runSenate(os.Args[2:])
+	case "warmup":
+		return runWarmup(os.Args[2:])
 	case "hook":
 		if len(os.Args) > 2 && os.Args[2] == "install" {
 			return runHookInstall(os.Args[3:])
@@ -57,6 +65,11 @@ func printUsage() {
 	fmt.Fprintln(os.Stderr, "  check <file>         Scan a single file")
 	fmt.Fprintln(os.Stderr, "  watch <path>         Watch for changes and scan modified files")
 	fmt.Fprintln(os.Stderr, "  report <path>        Generate JSON report to file")
+	fmt.Fprintln(os.Stderr, "  judge <findings.json>  Judge findings with precedents + LLM")
+	fmt.Fprintln(os.Stderr, "  debt [path]          List advisory debt entries")
+	fmt.Fprintln(os.Stderr, "  senate parse <file>  Parse and validate Senate verdict file")
+	fmt.Fprintln(os.Stderr, "  senate apply <file> [repo]  Apply approved Senate amendments")
+	fmt.Fprintln(os.Stderr, "  warmup <path>        Run full-repo scan+judge to build precedent base")
 	fmt.Fprintln(os.Stderr, "  rules                List all detection rules")
 	fmt.Fprintln(os.Stderr, "  rules --enabled      List only enabled rules (respects config)")
 	fmt.Fprintln(os.Stderr, "  rules --lang <langs>  List rules for specific languages")
@@ -73,7 +86,20 @@ func printUsage() {
 	fmt.Fprintln(os.Stderr, "  --lang <langs>       Scan only specific languages (e.g., go,python,js)")
 	fmt.Fprintln(os.Stderr, "  --parallel [n]       Scan files concurrently (default workers: NumCPU)")
 	fmt.Fprintln(os.Stderr, "  --config <path>      Use a custom config file (default: .truthsayer.toml)")
+	fmt.Fprintln(os.Stderr, "  --use-precedents     Suppress findings explicitly allowed in precedents.json")
 	fmt.Fprintln(os.Stderr, "  --create-beads       Create problem beads for errors")
+	fmt.Fprintln(os.Stderr, "")
+	fmt.Fprintln(os.Stderr, "Judge options:")
+	fmt.Fprintln(os.Stderr, "  --format json        Output verdicts as JSON (default)")
+	fmt.Fprintln(os.Stderr, "  --precedents <path>  Precedent store path (default: <input-dir>/precedents.json)")
+	fmt.Fprintln(os.Stderr, "  --debt <path>        Advisory debt path (default: <input-dir>/.truthsayer-debt.json)")
+	fmt.Fprintln(os.Stderr, "  --law-candidates <path>  Consistent-ruling candidate log path")
+	fmt.Fprintln(os.Stderr, "  --law-updates <path>     Markdown law update proposals path")
+	fmt.Fprintln(os.Stderr, "  --law-threshold n    Candidate threshold for repeated same-pattern rulings (default: 10)")
+	fmt.Fprintln(os.Stderr, "  --metrics <path>     Cost metrics JSONL path (default: <input-dir>/.truthsayer-cost.jsonl)")
+	fmt.Fprintln(os.Stderr, "  --budget n           Spend cap in USD for LLM judgments (0 = unlimited)")
+	fmt.Fprintln(os.Stderr, "  --min-confidence n   Minimum precedent confidence included in prompt context (0-1)")
+	fmt.Fprintln(os.Stderr, "  --auto-apply-threshold n  Skip LLM when matching precedent confidence is above n (default: 0.9)")
 	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "Language aliases:")
 	fmt.Fprintln(os.Stderr, "  go, js/javascript, ts/typescript, python/py, bash/shell/sh")
