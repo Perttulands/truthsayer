@@ -1,2 +1,12 @@
 [scan]
 exclude_dirs = ["vendor", "node_modules", "testdata", ".beads"]
+# Exclude test files containing intentional anti-patterns for rule testing
+exclude_patterns = ["*_test.go"]
+
+[rules]
+# Disable rules that generate false positives when scanning a scanner
+disable = [
+  "security.command-injection",      # exec.Command with literal git args is safe
+  "security.sql-injection",          # test fixtures contain intentional SQL examples
+  "config-smells.hardcoded-credentials",  # test fixtures contain intentional examples
+]
