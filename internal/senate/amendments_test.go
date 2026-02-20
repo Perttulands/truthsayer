@@ -45,4 +45,3 @@ func TestAppendAudit(t *testing.T) {
 		t.Fatal("expected audit content")
 	}
 }
-

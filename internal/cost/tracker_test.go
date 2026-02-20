@@ -32,4 +32,3 @@ func TestAppend(t *testing.T) {
 		t.Fatal("expected metrics content")
 	}
 }
-

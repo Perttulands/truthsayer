@@ -48,13 +48,13 @@ func TestRunJudge_JSONOutputAndPrecedentWrite(t *testing.T) {
 	dir := t.TempDir()
 	findingsPath := writeFindingsJSON(t, dir, []finding.Finding{
 		{
-			Rule:    "silent-fallback.hidden-failure-bash",
+			Rule:     "silent-fallback.hidden-failure-bash",
 			Severity: finding.SeverityError,
-			File:    "script.sh",
-			Line:    2,
-			Code:    "cmd || true",
-			Context: ">> 2 | cmd || true",
-			Message: "hidden failure",
+			File:     "script.sh",
+			Line:     2,
+			Code:     "cmd || true",
+			Context:  ">> 2 | cmd || true",
+			Message:  "hidden failure",
 		},
 	})
 
@@ -103,12 +103,12 @@ func TestRunJudge_ExitCode1OnGuilty(t *testing.T) {
 	dir := t.TempDir()
 	findingsPath := writeFindingsJSON(t, dir, []finding.Finding{
 		{
-			Rule:    "silent-fallback.empty-error-check",
+			Rule:     "silent-fallback.empty-error-check",
 			Severity: finding.SeverityError,
-			File:    "handler.go",
-			Line:    8,
-			Code:    "if err != nil { return nil }",
-			Message: "swallowed error",
+			File:     "handler.go",
+			Line:     8,
+			Code:     "if err != nil { return nil }",
+			Message:  "swallowed error",
 		},
 	})
 
@@ -136,12 +136,12 @@ func TestRunJudge_FallbackToPrecedentWhenJudgeFails(t *testing.T) {
 	dir := t.TempDir()
 	findings := []finding.Finding{
 		{
-			Rule:    "silent-fallback.hidden-failure-bash",
+			Rule:     "silent-fallback.hidden-failure-bash",
 			Severity: finding.SeverityError,
-			File:    "script.sh",
-			Line:    3,
-			Code:    "cmd || true",
-			Message: "hidden failure",
+			File:     "script.sh",
+			Line:     3,
+			Code:     "cmd || true",
+			Message:  "hidden failure",
 		},
 	}
 	findingsPath := writeFindingsJSON(t, dir, findings)
@@ -389,7 +389,7 @@ func TestRunJudge_LogsLawCandidateWhenThresholdReached(t *testing.T) {
 
 func TestRunJudge_WritesCostMetricsAndBudgetFallback(t *testing.T) {
 	dir := t.TempDir()
-	findingsPath := writeFindingsJSON(t, dir, []finding.Finding{
+	findings := []finding.Finding{
 		{
 			Rule:     "silent-fallback.hidden-failure-bash",
 			Severity: finding.SeverityError,
@@ -403,10 +403,24 @@ func TestRunJudge_WritesCostMetricsAndBudgetFallback(t *testing.T) {
 			Severity: finding.SeverityError,
 			File:     "script.sh",
 			Line:     4,
-			Code:     "cmd || true",
+			Code:     "cmd || :",
 			Message:  "hidden failure",
 		},
-	})
+	}
+	findingsPath := writeFindingsJSON(t, dir, findings)
+	seed := precedent.Precedent{
+		RuleID:        findings[1].Rule,
+		ViolationHash: "vh",
+		PatternHash:   precedent.HashFindingPattern(findings[1]),
+		Decision:      precedent.DecisionAllow,
+		Rationale:     "known cleanup for colon form",
+		Confidence:    0.7,
+		SeenCount:     3,
+		CreatedAt:     time.Date(2026, 2, 20, 0, 0, 0, 0, time.UTC),
+	}
+	if err := precedent.NewStore(filepath.Join(dir, precedent.DefaultPath)).Save([]precedent.Precedent{seed}); err != nil {
+		t.Fatalf("seed precedent save failed: %v", err)
+	}
 
 	fake := &fakeFindingJudge{
 		verdict: judge.Verdict{
@@ -443,5 +457,56 @@ func TestRunJudge_WritesCostMetricsAndBudgetFallback(t *testing.T) {
 	}
 	if !strings.Contains(string(raw), `"total_cost_usd":`) {
 		t.Fatalf("expected cost metric record, got:\n%s", string(raw))
+	}
+}
+
+func TestRunJudge_BatchesSimilarFindingsSingleLLMCall(t *testing.T) {
+	dir := t.TempDir()
+	findingsPath := writeFindingsJSON(t, dir, []finding.Finding{
+		{
+			Rule:     "silent-fallback.hidden-failure-bash",
+			Severity: finding.SeverityError,
+			File:     "a.sh",
+			Line:     3,
+			Code:     "cmd || true",
+			Message:  "hidden failure",
+		},
+		{
+			Rule:     "silent-fallback.hidden-failure-bash",
+			Severity: finding.SeverityError,
+			File:     "b.sh",
+			Line:     9,
+			Code:     "cmd || true",
+			Message:  "hidden failure",
+		},
+	})
+
+	fake := &fakeFindingJudge{
+		verdict: judge.Verdict{
+			Verdict:            judge.VerdictNotGuilty,
+			Reasoning:          "same pattern batch decision",
+			Confidence:         0.88,
+			PrecedentDecision:  precedent.DecisionAllow,
+			PrecedentRationale: "stable match",
+			Source:             "llm",
+			InputTokens:        300,
+			OutputTokens:       80,
+		},
+	}
+	oldFactory := newFindingJudge
+	newFindingJudge = func() (findingJudge, error) { return fake, nil }
+	defer func() { newFindingJudge = oldFactory }()
+
+	stdout := captureStdout(t, func() {
+		code := runJudge([]string{findingsPath})
+		if code != 0 {
+			t.Fatalf("expected exit code 0, got %d", code)
+		}
+	})
+	if fake.calls != 1 {
+		t.Fatalf("expected exactly 1 llm call for batched findings, got %d", fake.calls)
+	}
+	if !strings.Contains(stdout, `"batches": 1`) {
+		t.Fatalf("expected batch count in summary, got:\n%s", stdout)
 	}
 }

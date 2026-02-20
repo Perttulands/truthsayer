@@ -22,4 +22,3 @@ func TestScan_AppliesSenateSeverityAmendment(t *testing.T) {
 		t.Fatalf("expected exit code 0 after severity amendment, got %d", code)
 	}
 }
-

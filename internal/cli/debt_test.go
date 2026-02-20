@@ -53,4 +53,3 @@ func TestRunDebt_JSONOutput(t *testing.T) {
 		t.Fatalf("expected json output, got:\n%s", out)
 	}
 }
-

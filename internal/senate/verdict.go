@@ -34,9 +34,9 @@ const (
 )
 
 const (
-	ActionSetSeverity = "set_severity"
-	ActionDisableRule = "disable_rule"
-	ActionEnableRule  = "enable_rule"
+	ActionSetSeverity  = "set_severity"
+	ActionDisableRule  = "disable_rule"
+	ActionEnableRule   = "enable_rule"
 	ActionAddException = "add_exception"
 )
 
@@ -121,4 +121,3 @@ func (a Amendment) Validate() error {
 	}
 	return nil
 }
-

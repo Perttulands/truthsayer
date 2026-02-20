@@ -173,4 +173,3 @@ func AppendAudit(path string, applied []AppliedAmendment) error {
 	}
 	return nil
 }
-

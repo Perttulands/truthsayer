@@ -39,4 +39,3 @@ func TestWriteProposals(t *testing.T) {
 		t.Fatalf("write proposals failed: %v", err)
 	}
 }
-

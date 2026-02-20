@@ -183,4 +183,3 @@ func (s *CandidateStore) Save(candidates []Candidate) error {
 	}
 	return nil
 }
-

@@ -56,4 +56,3 @@ func TestCandidateStore_SaveLoad(t *testing.T) {
 		t.Fatalf("unexpected candidate: %+v", got[0])
 	}
 }
-

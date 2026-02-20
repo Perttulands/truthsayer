@@ -60,4 +60,3 @@ func Append(path string, m Metrics) error {
 	}
 	return nil
 }
-

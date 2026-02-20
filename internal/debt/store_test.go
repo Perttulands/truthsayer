@@ -49,4 +49,3 @@ func TestEntryValidate(t *testing.T) {
 		t.Fatal("expected validation error")
 	}
 }
-

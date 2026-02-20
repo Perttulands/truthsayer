@@ -117,4 +117,3 @@ func (s *Store) Add(e Entry) error {
 	entries = append(entries, e)
 	return s.Save(entries)
 }
-

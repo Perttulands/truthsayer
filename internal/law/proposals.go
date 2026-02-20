@@ -65,4 +65,3 @@ func WriteProposals(path string, candidates []Candidate, ruleDescriptions map[st
 	}
 	return nil
 }
-

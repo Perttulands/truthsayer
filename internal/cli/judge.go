@@ -51,45 +51,46 @@ var newFindingJudge = func() (findingJudge, error) {
 }
 
 type judgeOutput struct {
-	Version   string              `json:"version"`
-	JudgedAt  string              `json:"judged_at"`
-	Source    string              `json:"source"`
-	Verdicts  []judgeFindingVerdict `json:"verdicts"`
-	Summary   judgeSummary        `json:"summary"`
+	Version  string                `json:"version"`
+	JudgedAt string                `json:"judged_at"`
+	Source   string                `json:"source"`
+	Verdicts []judgeFindingVerdict `json:"verdicts"`
+	Summary  judgeSummary          `json:"summary"`
 }
 
 type judgeFindingVerdict struct {
-	RuleID             string              `json:"rule_id"`
-	File               string              `json:"file"`
-	Line               int                 `json:"line"`
-	Code               string              `json:"code"`
-	Context            string              `json:"context,omitempty"`
-	Verdict            judge.VerdictType   `json:"verdict"`
-	Reasoning          string              `json:"reasoning"`
-	Confidence         float64             `json:"confidence"`
-	PrecedentDecision  precedent.Decision  `json:"precedent_decision"`
-	PrecedentRationale string              `json:"precedent_rationale"`
-	Source             string              `json:"source"`
-	InputTokens        int                 `json:"input_tokens,omitempty"`
-	OutputTokens       int                 `json:"output_tokens,omitempty"`
+	RuleID             string             `json:"rule_id"`
+	File               string             `json:"file"`
+	Line               int                `json:"line"`
+	Code               string             `json:"code"`
+	Context            string             `json:"context,omitempty"`
+	Verdict            judge.VerdictType  `json:"verdict"`
+	Reasoning          string             `json:"reasoning"`
+	Confidence         float64            `json:"confidence"`
+	PrecedentDecision  precedent.Decision `json:"precedent_decision"`
+	PrecedentRationale string             `json:"precedent_rationale"`
+	Source             string             `json:"source"`
+	InputTokens        int                `json:"input_tokens,omitempty"`
+	OutputTokens       int                `json:"output_tokens,omitempty"`
 }
 
 type judgeSummary struct {
-	Total            int `json:"total"`
-	Guilty           int `json:"guilty"`
-	NotGuilty        int `json:"not_guilty"`
-	Advisory         int `json:"advisory"`
-	AdvisoriesTracked int `json:"advisories_tracked"`
-	LawCandidates    int `json:"law_candidates"`
-	LawProposals     int `json:"law_proposals"`
-	InputTokens      int `json:"input_tokens"`
-	OutputTokens     int `json:"output_tokens"`
-	TotalCostUSD     float64 `json:"total_cost_usd"`
-	BudgetUSD        float64 `json:"budget_usd,omitempty"`
-	BudgetExhausted  bool    `json:"budget_exhausted,omitempty"`
-	LLMCalls         int `json:"llm_calls"`
-	AutoApplied      int `json:"auto_applied"`
-	PrecedentMatches int `json:"precedent_matches"`
+	Total             int     `json:"total"`
+	Guilty            int     `json:"guilty"`
+	NotGuilty         int     `json:"not_guilty"`
+	Advisory          int     `json:"advisory"`
+	AdvisoriesTracked int     `json:"advisories_tracked"`
+	LawCandidates     int     `json:"law_candidates"`
+	LawProposals      int     `json:"law_proposals"`
+	Batches           int     `json:"batches"`
+	InputTokens       int     `json:"input_tokens"`
+	OutputTokens      int     `json:"output_tokens"`
+	TotalCostUSD      float64 `json:"total_cost_usd"`
+	BudgetUSD         float64 `json:"budget_usd,omitempty"`
+	BudgetExhausted   bool    `json:"budget_exhausted,omitempty"`
+	LLMCalls          int     `json:"llm_calls"`
+	AutoApplied       int     `json:"auto_applied"`
+	PrecedentMatches  int     `json:"precedent_matches"`
 }
 
 func runJudge(args []string) int {
@@ -143,14 +144,17 @@ func runJudge(args []string) int {
 	}
 	output.Summary.BudgetUSD = opts.budgetUSD
 
-	for _, f := range findings {
+	batches := batchFindings(findings)
+	output.Summary.Batches = len(batches)
+	for _, batch := range batches {
+		f := batch.representative
 		allMatches := precedent.Match(records, f, precedent.MatchOptions{
 			MinConfidence: 0,
 			Limit:         10,
 		})
 		matches := filterMatchesByConfidence(allMatches, opts.minConfidence)
 		if len(allMatches) > 0 {
-			output.Summary.PrecedentMatches++
+			output.Summary.PrecedentMatches += len(batch.items)
 		}
 
 		var v judge.Verdict
@@ -169,23 +173,23 @@ func runJudge(args []string) int {
 					return 2
 				}
 			} else {
-			judged, err := judger.JudgeFinding(context.Background(), judge.PromptInput{
-				Finding:         f,
-				RuleDescription: ruleDescriptions[f.Rule],
-				Precedents:      matches,
-			})
-			if err != nil {
-				// For command core reliability, if model fails and precedent exists, use the strongest precedent.
-				if len(matches) > 0 {
-					v = verdictFromPrecedent(matches[0])
+				judged, err := judger.JudgeFinding(context.Background(), judge.PromptInput{
+					Finding:         f,
+					RuleDescription: ruleDescriptions[f.Rule],
+					Precedents:      matches,
+				})
+				if err != nil {
+					// For command core reliability, if model fails and precedent exists, use the strongest precedent.
+					if len(matches) > 0 {
+						v = verdictFromPrecedent(matches[0])
+					} else {
+						fmt.Fprintf(os.Stderr, "error: judge finding %s:%d (%s): %v\n", f.File, f.Line, f.Rule, err)
+						return 2
+					}
 				} else {
-					fmt.Fprintf(os.Stderr, "error: judge finding %s:%d (%s): %v\n", f.File, f.Line, f.Rule, err)
-					return 2
+					output.Summary.LLMCalls++
+					v = judged
 				}
-			} else {
-				output.Summary.LLMCalls++
-				v = judged
-			}
 			}
 		}
 		if v.Source == "llm" {
@@ -194,48 +198,50 @@ func runJudge(args []string) int {
 			output.Summary.TotalCostUSD += cost.EstimateUSD(v.InputTokens, v.OutputTokens)
 		}
 
-		output.Verdicts = append(output.Verdicts, judgeFindingVerdict{
-			RuleID:             f.Rule,
-			File:               f.File,
-			Line:               f.Line,
-			Code:               f.Code,
-			Context:            f.Context,
-			Verdict:            v.Verdict,
-			Reasoning:          v.Reasoning,
-			Confidence:         v.Confidence,
-			PrecedentDecision:  v.PrecedentDecision,
-			PrecedentRationale: v.PrecedentRationale,
-			Source:             v.Source,
-			InputTokens:        v.InputTokens,
-			OutputTokens:       v.OutputTokens,
-		})
-		if v.Verdict == judge.VerdictAdvisory {
-			err := debtStore.Add(debt.Entry{
-				RuleID:    f.Rule,
-				File:      f.File,
-				Line:      f.Line,
-				Code:      f.Code,
-				Message:   f.Message,
-				Reasoning: v.Reasoning,
-				CreatedAt: time.Now().UTC(),
+		for _, item := range batch.items {
+			output.Verdicts = append(output.Verdicts, judgeFindingVerdict{
+				RuleID:             item.Rule,
+				File:               item.File,
+				Line:               item.Line,
+				Code:               item.Code,
+				Context:            item.Context,
+				Verdict:            v.Verdict,
+				Reasoning:          v.Reasoning,
+				Confidence:         v.Confidence,
+				PrecedentDecision:  v.PrecedentDecision,
+				PrecedentRationale: v.PrecedentRationale,
+				Source:             v.Source,
+				InputTokens:        v.InputTokens,
+				OutputTokens:       v.OutputTokens,
 			})
+			if v.Verdict == judge.VerdictAdvisory {
+				err := debtStore.Add(debt.Entry{
+					RuleID:    item.Rule,
+					File:      item.File,
+					Line:      item.Line,
+					Code:      item.Code,
+					Message:   item.Message,
+					Reasoning: v.Reasoning,
+					CreatedAt: time.Now().UTC(),
+				})
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "error: save advisory debt: %v\n", err)
+					return 2
+				}
+				output.Summary.AdvisoriesTracked++
+			}
+
+			record := v.ToPrecedent(item, time.Now().UTC())
+			if err := record.AsPrecedent().Validate(); err != nil {
+				continue
+			}
+			saved, err := store.AddOrUpdateJudgment(record.AsPrecedent())
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "error: save advisory debt: %v\n", err)
+				fmt.Fprintf(os.Stderr, "error: save precedents: %v\n", err)
 				return 2
 			}
-			output.Summary.AdvisoriesTracked++
+			records = append(records, saved)
 		}
-
-		record := v.ToPrecedent(f, time.Now().UTC())
-		if err := record.AsPrecedent().Validate(); err != nil {
-			continue
-		}
-		saved, err := store.AddOrUpdateJudgment(record.AsPrecedent())
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "error: save precedents: %v\n", err)
-			return 2
-		}
-		records = append(records, saved)
 	}
 	candidates := law.DetectCandidates(records, opts.lawThreshold)
 	if len(candidates) > 0 {
@@ -461,6 +467,44 @@ func buildRuleDescriptionMap() map[string]string {
 	out := make(map[string]string, len(all))
 	for _, r := range all {
 		out[r.ID] = r.Description
+	}
+	return out
+}
+
+type findingBatch struct {
+	representative finding.Finding
+	items          []finding.Finding
+}
+
+func batchFindings(findings []finding.Finding) []findingBatch {
+	if len(findings) == 0 {
+		return nil
+	}
+
+	order := make([]string, 0, len(findings))
+	batches := make(map[string]*findingBatch, len(findings))
+	for _, f := range findings {
+		pattern := precedent.HashFindingPattern(f)
+		if strings.TrimSpace(pattern) == "" {
+			pattern = fmt.Sprintf("%s:%s:%d", f.Rule, f.File, f.Line)
+		}
+		key := f.Rule + "\x00" + pattern
+
+		batch, ok := batches[key]
+		if !ok {
+			order = append(order, key)
+			batches[key] = &findingBatch{
+				representative: f,
+				items:          []finding.Finding{f},
+			}
+			continue
+		}
+		batch.items = append(batch.items, f)
+	}
+
+	out := make([]findingBatch, 0, len(order))
+	for _, key := range order {
+		out = append(out, *batches[key])
 	}
 	return out
 }

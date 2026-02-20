@@ -76,4 +76,3 @@ func parseDebtOptions(args []string) (debtOptions, error) {
 	}
 	return opts, nil
 }
-
