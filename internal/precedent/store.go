@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
+
+	"github.com/perttulands/truthsayer/internal/finding"
 )
 
 // DefaultPath is the default file used for precedent storage.
@@ -25,8 +28,11 @@ const (
 type Precedent struct {
 	RuleID        string    `json:"rule_id"`
 	ViolationHash string    `json:"violation_hash"`
+	PatternHash   string    `json:"pattern_hash,omitempty"`
 	Decision      Decision  `json:"decision"`
 	Rationale     string    `json:"rationale"`
+	Confidence    float64   `json:"confidence,omitempty"`
+	SeenCount     int       `json:"seen_count,omitempty"`
 	CreatedAt     time.Time `json:"created_at"`
 }
 
@@ -37,6 +43,12 @@ func (p Precedent) Validate() error {
 	}
 	if strings.TrimSpace(p.ViolationHash) == "" {
 		return errors.New("precedent: violation_hash is required")
+	}
+	if p.Confidence < 0 || p.Confidence > 1 {
+		return fmt.Errorf("precedent: confidence out of range [0,1]: %f", p.Confidence)
+	}
+	if p.SeenCount < 0 {
+		return errors.New("precedent: seen_count cannot be negative")
 	}
 	if strings.TrimSpace(string(p.Decision)) == "" {
 		return errors.New("precedent: decision is required")
@@ -172,4 +184,82 @@ func QueryByRule(precedents []Precedent, ruleID string) []Precedent {
 		}
 	}
 	return filtered
+}
+
+// MatchOptions controls precedent lookup behavior.
+type MatchOptions struct {
+	MinConfidence float64
+	Limit         int
+}
+
+func normalizeMatchOptions(opts MatchOptions) MatchOptions {
+	if opts.MinConfidence < 0 {
+		opts.MinConfidence = 0
+	}
+	if opts.MinConfidence > 1 {
+		opts.MinConfidence = 1
+	}
+	return opts
+}
+
+func precedenceConfidence(p Precedent) float64 {
+	if p.Confidence <= 0 {
+		return 0.5
+	}
+	return p.Confidence
+}
+
+// Match returns precedents matching a finding by rule_id + pattern_hash.
+// Results are sorted by confidence, then seen_count, then recency.
+func Match(precedents []Precedent, f finding.Finding, opts MatchOptions) []Precedent {
+	if len(precedents) == 0 {
+		return nil
+	}
+	opts = normalizeMatchOptions(opts)
+	patternHash := HashFindingPattern(f)
+	if patternHash == "" {
+		return nil
+	}
+
+	matches := make([]Precedent, 0)
+	for _, p := range precedents {
+		if p.RuleID != f.Rule {
+			continue
+		}
+		if strings.TrimSpace(p.PatternHash) != patternHash {
+			continue
+		}
+		if precedenceConfidence(p) < opts.MinConfidence {
+			continue
+		}
+		matches = append(matches, p)
+	}
+	if len(matches) == 0 {
+		return nil
+	}
+
+	sort.Slice(matches, func(i, j int) bool {
+		a, b := matches[i], matches[j]
+		if precedenceConfidence(a) != precedenceConfidence(b) {
+			return precedenceConfidence(a) > precedenceConfidence(b)
+		}
+		if a.SeenCount != b.SeenCount {
+			return a.SeenCount > b.SeenCount
+		}
+		return a.CreatedAt.After(b.CreatedAt)
+	})
+
+	if opts.Limit > 0 && len(matches) > opts.Limit {
+		return matches[:opts.Limit]
+	}
+	return matches
+}
+
+// Match returns precedents matching a finding by rule_id + pattern_hash.
+func (s *Store) Match(f finding.Finding, opts MatchOptions) ([]Precedent, error) {
+	precedents, err := s.Load()
+	if err != nil {
+		return nil, fmt.Errorf("precedent: load before match: %w", err)
+	}
+	return Match(precedents, f, opts), nil
 }
