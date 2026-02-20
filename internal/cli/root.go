@@ -27,6 +27,8 @@ func Run() int {
 		return runDoctor(os.Args[2:])
 	case "judge":
 		return runJudge(os.Args[2:])
+	case "debt":
+		return runDebt(os.Args[2:])
 	case "hook":
 		if len(os.Args) > 2 && os.Args[2] == "install" {
 			return runHookInstall(os.Args[3:])
@@ -60,6 +62,7 @@ func printUsage() {
 	fmt.Fprintln(os.Stderr, "  watch <path>         Watch for changes and scan modified files")
 	fmt.Fprintln(os.Stderr, "  report <path>        Generate JSON report to file")
 	fmt.Fprintln(os.Stderr, "  judge <findings.json>  Judge findings with precedents + LLM")
+	fmt.Fprintln(os.Stderr, "  debt [path]          List advisory debt entries")
 	fmt.Fprintln(os.Stderr, "  rules                List all detection rules")
 	fmt.Fprintln(os.Stderr, "  rules --enabled      List only enabled rules (respects config)")
 	fmt.Fprintln(os.Stderr, "  rules --lang <langs>  List rules for specific languages")
@@ -82,6 +85,7 @@ func printUsage() {
 	fmt.Fprintln(os.Stderr, "Judge options:")
 	fmt.Fprintln(os.Stderr, "  --format json        Output verdicts as JSON (default)")
 	fmt.Fprintln(os.Stderr, "  --precedents <path>  Precedent store path (default: <input-dir>/precedents.json)")
+	fmt.Fprintln(os.Stderr, "  --debt <path>        Advisory debt path (default: <input-dir>/.truthsayer-debt.json)")
 	fmt.Fprintln(os.Stderr, "  --min-confidence n   Minimum precedent confidence included in prompt context (0-1)")
 	fmt.Fprintln(os.Stderr, "  --auto-apply-threshold n  Skip LLM when matching precedent confidence is above n (default: 0.9)")
 	fmt.Fprintln(os.Stderr, "")

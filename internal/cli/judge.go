@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/perttulands/truthsayer/internal/debt"
 	"github.com/perttulands/truthsayer/internal/finding"
 	"github.com/perttulands/truthsayer/internal/judge"
 	"github.com/perttulands/truthsayer/internal/llm"
@@ -19,10 +20,11 @@ import (
 )
 
 type judgeOptions struct {
-	inputPath       string
-	format          string
-	precedentsPath  string
-	minConfidence   float64
+	inputPath          string
+	format             string
+	precedentsPath     string
+	debtPath           string
+	minConfidence      float64
 	autoApplyThreshold float64
 }
 
@@ -70,6 +72,7 @@ type judgeSummary struct {
 	Guilty           int `json:"guilty"`
 	NotGuilty        int `json:"not_guilty"`
 	Advisory         int `json:"advisory"`
+	AdvisoriesTracked int `json:"advisories_tracked"`
 	LLMCalls         int `json:"llm_calls"`
 	AutoApplied      int `json:"auto_applied"`
 	PrecedentMatches int `json:"precedent_matches"`
@@ -90,6 +93,9 @@ func runJudge(args []string) int {
 	if opts.precedentsPath == "" {
 		opts.precedentsPath = filepath.Join(filepath.Dir(opts.inputPath), precedent.DefaultPath)
 	}
+	if opts.debtPath == "" {
+		opts.debtPath = filepath.Join(filepath.Dir(opts.inputPath), debt.DefaultPath)
+	}
 
 	store := precedent.NewStore(opts.precedentsPath)
 	records, err := store.Load()
@@ -97,6 +103,7 @@ func runJudge(args []string) int {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		return 2
 	}
+	debtStore := debt.NewStore(opts.debtPath)
 
 	judger, err := newFindingJudge()
 	if err != nil {
@@ -162,6 +169,22 @@ func runJudge(args []string) int {
 			InputTokens:        v.InputTokens,
 			OutputTokens:       v.OutputTokens,
 		})
+		if v.Verdict == judge.VerdictAdvisory {
+			err := debtStore.Add(debt.Entry{
+				RuleID:    f.Rule,
+				File:      f.File,
+				Line:      f.Line,
+				Code:      f.Code,
+				Message:   f.Message,
+				Reasoning: v.Reasoning,
+				CreatedAt: time.Now().UTC(),
+			})
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "error: save advisory debt: %v\n", err)
+				return 2
+			}
+			output.Summary.AdvisoriesTracked++
+		}
 
 		record := v.ToPrecedent(f, time.Now().UTC())
 		if err := record.AsPrecedent().Validate(); err != nil {
@@ -250,6 +273,12 @@ func parseJudgeOptions(args []string) (judgeOptions, error) {
 				return judgeOptions{}, fmt.Errorf("--precedents requires a value")
 			}
 			opts.precedentsPath = args[i+1]
+			i++
+		case "--debt":
+			if i+1 >= len(args) {
+				return judgeOptions{}, fmt.Errorf("--debt requires a value")
+			}
+			opts.debtPath = args[i+1]
 			i++
 		case "--min-confidence":
 			if i+1 >= len(args) {

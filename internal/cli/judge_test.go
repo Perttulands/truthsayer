@@ -177,12 +177,15 @@ func TestRunJudge_FallbackToPrecedentWhenJudgeFails(t *testing.T) {
 }
 
 func TestParseJudgeOptions(t *testing.T) {
-	opts, err := parseJudgeOptions([]string{"--precedents", "p.json", "--min-confidence", "0.9", "--auto-apply-threshold", "0.95", "f.json"})
+	opts, err := parseJudgeOptions([]string{"--precedents", "p.json", "--debt", "d.json", "--min-confidence", "0.9", "--auto-apply-threshold", "0.95", "f.json"})
 	if err != nil {
 		t.Fatalf("parseJudgeOptions failed: %v", err)
 	}
 	if opts.precedentsPath != "p.json" {
 		t.Fatalf("unexpected precedents path: %q", opts.precedentsPath)
+	}
+	if opts.debtPath != "d.json" {
+		t.Fatalf("unexpected debt path: %q", opts.debtPath)
 	}
 	if opts.minConfidence != 0.9 {
 		t.Fatalf("unexpected min confidence: %f", opts.minConfidence)
@@ -247,5 +250,52 @@ func TestRunJudge_AutoApplyHighConfidenceSkipsLLM(t *testing.T) {
 	}
 	if !strings.Contains(stdout, `"auto_applied": 1`) {
 		t.Fatalf("expected auto_applied summary count, got:\n%s", stdout)
+	}
+}
+
+func TestRunJudge_AdvisoryWritesDebtEntry(t *testing.T) {
+	dir := t.TempDir()
+	findingsPath := writeFindingsJSON(t, dir, []finding.Finding{
+		{
+			Rule:     "trace-gaps.long-function-no-log",
+			Severity: finding.SeverityWarning,
+			File:     "service.go",
+			Line:     22,
+			Code:     "func process(){ ... }",
+			Message:  "function has no log statements",
+		},
+	})
+
+	fake := &fakeFindingJudge{
+		verdict: judge.Verdict{
+			Verdict:            judge.VerdictAdvisory,
+			Reasoning:          "low risk now, but should be improved",
+			Confidence:         0.8,
+			PrecedentDecision:  precedent.DecisionDeny,
+			PrecedentRationale: "tracking for future rule update",
+			Source:             "llm",
+		},
+	}
+	oldFactory := newFindingJudge
+	newFindingJudge = func() (findingJudge, error) { return fake, nil }
+	defer func() { newFindingJudge = oldFactory }()
+
+	stdout := captureStdout(t, func() {
+		code := runJudge([]string{findingsPath})
+		if code != 0 {
+			t.Fatalf("expected exit code 0 for advisory-only run, got %d", code)
+		}
+	})
+
+	if !strings.Contains(stdout, `"advisories_tracked": 1`) {
+		t.Fatalf("expected advisories_tracked summary, got:\n%s", stdout)
+	}
+
+	raw, err := os.ReadFile(filepath.Join(dir, ".truthsayer-debt.json"))
+	if err != nil {
+		t.Fatalf("read debt file: %v", err)
+	}
+	if !strings.Contains(string(raw), `"rule_id": "trace-gaps.long-function-no-log"`) {
+		t.Fatalf("expected advisory debt entry, got:\n%s", string(raw))
 	}
 }
