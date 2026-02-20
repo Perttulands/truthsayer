@@ -74,6 +74,7 @@ if [[ "$UNPRECEDENTED_COUNT" -gt 0 ]]; then
     end=$((line + 5))
     
     if [[ -f "$file" ]]; then
+      # REASON: intentional fallback - if sed fails, we show "(could not read)" instead
       code=$(sed -n "${start},${end}p" "$file" 2>/dev/null || echo "(could not read)")
     else
       code="(file not accessible)"
@@ -120,6 +121,7 @@ $CONTEXT"
   fi
 
   # Parse judgment and create precedents
+  # REASON: jq parse errors handled by loop termination - no JSON means no iterations
   echo "$JUDGMENT" | jq -c '.[]' 2>/dev/null | while IFS= read -r j; do
     rule=$(echo "$j" | jq -r '.rule')
     verdict=$(echo "$j" | jq -r '.verdict')
@@ -142,6 +144,7 @@ $CONTEXT"
   done
 
   # Merge all verdicts
+  # REASON: jq parse error handled by fallback to empty array
   LLM_VERDICTS=$(echo "$JUDGMENT" | jq '[.[] | {rule, file, verdict, reasoning, source: "judge"}]' 2>/dev/null || echo '[]')
 else
   LLM_VERDICTS='[]'
