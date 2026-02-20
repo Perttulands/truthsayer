@@ -8,6 +8,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 
 ### Changed
 - `hidden-failure-bash` rule upgraded to ERROR severity; downgraded to INFO when line has `# REASON:` comment justifying the suppression
+- `silent-fallback.hidden-failure-bash` now exempts `|| true` inside `trap` handlers, one-hop trap-invoked cleanup functions, and functions marked with `# truthsayer:cleanup-context`
 
 ## [1.0.0] - 2026-02-13
 
