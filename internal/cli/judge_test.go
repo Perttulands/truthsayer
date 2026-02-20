@@ -177,7 +177,7 @@ func TestRunJudge_FallbackToPrecedentWhenJudgeFails(t *testing.T) {
 }
 
 func TestParseJudgeOptions(t *testing.T) {
-	opts, err := parseJudgeOptions([]string{"--precedents", "p.json", "--debt", "d.json", "--min-confidence", "0.9", "--auto-apply-threshold", "0.95", "f.json"})
+	opts, err := parseJudgeOptions([]string{"--precedents", "p.json", "--debt", "d.json", "--law-candidates", "c.json", "--law-threshold", "7", "--min-confidence", "0.9", "--auto-apply-threshold", "0.95", "f.json"})
 	if err != nil {
 		t.Fatalf("parseJudgeOptions failed: %v", err)
 	}
@@ -186,6 +186,12 @@ func TestParseJudgeOptions(t *testing.T) {
 	}
 	if opts.debtPath != "d.json" {
 		t.Fatalf("unexpected debt path: %q", opts.debtPath)
+	}
+	if opts.lawCandidatesPath != "c.json" {
+		t.Fatalf("unexpected law candidates path: %q", opts.lawCandidatesPath)
+	}
+	if opts.lawThreshold != 7 {
+		t.Fatalf("unexpected law threshold: %d", opts.lawThreshold)
 	}
 	if opts.minConfidence != 0.9 {
 		t.Fatalf("unexpected min confidence: %f", opts.minConfidence)
@@ -297,5 +303,69 @@ func TestRunJudge_AdvisoryWritesDebtEntry(t *testing.T) {
 	}
 	if !strings.Contains(string(raw), `"rule_id": "trace-gaps.long-function-no-log"`) {
 		t.Fatalf("expected advisory debt entry, got:\n%s", string(raw))
+	}
+}
+
+func TestRunJudge_LogsLawCandidateWhenThresholdReached(t *testing.T) {
+	dir := t.TempDir()
+	findings := []finding.Finding{
+		{
+			Rule:     "silent-fallback.hidden-failure-bash",
+			Severity: finding.SeverityError,
+			File:     "script.sh",
+			Line:     3,
+			Code:     "cmd || true",
+			Message:  "hidden failure",
+		},
+	}
+	findingsPath := writeFindingsJSON(t, dir, findings)
+
+	seed := make([]precedent.Precedent, 0, 2)
+	for i := 0; i < 2; i++ {
+		seed = append(seed, precedent.Precedent{
+			RuleID:        findings[0].Rule,
+			ViolationHash: "vh",
+			PatternHash:   precedent.HashFindingPattern(findings[0]),
+			Decision:      precedent.DecisionAllow,
+			Rationale:     "known cleanup",
+			Confidence:    0.8,
+			SeenCount:     2 + i,
+			CreatedAt:     time.Date(2026, 2, 20, i, 0, 0, 0, time.UTC),
+		})
+	}
+	if err := precedent.NewStore(filepath.Join(dir, precedent.DefaultPath)).Save(seed); err != nil {
+		t.Fatalf("save seed precedents: %v", err)
+	}
+
+	fake := &fakeFindingJudge{
+		verdict: judge.Verdict{
+			Verdict:            judge.VerdictNotGuilty,
+			Reasoning:          "approved cleanup context",
+			Confidence:         0.9,
+			PrecedentDecision:  precedent.DecisionAllow,
+			PrecedentRationale: "stable allow decision",
+			Source:             "llm",
+		},
+	}
+	oldFactory := newFindingJudge
+	newFindingJudge = func() (findingJudge, error) { return fake, nil }
+	defer func() { newFindingJudge = oldFactory }()
+
+	stdout := captureStdout(t, func() {
+		code := runJudge([]string{"--law-threshold", "3", findingsPath})
+		if code != 0 {
+			t.Fatalf("expected exit code 0, got %d", code)
+		}
+	})
+	if !strings.Contains(stdout, `"law_candidates": 1`) {
+		t.Fatalf("expected law candidate summary, got:\n%s", stdout)
+	}
+
+	raw, err := os.ReadFile(filepath.Join(dir, ".truthsayer-law-candidates.json"))
+	if err != nil {
+		t.Fatalf("read law candidates file: %v", err)
+	}
+	if !strings.Contains(string(raw), `"rule_id": "silent-fallback.hidden-failure-bash"`) {
+		t.Fatalf("expected law candidate entry, got:\n%s", string(raw))
 	}
 }

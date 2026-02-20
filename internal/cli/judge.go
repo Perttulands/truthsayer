@@ -13,6 +13,7 @@ import (
 	"github.com/perttulands/truthsayer/internal/debt"
 	"github.com/perttulands/truthsayer/internal/finding"
 	"github.com/perttulands/truthsayer/internal/judge"
+	"github.com/perttulands/truthsayer/internal/law"
 	"github.com/perttulands/truthsayer/internal/llm"
 	"github.com/perttulands/truthsayer/internal/precedent"
 	"github.com/perttulands/truthsayer/internal/report"
@@ -24,6 +25,8 @@ type judgeOptions struct {
 	format             string
 	precedentsPath     string
 	debtPath           string
+	lawCandidatesPath  string
+	lawThreshold       int
 	minConfidence      float64
 	autoApplyThreshold float64
 }
@@ -73,6 +76,7 @@ type judgeSummary struct {
 	NotGuilty        int `json:"not_guilty"`
 	Advisory         int `json:"advisory"`
 	AdvisoriesTracked int `json:"advisories_tracked"`
+	LawCandidates    int `json:"law_candidates"`
 	LLMCalls         int `json:"llm_calls"`
 	AutoApplied      int `json:"auto_applied"`
 	PrecedentMatches int `json:"precedent_matches"`
@@ -95,6 +99,9 @@ func runJudge(args []string) int {
 	}
 	if opts.debtPath == "" {
 		opts.debtPath = filepath.Join(filepath.Dir(opts.inputPath), debt.DefaultPath)
+	}
+	if opts.lawCandidatesPath == "" {
+		opts.lawCandidatesPath = filepath.Join(filepath.Dir(opts.inputPath), law.DefaultCandidatesPath)
 	}
 
 	store := precedent.NewStore(opts.precedentsPath)
@@ -197,6 +204,14 @@ func runJudge(args []string) int {
 		}
 		records = append(records, saved)
 	}
+	candidates := law.DetectCandidates(records, opts.lawThreshold)
+	if len(candidates) > 0 {
+		if err := law.NewCandidateStore(opts.lawCandidatesPath).Save(candidates); err != nil {
+			fmt.Fprintf(os.Stderr, "error: save law candidates: %v\n", err)
+			return 2
+		}
+		output.Summary.LawCandidates = len(candidates)
+	}
 
 	accumulateJudgeSummary(&output)
 
@@ -259,6 +274,7 @@ func parseJudgeOptions(args []string) (judgeOptions, error) {
 		format:             "json",
 		minConfidence:      0.0,
 		autoApplyThreshold: 0.9,
+		lawThreshold:       10,
 	}
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
@@ -279,6 +295,25 @@ func parseJudgeOptions(args []string) (judgeOptions, error) {
 				return judgeOptions{}, fmt.Errorf("--debt requires a value")
 			}
 			opts.debtPath = args[i+1]
+			i++
+		case "--law-candidates":
+			if i+1 >= len(args) {
+				return judgeOptions{}, fmt.Errorf("--law-candidates requires a value")
+			}
+			opts.lawCandidatesPath = args[i+1]
+			i++
+		case "--law-threshold":
+			if i+1 >= len(args) {
+				return judgeOptions{}, fmt.Errorf("--law-threshold requires a value")
+			}
+			n, err := strconv.Atoi(args[i+1])
+			if err != nil {
+				return judgeOptions{}, fmt.Errorf("invalid --law-threshold %q", args[i+1])
+			}
+			if n <= 0 {
+				return judgeOptions{}, fmt.Errorf("--law-threshold must be > 0")
+			}
+			opts.lawThreshold = n
 			i++
 		case "--min-confidence":
 			if i+1 >= len(args) {
