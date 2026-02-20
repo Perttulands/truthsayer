@@ -6,6 +6,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 
 ## [Unreleased]
 
+### Changed
+- README: restored mythology intro (The Law Keeper), character sigil and visual items, "Part of the Agora" section
+
 ### Added
 - Pre-commit judgment integration: `truthsayer hook` now executes `scan -> judge`, blocks only on guilty verdicts, and persists precedents from hook judgments
 - Advisory tracking with `.truthsayer-debt.json`: advisory verdicts now create debt entries, and `truthsayer debt` lists accumulated advisory items

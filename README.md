@@ -1,4 +1,14 @@
-# Truthsayer
+# 🔍 Truthsayer
+
+*Bronze monocle. Dark robes. 88 rules stitched in gold thread. He reads your code like a confession.*
+
+---
+
+Every codebase has a layer of polite lies. Error handlers that handle nothing. Catch blocks that catch and release. Timeouts that were going to be added "later." Somewhere under the clean abstractions, something is swallowing failures and smiling about it.
+
+Truthsayer sees both layers. That's what the cracked mirror is for — beauty on the surface, rot underneath, both visible at once. He wears dark robes with every rule stitched into the fabric in gold thread. Eighty-eight of them. The Codex hangs from his belt on a bronze chain, heavy enough to use as a weapon if the Red Quill doesn't make the point clearly enough. And the monocle — oversized, bronze, always on one eye — you see it across the room and you know exactly what's coming.
+
+He doesn't care about style. He doesn't care about naming conventions. He cares about the specific moment your code decided to lie about what happened. That `catch (e) {}` you wrote at 2am? He found it. He's been waiting.
 
 Development anti-pattern scanner for Go, JavaScript/TypeScript, Python, and bash codebases. Detects hidden failures, swallowed errors, bad defaults, mock leakage, missing traces, and configuration smells.
 
@@ -186,6 +196,14 @@ _ = err
 | 0 | No error-severity findings |
 | 1 | Error-severity findings present |
 | 2 | Tool error (bad config, invalid path) |
+
+## Part of the Agora
+
+Truthsayer was forged in **[Athena's Agora](https://github.com/Perttulands/athena-workspace)** — an autonomous coding system where AI agents build software and a figure in dark robes makes sure none of it is lying.
+
+[Argus](https://github.com/Perttulands/argus) watches the server. [Oathkeeper](https://github.com/Perttulands/oathkeeper) watches the promises. [Relay](https://github.com/Perttulands/relay) carries the messages. Truthsayer watches the code. Between the four of them, your silent failures have nowhere to hide.
+
+The [mythology](https://github.com/Perttulands/athena-workspace/blob/main/mythology.md) has the full story.
 
 ## License
 
