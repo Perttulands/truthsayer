@@ -5,6 +5,10 @@ import (
 	"os/exec"
 	"path/filepath"
 	"testing"
+	"time"
+
+	"github.com/perttulands/truthsayer/internal/judge"
+	"github.com/perttulands/truthsayer/internal/precedent"
 )
 
 // initGitRepo creates a git repo in dir with initial commit.
@@ -150,5 +154,84 @@ disable = ["silent-fallback.empty-error-check"]
 	code := runHook([]string{dir})
 	if code != 0 {
 		t.Errorf("expected exit code 0 (rule disabled via config), got %d", code)
+	}
+}
+
+func TestHook_JudgmentNotGuiltyPassesAndWritesPrecedent(t *testing.T) {
+	dir := t.TempDir()
+	initGitRepo(t, dir)
+	writeFile(t, dir, "bad.go", goWithError)
+	stageFile(t, dir, "bad.go")
+
+	fake := &fakeFindingJudge{
+		verdict: judge.Verdict{
+			Verdict:            judge.VerdictNotGuilty,
+			Reasoning:          "known intentional fallback",
+			Confidence:         0.92,
+			PrecedentDecision:  precedent.DecisionAllow,
+			PrecedentRationale: "approved cleanup exception",
+			Source:             "llm",
+		},
+	}
+	oldFactory := newFindingJudge
+	newFindingJudge = func() (findingJudge, error) { return fake, nil }
+	defer func() { newFindingJudge = oldFactory }()
+
+	code := runHook([]string{dir})
+	if code != 0 {
+		t.Fatalf("expected exit code 0 from not_guilty judgment, got %d", code)
+	}
+
+	records, err := precedent.NewStore(filepath.Join(dir, precedent.DefaultPath)).Load()
+	if err != nil {
+		t.Fatalf("load precedents: %v", err)
+	}
+	if len(records) == 0 {
+		t.Fatal("expected precedents to be written by hook judgment")
+	}
+	if records[len(records)-1].Decision != precedent.DecisionAllow {
+		t.Fatalf("expected last precedent decision allow, got %q", records[len(records)-1].Decision)
+	}
+}
+
+func TestHook_JudgmentGuiltyBlocksCommit(t *testing.T) {
+	dir := t.TempDir()
+	initGitRepo(t, dir)
+	writeFile(t, dir, "bad.go", goWithError)
+	stageFile(t, dir, "bad.go")
+
+	fake := &fakeFindingJudge{
+		verdict: judge.Verdict{
+			Verdict:            judge.VerdictGuilty,
+			Reasoning:          "silent error suppression remains harmful",
+			Confidence:         0.88,
+			PrecedentDecision:  precedent.DecisionDeny,
+			PrecedentRationale: "must return or wrap error",
+			Source:             "llm",
+			InputTokens:        120,
+			OutputTokens:       42,
+		},
+	}
+	oldFactory := newFindingJudge
+	newFindingJudge = func() (findingJudge, error) { return fake, nil }
+	defer func() { newFindingJudge = oldFactory }()
+
+	code := runHook([]string{dir})
+	if code != 1 {
+		t.Fatalf("expected exit code 1 from guilty judgment, got %d", code)
+	}
+
+	records, err := precedent.NewStore(filepath.Join(dir, precedent.DefaultPath)).Load()
+	if err != nil {
+		t.Fatalf("load precedents: %v", err)
+	}
+	if len(records) == 0 {
+		t.Fatal("expected precedents to be written by hook judgment")
+	}
+	if records[len(records)-1].Decision != precedent.DecisionDeny {
+		t.Fatalf("expected last precedent decision deny, got %q", records[len(records)-1].Decision)
+	}
+	if records[len(records)-1].CreatedAt.Before(time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)) {
+		t.Fatalf("expected recent precedent timestamp, got %s", records[len(records)-1].CreatedAt)
 	}
 }

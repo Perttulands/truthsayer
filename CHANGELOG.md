@@ -7,6 +7,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 ## [Unreleased]
 
 ### Added
+- Pre-commit judgment integration: `truthsayer hook` now executes `scan -> judge`, blocks only on guilty verdicts, and persists precedents from hook judgments
 - `finding.Finding.Context` with ±10-line source windows and highlighted violation line, populated across Go, JS/TS, Python, bash, and config scans
 - Pattern hashing for judgments via `precedent.HashPattern`/`precedent.HashFindingPattern`, with normalization of variable names, literals, and whitespace for stable precedent matching
 - Precedent lookup API via `Store.Match`/`precedent.Match` using `rule_id + pattern_hash`, confidence thresholds, and confidence-first sorting for ranked match retrieval
