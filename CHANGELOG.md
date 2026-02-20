@@ -13,6 +13,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 - Claude LLM client (`internal/llm`) with Anthropic Messages API integration, auth validation, retry/backoff for 429/5xx responses, and request pacing for rate limiting
 - Judgment prompt template builder (`internal/judge.BuildPrompt`) with structured finding/context/precedent payload and strict parseable JSON response schema
 - LLM judgment call logic (`internal/judge.LLMJudge`) that builds prompts, calls the LLM client, parses typed verdict JSON, and converts verdicts into precedent records
+- New `truthsayer judge` command core: reads findings JSON, retrieves precedent context, performs judgment, outputs verdicts JSON/text, and writes updated precedent records
 
 ### Changed
 - `hidden-failure-bash` rule upgraded to ERROR severity; downgraded to INFO when line has `# REASON:` comment justifying the suppression

@@ -1,0 +1,193 @@
+package cli
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/perttulands/truthsayer/internal/finding"
+	"github.com/perttulands/truthsayer/internal/judge"
+	"github.com/perttulands/truthsayer/internal/precedent"
+	"github.com/perttulands/truthsayer/internal/report"
+)
+
+type fakeFindingJudge struct {
+	verdict judge.Verdict
+	err     error
+	calls   int
+}
+
+func (f *fakeFindingJudge) JudgeFinding(context.Context, judge.PromptInput) (judge.Verdict, error) {
+	f.calls++
+	if f.err != nil {
+		return judge.Verdict{}, f.err
+	}
+	return f.verdict, nil
+}
+
+func writeFindingsJSON(t *testing.T, dir string, findings []finding.Finding) string {
+	t.Helper()
+	path := filepath.Join(dir, "findings.json")
+	f, err := os.Create(path)
+	if err != nil {
+		t.Fatalf("create findings json: %v", err)
+	}
+	defer f.Close()
+	if err := report.JSON(f, findings, dir, time.Date(2026, 2, 20, 0, 0, 0, 0, time.UTC), 1, 1); err != nil {
+		t.Fatalf("write report json: %v", err)
+	}
+	return path
+}
+
+func TestRunJudge_JSONOutputAndPrecedentWrite(t *testing.T) {
+	dir := t.TempDir()
+	findingsPath := writeFindingsJSON(t, dir, []finding.Finding{
+		{
+			Rule:    "silent-fallback.hidden-failure-bash",
+			Severity: finding.SeverityError,
+			File:    "script.sh",
+			Line:    2,
+			Code:    "cmd || true",
+			Context: ">> 2 | cmd || true",
+			Message: "hidden failure",
+		},
+	})
+
+	fake := &fakeFindingJudge{
+		verdict: judge.Verdict{
+			Verdict:            judge.VerdictNotGuilty,
+			Reasoning:          "intentional cleanup trap",
+			Confidence:         0.91,
+			PrecedentDecision:  precedent.DecisionAllow,
+			PrecedentRationale: "trap cleanup context",
+			Source:             "llm",
+		},
+	}
+	oldFactory := newFindingJudge
+	newFindingJudge = func() (findingJudge, error) { return fake, nil }
+	defer func() { newFindingJudge = oldFactory }()
+
+	var out judgeOutput
+	stdout := captureStdout(t, func() {
+		code := runJudge([]string{findingsPath})
+		if code != 0 {
+			t.Fatalf("expected exit code 0, got %d", code)
+		}
+	})
+	if err := json.Unmarshal([]byte(stdout), &out); err != nil {
+		t.Fatalf("decode judge output: %v\n%s", err, stdout)
+	}
+	if out.Summary.Total != 1 || out.Summary.NotGuilty != 1 {
+		t.Fatalf("unexpected summary: %+v", out.Summary)
+	}
+	if out.Summary.LLMCalls != 1 {
+		t.Fatalf("expected one llm call, got %d", out.Summary.LLMCalls)
+	}
+
+	precedentsPath := filepath.Join(dir, precedent.DefaultPath)
+	records, err := precedent.NewStore(precedentsPath).Load()
+	if err != nil {
+		t.Fatalf("load precedents: %v", err)
+	}
+	if len(records) == 0 {
+		t.Fatal("expected saved precedent records")
+	}
+}
+
+func TestRunJudge_ExitCode1OnGuilty(t *testing.T) {
+	dir := t.TempDir()
+	findingsPath := writeFindingsJSON(t, dir, []finding.Finding{
+		{
+			Rule:    "silent-fallback.empty-error-check",
+			Severity: finding.SeverityError,
+			File:    "handler.go",
+			Line:    8,
+			Code:    "if err != nil { return nil }",
+			Message: "swallowed error",
+		},
+	})
+
+	fake := &fakeFindingJudge{
+		verdict: judge.Verdict{
+			Verdict:            judge.VerdictGuilty,
+			Reasoning:          "error suppression is harmful",
+			Confidence:         0.85,
+			PrecedentDecision:  precedent.DecisionDeny,
+			PrecedentRationale: "must return or wrap error",
+			Source:             "llm",
+		},
+	}
+	oldFactory := newFindingJudge
+	newFindingJudge = func() (findingJudge, error) { return fake, nil }
+	defer func() { newFindingJudge = oldFactory }()
+
+	code := runJudge([]string{findingsPath})
+	if code != 1 {
+		t.Fatalf("expected exit code 1 for guilty verdict, got %d", code)
+	}
+}
+
+func TestRunJudge_FallbackToPrecedentWhenJudgeFails(t *testing.T) {
+	dir := t.TempDir()
+	findings := []finding.Finding{
+		{
+			Rule:    "silent-fallback.hidden-failure-bash",
+			Severity: finding.SeverityError,
+			File:    "script.sh",
+			Line:    3,
+			Code:    "cmd || true",
+			Message: "hidden failure",
+		},
+	}
+	findingsPath := writeFindingsJSON(t, dir, findings)
+
+	p := precedent.Precedent{
+		RuleID:        findings[0].Rule,
+		ViolationHash: "vh",
+		PatternHash:   precedent.HashFindingPattern(findings[0]),
+		Decision:      precedent.DecisionAllow,
+		Rationale:     "known cleanup context",
+		Confidence:    0.95,
+		SeenCount:     5,
+		CreatedAt:     time.Date(2026, 2, 20, 0, 0, 0, 0, time.UTC),
+	}
+	if err := precedent.NewStore(filepath.Join(dir, precedent.DefaultPath)).Save([]precedent.Precedent{p}); err != nil {
+		t.Fatalf("save precedent seed: %v", err)
+	}
+
+	fake := &fakeFindingJudge{err: errors.New("llm down")}
+	oldFactory := newFindingJudge
+	newFindingJudge = func() (findingJudge, error) { return fake, nil }
+	defer func() { newFindingJudge = oldFactory }()
+
+	stdout := captureStdout(t, func() {
+		code := runJudge([]string{findingsPath})
+		if code != 0 {
+			t.Fatalf("expected exit code 0 via allow precedent fallback, got %d", code)
+		}
+	})
+	if !strings.Contains(stdout, `"source": "precedent"`) {
+		t.Fatalf("expected precedent fallback source in output, got:\n%s", stdout)
+	}
+}
+
+func TestParseJudgeOptions(t *testing.T) {
+	opts, err := parseJudgeOptions([]string{"--precedents", "p.json", "--min-confidence", "0.9", "f.json"})
+	if err != nil {
+		t.Fatalf("parseJudgeOptions failed: %v", err)
+	}
+	if opts.precedentsPath != "p.json" {
+		t.Fatalf("unexpected precedents path: %q", opts.precedentsPath)
+	}
+	if opts.minConfidence != 0.9 {
+		t.Fatalf("unexpected min confidence: %f", opts.minConfidence)
+	}
+	if opts.inputPath != "f.json" {
+		t.Fatalf("unexpected input path: %q", opts.inputPath)
+	}
+}
