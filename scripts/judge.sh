@@ -120,9 +120,14 @@ $CONTEXT"
     exit 1
   fi
 
-  # Parse judgment and create precedents
-  # REASON: jq parse errors handled by loop termination - no JSON means no iterations
-  echo "$JUDGMENT" | jq -c '.[]' 2>/dev/null | while IFS= read -r j; do
+  # Parse judgment and create precedents.
+  # Fail closed if model output is malformed or not a JSON array.
+  if ! JUDGMENT_ARRAY=$(echo "$JUDGMENT" | jq -ce 'if type == "array" then . else error("judgment must be a JSON array") end'); then
+    echo "Error: LLM returned malformed judgment JSON (expected top-level array)" >&2
+    exit 1
+  fi
+
+  while IFS= read -r j; do
     rule=$(echo "$j" | jq -r '.rule')
     verdict=$(echo "$j" | jq -r '.verdict')
     reasoning=$(echo "$j" | jq -r '.reasoning')
@@ -141,11 +146,10 @@ $CONTEXT"
         first_seen: (now | strftime("%Y-%m-%d")),
         last_seen: (now | strftime("%Y-%m-%d"))
       }]' "$PRECEDENTS_FILE" > "$PRECEDENTS_FILE.tmp" && mv "$PRECEDENTS_FILE.tmp" "$PRECEDENTS_FILE"
-  done
+  done < <(echo "$JUDGMENT_ARRAY" | jq -c '.[]')
 
   # Merge all verdicts
-  # REASON: jq parse error handled by fallback to empty array
-  LLM_VERDICTS=$(echo "$JUDGMENT" | jq '[.[] | {rule, file, verdict, reasoning, source: "judge"}]' 2>/dev/null || echo '[]')
+  LLM_VERDICTS=$(echo "$JUDGMENT_ARRAY" | jq -c '[.[] | {rule, file, verdict, reasoning, source: "judge"}]')
 else
   LLM_VERDICTS='[]'
 fi

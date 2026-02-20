@@ -20,6 +20,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 
 ### Fixed
 - 2026-02-20: strengthened CLI error handling for scan-reported swallowed errors in `internal/cli/doctor.go` and `internal/cli/judge.go` by making doctor's fallback explicit and logging judge LLM failures before precedent fallback, so operational failures are visible instead of silent.
+- 2026-02-20: fixed silent JSON failure paths in `scripts/judge.sh` by validating LLM output as a top-level JSON array and failing closed on parse/type errors instead of dropping errors or defaulting to `[]` (`athena-lh3q`).
+- 2026-02-20: added path-aware `%w` error wrapping at scan boundaries in `internal/engine/engine.go` so scanner/read/stat failures preserve file context (`athena-ekis`).
 
 ## [2.0.0] - 2026-02-16
 

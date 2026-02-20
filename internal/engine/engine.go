@@ -250,7 +250,7 @@ func (e *Engine) scanFileFindings(path string) ([]finding.Finding, error) {
 
 	info, err := os.Stat(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("stat %s: %w", path, err)
 	}
 	mtimeUnixNano := info.ModTime().UnixNano()
 	if cached, ok := e.getCachedFindings(path, mtimeUnixNano); ok {
@@ -263,7 +263,7 @@ func (e *Engine) scanFileFindings(path string) ([]finding.Finding, error) {
 	case ext == ".go":
 		results, goLines, err := e.goScanner.Scan(path)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scan go file %s: %w", path, err)
 		}
 		lines = goLines
 		fileFindings = append(results, e.regexScanner.ScanLines(path, lines)...)
@@ -271,7 +271,7 @@ func (e *Engine) scanFileFindings(path string) ([]finding.Finding, error) {
 	case isJSExt(ext):
 		results, jsLines, err := e.getJSScanner().Scan(path)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scan js file %s: %w", path, err)
 		}
 		lines = jsLines
 		fileFindings = append(results, e.regexScanner.ScanLines(path, lines)...)
@@ -279,7 +279,7 @@ func (e *Engine) scanFileFindings(path string) ([]finding.Finding, error) {
 	case isPyExt(ext):
 		results, pyLines, err := e.getPyScanner().Scan(path)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scan py file %s: %w", path, err)
 		}
 		lines = pyLines
 		fileFindings = append(results, e.regexScanner.ScanLines(path, lines)...)
@@ -287,11 +287,11 @@ func (e *Engine) scanFileFindings(path string) ([]finding.Finding, error) {
 	default:
 		results, err := e.regexScanner.Scan(path)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scan file %s: %w", path, err)
 		}
 		source, err := os.ReadFile(path)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("read file %s: %w", path, err)
 		}
 		lines = strings.Split(string(source), "\n")
 		fileFindings = results
