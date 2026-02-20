@@ -66,6 +66,7 @@ func printUsage() {
 	fmt.Fprintln(os.Stderr, "  judge <findings.json>  Judge findings with precedents + LLM")
 	fmt.Fprintln(os.Stderr, "  debt [path]          List advisory debt entries")
 	fmt.Fprintln(os.Stderr, "  senate parse <file>  Parse and validate Senate verdict file")
+	fmt.Fprintln(os.Stderr, "  senate apply <file> [repo]  Apply approved Senate amendments")
 	fmt.Fprintln(os.Stderr, "  rules                List all detection rules")
 	fmt.Fprintln(os.Stderr, "  rules --enabled      List only enabled rules (respects config)")
 	fmt.Fprintln(os.Stderr, "  rules --lang <langs>  List rules for specific languages")

@@ -60,6 +60,13 @@ func (r *Registry) Disable(id string) {
 	r.disabled[id] = true
 }
 
+// Enable clears a disabled marker for a rule ID.
+func (r *Registry) Enable(id string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	delete(r.disabled, id)
+}
+
 // SetSeverity overrides the severity for a rule by ID.
 // Returns false if the rule ID is not registered.
 func (r *Registry) SetSeverity(id string, severity string) bool {

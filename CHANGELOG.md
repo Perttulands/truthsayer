@@ -12,6 +12,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 - Consistent-ruling detection in `truthsayer judge`: repeated same-pattern/same-decision judgments are flagged as law candidates (default threshold 10, configurable) and logged to `.truthsayer-law-candidates.json`
 - Automatic law update proposal generation: `truthsayer judge` now writes Senate-ready `law-updates.md` proposals with rule context, pattern evidence, and suggested amendments
 - Senate verdict parsing: new `truthsayer senate parse <file>` command validates verdict schema (including amendment actions) from JSON or fenced JSON markdown
+- Senate amendment application: new `truthsayer senate apply <file> [repo]` persists approved amendments + audit trail, and scan engine now enforces applied `set_severity`/`disable_rule`/`enable_rule` amendments
 - `finding.Finding.Context` with ±10-line source windows and highlighted violation line, populated across Go, JS/TS, Python, bash, and config scans
 - Pattern hashing for judgments via `precedent.HashPattern`/`precedent.HashFindingPattern`, with normalization of variable names, literals, and whitespace for stable precedent matching
 - Precedent lookup API via `Store.Match`/`precedent.Match` using `rule_id + pattern_hash`, confidence thresholds, and confidence-first sorting for ranked match retrieval
