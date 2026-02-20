@@ -23,6 +23,7 @@ type judgeOptions struct {
 	format          string
 	precedentsPath  string
 	minConfidence   float64
+	autoApplyThreshold float64
 }
 
 type findingJudge interface {
@@ -70,6 +71,7 @@ type judgeSummary struct {
 	NotGuilty        int `json:"not_guilty"`
 	Advisory         int `json:"advisory"`
 	LLMCalls         int `json:"llm_calls"`
+	AutoApplied      int `json:"auto_applied"`
 	PrecedentMatches int `json:"precedent_matches"`
 }
 
@@ -111,29 +113,38 @@ func runJudge(args []string) int {
 	}
 
 	for _, f := range findings {
-		matches := precedent.Match(records, f, precedent.MatchOptions{
-			MinConfidence: opts.minConfidence,
-			Limit:         5,
+		allMatches := precedent.Match(records, f, precedent.MatchOptions{
+			MinConfidence: 0,
+			Limit:         10,
 		})
-		if len(matches) > 0 {
+		matches := filterMatchesByConfidence(allMatches, opts.minConfidence)
+		if len(allMatches) > 0 {
 			output.Summary.PrecedentMatches++
 		}
 
-		v, err := judger.JudgeFinding(context.Background(), judge.PromptInput{
-			Finding:         f,
-			RuleDescription: ruleDescriptions[f.Rule],
-			Precedents:      matches,
-		})
-		if err != nil {
-			// For command core reliability, if model fails and precedent exists, use the strongest precedent.
-			if len(matches) > 0 {
-				v = verdictFromPrecedent(matches[0])
-			} else {
-				fmt.Fprintf(os.Stderr, "error: judge finding %s:%d (%s): %v\n", f.File, f.Line, f.Rule, err)
-				return 2
-			}
+		var v judge.Verdict
+		if top, ok := strongestMatch(allMatches); ok && effectiveConfidence(top) > opts.autoApplyThreshold {
+			v = verdictFromPrecedent(top)
+			v.Reasoning = "Auto-applied high-confidence precedent."
+			output.Summary.AutoApplied++
 		} else {
-			output.Summary.LLMCalls++
+			judged, err := judger.JudgeFinding(context.Background(), judge.PromptInput{
+				Finding:         f,
+				RuleDescription: ruleDescriptions[f.Rule],
+				Precedents:      matches,
+			})
+			if err != nil {
+				// For command core reliability, if model fails and precedent exists, use the strongest precedent.
+				if len(matches) > 0 {
+					v = verdictFromPrecedent(matches[0])
+				} else {
+					fmt.Fprintf(os.Stderr, "error: judge finding %s:%d (%s): %v\n", f.File, f.Line, f.Rule, err)
+					return 2
+				}
+			} else {
+				output.Summary.LLMCalls++
+				v = judged
+			}
 		}
 
 		output.Verdicts = append(output.Verdicts, judgeFindingVerdict{
@@ -222,8 +233,9 @@ func accumulateJudgeSummary(output *judgeOutput) {
 
 func parseJudgeOptions(args []string) (judgeOptions, error) {
 	opts := judgeOptions{
-		format:        "json",
-		minConfidence: 0.0,
+		format:             "json",
+		minConfidence:      0.0,
+		autoApplyThreshold: 0.9,
 	}
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
@@ -251,6 +263,19 @@ func parseJudgeOptions(args []string) (judgeOptions, error) {
 				return judgeOptions{}, fmt.Errorf("--min-confidence must be between 0 and 1")
 			}
 			opts.minConfidence = n
+			i++
+		case "--auto-apply-threshold":
+			if i+1 >= len(args) {
+				return judgeOptions{}, fmt.Errorf("--auto-apply-threshold requires a value")
+			}
+			n, err := strconv.ParseFloat(args[i+1], 64)
+			if err != nil {
+				return judgeOptions{}, fmt.Errorf("invalid --auto-apply-threshold %q", args[i+1])
+			}
+			if n < 0 || n > 1 {
+				return judgeOptions{}, fmt.Errorf("--auto-apply-threshold must be between 0 and 1")
+			}
+			opts.autoApplyThreshold = n
 			i++
 		default:
 			opts.inputPath = args[i]
@@ -298,4 +323,31 @@ func buildRuleDescriptionMap() map[string]string {
 		out[r.ID] = r.Description
 	}
 	return out
+}
+
+func filterMatchesByConfidence(matches []precedent.Precedent, min float64) []precedent.Precedent {
+	if len(matches) == 0 || min <= 0 {
+		return matches
+	}
+	out := make([]precedent.Precedent, 0, len(matches))
+	for _, p := range matches {
+		if effectiveConfidence(p) >= min {
+			out = append(out, p)
+		}
+	}
+	return out
+}
+
+func strongestMatch(matches []precedent.Precedent) (precedent.Precedent, bool) {
+	if len(matches) == 0 {
+		return precedent.Precedent{}, false
+	}
+	return matches[0], true
+}
+
+func effectiveConfidence(p precedent.Precedent) float64 {
+	if p.Confidence <= 0 {
+		return 0.5
+	}
+	return p.Confidence
 }

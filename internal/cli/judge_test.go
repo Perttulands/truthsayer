@@ -177,7 +177,7 @@ func TestRunJudge_FallbackToPrecedentWhenJudgeFails(t *testing.T) {
 }
 
 func TestParseJudgeOptions(t *testing.T) {
-	opts, err := parseJudgeOptions([]string{"--precedents", "p.json", "--min-confidence", "0.9", "f.json"})
+	opts, err := parseJudgeOptions([]string{"--precedents", "p.json", "--min-confidence", "0.9", "--auto-apply-threshold", "0.95", "f.json"})
 	if err != nil {
 		t.Fatalf("parseJudgeOptions failed: %v", err)
 	}
@@ -189,5 +189,63 @@ func TestParseJudgeOptions(t *testing.T) {
 	}
 	if opts.inputPath != "f.json" {
 		t.Fatalf("unexpected input path: %q", opts.inputPath)
+	}
+	if opts.autoApplyThreshold != 0.95 {
+		t.Fatalf("unexpected auto-apply threshold: %f", opts.autoApplyThreshold)
+	}
+}
+
+func TestRunJudge_AutoApplyHighConfidenceSkipsLLM(t *testing.T) {
+	dir := t.TempDir()
+	findings := []finding.Finding{
+		{
+			Rule:     "silent-fallback.hidden-failure-bash",
+			Severity: finding.SeverityError,
+			File:     "script.sh",
+			Line:     3,
+			Code:     "cmd || true",
+			Message:  "hidden failure",
+		},
+	}
+	findingsPath := writeFindingsJSON(t, dir, findings)
+
+	p := precedent.Precedent{
+		RuleID:        findings[0].Rule,
+		ViolationHash: "vh",
+		PatternHash:   precedent.HashFindingPattern(findings[0]),
+		Decision:      precedent.DecisionAllow,
+		Rationale:     "known cleanup context",
+		Confidence:    0.95,
+		SeenCount:     9,
+		CreatedAt:     time.Date(2026, 2, 20, 0, 0, 0, 0, time.UTC),
+	}
+	if err := precedent.NewStore(filepath.Join(dir, precedent.DefaultPath)).Save([]precedent.Precedent{p}); err != nil {
+		t.Fatalf("save precedent seed: %v", err)
+	}
+
+	fake := &fakeFindingJudge{
+		verdict: judge.Verdict{
+			Verdict:            judge.VerdictGuilty,
+			Reasoning:          "should not be used",
+			Confidence:         0.1,
+			PrecedentDecision:  precedent.DecisionDeny,
+			PrecedentRationale: "should not be used",
+		},
+	}
+	oldFactory := newFindingJudge
+	newFindingJudge = func() (findingJudge, error) { return fake, nil }
+	defer func() { newFindingJudge = oldFactory }()
+
+	stdout := captureStdout(t, func() {
+		code := runJudge([]string{findingsPath})
+		if code != 0 {
+			t.Fatalf("expected exit code 0 from auto-applied allow precedent, got %d", code)
+		}
+	})
+	if fake.calls != 0 {
+		t.Fatalf("expected zero llm calls due auto-apply, got %d", fake.calls)
+	}
+	if !strings.Contains(stdout, `"auto_applied": 1`) {
+		t.Fatalf("expected auto_applied summary count, got:\n%s", stdout)
 	}
 }

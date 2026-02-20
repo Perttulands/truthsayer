@@ -83,6 +83,7 @@ func printUsage() {
 	fmt.Fprintln(os.Stderr, "  --format json        Output verdicts as JSON (default)")
 	fmt.Fprintln(os.Stderr, "  --precedents <path>  Precedent store path (default: <input-dir>/precedents.json)")
 	fmt.Fprintln(os.Stderr, "  --min-confidence n   Minimum precedent confidence included in prompt context (0-1)")
+	fmt.Fprintln(os.Stderr, "  --auto-apply-threshold n  Skip LLM when matching precedent confidence is above n (default: 0.9)")
 	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "Language aliases:")
 	fmt.Fprintln(os.Stderr, "  go, js/javascript, ts/typescript, python/py, bash/shell/sh")
