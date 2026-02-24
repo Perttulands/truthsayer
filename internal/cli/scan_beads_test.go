@@ -21,7 +21,7 @@ func (f *fakeBeadCreator) CreateProblemBead(rule string, file string, count int)
 		file:  file,
 		count: count,
 	})
-	return "bd-test-1", nil
+	return "br-test-1", nil
 }
 
 func TestScan_CreateBeadsFlag_CreatesProblemBeads(t *testing.T) {
@@ -49,7 +49,7 @@ func TestScan_CreateBeadsFlag_CreatesProblemBeads(t *testing.T) {
 	if !strings.Contains(out, "Beads created: 1") {
 		t.Fatalf("expected bead summary in output, got:\n%s", out)
 	}
-	if !strings.Contains(out, "bd-test-1") {
+	if !strings.Contains(out, "br-test-1") {
 		t.Fatalf("expected bead ID in output, got:\n%s", out)
 	}
 }

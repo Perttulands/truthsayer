@@ -12,7 +12,7 @@ import (
 func TestCreateProblemBead_UsesExpectedTitleAndPriority(t *testing.T) {
 	dir := t.TempDir()
 	argsFile := filepath.Join(dir, "args.txt")
-	mockBR := writeMockBD(t, dir, argsFile, `echo "bd-123"`)
+	mockBR := writeMockBR(t, dir, argsFile, `echo "br-123"`)
 
 	creator := NewBeadCreatorWithCommand(mockBR)
 
@@ -20,14 +20,13 @@ func TestCreateProblemBead_UsesExpectedTitleAndPriority(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateProblemBead returned error: %v", err)
 	}
-	if id != "bd-123" {
-		t.Fatalf("expected bead ID bd-123, got %q", id)
+	if id != "br-123" {
+		t.Fatalf("expected bead ID br-123, got %q", id)
 	}
 
 	args := readArgs(t, argsFile)
 	expected := []string{
 		"create",
-		"--title",
 		"[truthsayer] silent-fallback.empty-error-check: 3 errors in pkg/handler.go",
 		"--priority",
 		"1",
@@ -40,7 +39,7 @@ func TestCreateProblemBead_UsesExpectedTitleAndPriority(t *testing.T) {
 func TestCreateWarningBead_UsesWarningPriority(t *testing.T) {
 	dir := t.TempDir()
 	argsFile := filepath.Join(dir, "args.txt")
-	mockBR := writeMockBD(t, dir, argsFile, `echo "bd-456"`)
+	mockBR := writeMockBR(t, dir, argsFile, `echo "br-456"`)
 
 	creator := NewBeadCreatorWithCommand(mockBR)
 
@@ -48,8 +47,8 @@ func TestCreateWarningBead_UsesWarningPriority(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateWarningBead returned error: %v", err)
 	}
-	if id != "bd-456" {
-		t.Fatalf("expected bead ID bd-456, got %q", id)
+	if id != "br-456" {
+		t.Fatalf("expected bead ID br-456, got %q", id)
 	}
 
 	args := readArgs(t, argsFile)
@@ -61,7 +60,7 @@ func TestCreateWarningBead_UsesWarningPriority(t *testing.T) {
 func TestCreateProblemBead_Timeout(t *testing.T) {
 	dir := t.TempDir()
 	argsFile := filepath.Join(dir, "args.txt")
-	mockBR := writeMockBD(t, dir, argsFile, `sleep 2; echo "bd-late"`)
+	mockBR := writeMockBR(t, dir, argsFile, `sleep 2; echo "br-late"`)
 
 	creator := NewBeadCreatorWithCommand(mockBR)
 	creator.SetTimeout(100 * time.Millisecond)
@@ -75,15 +74,15 @@ func TestCreateProblemBead_Timeout(t *testing.T) {
 	}
 }
 
-func writeMockBD(t *testing.T, dir string, argsFile string, body string) string {
+func writeMockBR(t *testing.T, dir string, argsFile string, body string) string {
 	t.Helper()
-	path := filepath.Join(dir, "bd")
+	path := filepath.Join(dir, "br")
 	script := fmt.Sprintf(`#!/bin/sh
 printf "%%s\n" "$@" > %q
 %s
 `, argsFile, body)
 	if err := os.WriteFile(path, []byte(script), 0o755); err != nil {
-		t.Fatalf("write mock bd: %v", err)
+		t.Fatalf("write mock br: %v", err)
 	}
 	return path
 }
