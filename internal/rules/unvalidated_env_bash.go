@@ -26,11 +26,18 @@ func (u *UnvalidatedEnvBash) Meta() Rule {
 var unvalidatedEnvPattern = regexp.MustCompile(`\$\{[A-Z_][A-Z0-9_]*:-[^}]+\}`)
 var unvalidatedEnvAssignPattern = regexp.MustCompile(`\$\{[A-Z_][A-Z0-9_]*:=[^}]+\}`)
 
+// Lines that are purely echo/printf output — env defaults here are informational, not bugs.
+var echoPrintfLine = regexp.MustCompile(`^[[:space:]]*(echo|printf)\s`)
+
 func (u *UnvalidatedEnvBash) CheckLines(path string, lines []string) []finding.Finding {
 	var findings []finding.Finding
 	for i, line := range lines {
 		trimmed := strings.TrimSpace(line)
 		if strings.HasPrefix(trimmed, "#") {
+			continue
+		}
+		// Skip env var defaults that appear only in echo/printf output context.
+		if echoPrintfLine.MatchString(line) {
 			continue
 		}
 		matched := false

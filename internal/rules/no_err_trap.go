@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -26,6 +27,13 @@ var setEPattern = regexp.MustCompile(`set\s+-[a-zA-Z]*e`)
 var trapErrPattern = regexp.MustCompile(`trap\s+.*\bERR\b`)
 
 func (n *NoErrTrap) CheckLines(path string, lines []string) []finding.Finding {
+	// Skip test helpers, test data, and bats test files.
+	norm := filepath.ToSlash(path)
+	if strings.Contains(norm, "/tests/") || strings.Contains(norm, "/test/") ||
+		strings.Contains(norm, "/testdata/") || strings.HasSuffix(path, ".bats") {
+		return nil
+	}
+
 	hasSetE := false
 	hasTrapErr := false
 	setELine := 0

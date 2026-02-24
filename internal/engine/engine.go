@@ -234,6 +234,8 @@ func extLang(ext string) string {
 		return "python"
 	case ".sh", ".bash":
 		return "bash"
+	case ".rs":
+		return "rust"
 	default:
 		return ""
 	}

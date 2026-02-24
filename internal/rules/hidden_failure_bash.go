@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -27,6 +28,14 @@ var hiddenFailurePatterns = []*regexp.Regexp{
 	regexp.MustCompile(`\|\|\s*:`),
 	regexp.MustCompile(`2>\s*/dev/null`),
 }
+
+// Commands where || true is harmless and expected.
+var hiddenFailureHarmlessCommands = regexp.MustCompile(
+	`^\s*(shopt|mkdir|rmdir)\b`,
+)
+
+// simpleOrTrue matches lines where || true follows a simple command (no pipes, &&, etc.).
+var simpleOrTrue = regexp.MustCompile(`^\s*\S+(\s+\S+)*\s*\|\|\s*true\s*$`)
 
 var hiddenFailureMessages = []string{
 	"'|| true' silently swallows command failure",
@@ -72,6 +81,9 @@ func (h *HiddenFailureBash) CheckLines(path string, lines []string) []finding.Fi
 	functions := findBashFunctions(lines)
 	exemptOrTrueLines := findExemptOrTrueLines(lines, functions)
 
+	base := filepath.Base(path)
+	isInstallScript := base == "install.sh"
+
 	var findings []finding.Finding
 	for i, line := range lines {
 		trimmed := strings.TrimSpace(line)
@@ -96,6 +108,19 @@ func (h *HiddenFailureBash) CheckLines(path string, lines []string) []finding.Fi
 					suggestion = ""
 				} else {
 					msg = msg + " — add '# REASON: ...' to justify or fix the suppression"
+				}
+
+				// Downgrade harmless commands (shopt, mkdir, rmdir)
+				// or simple "cmd || true" at end of line.
+				if j == 0 && severity == finding.SeverityError {
+					if hiddenFailureHarmlessCommands.MatchString(line) || simpleOrTrue.MatchString(line) {
+						severity = finding.SeverityWarning
+					}
+				}
+
+				// install.sh files get all findings downgraded to Info.
+				if isInstallScript {
+					severity = finding.SeverityInfo
 				}
 
 				findings = append(findings, finding.Finding{

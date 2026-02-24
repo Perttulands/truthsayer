@@ -45,6 +45,7 @@ var supportedExts = map[string]bool{
 	".pyi":  true,
 	".sh":   true,
 	".bash": true,
+	".rs":   true,
 	".toml": true,
 	".yaml": true,
 	".yml":  true,

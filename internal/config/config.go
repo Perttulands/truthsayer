@@ -29,6 +29,7 @@ type LanguageConfig struct {
 	TypeScript *bool `toml:"typescript"`
 	Python     *bool `toml:"python"`
 	Bash       *bool `toml:"bash"`
+	Rust       *bool `toml:"rust"`
 }
 
 // IsEnabled returns whether a language is enabled. Unset (nil) defaults to true.
@@ -45,6 +46,8 @@ func (lc *LanguageConfig) IsEnabled(lang string) bool {
 		p = lc.Python
 	case "bash":
 		p = lc.Bash
+	case "rust":
+		p = lc.Rust
 	default:
 		return true
 	}

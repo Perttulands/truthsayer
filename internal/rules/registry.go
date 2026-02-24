@@ -352,5 +352,17 @@ func DefaultRegistry() *Registry {
 	reg.RegisterRegex(&PyHardcodedCredentials{})
 	reg.RegisterRegex(&PyRequirementsUnpinned{})
 
+	// Rust regex rules
+	reg.RegisterRegex(&RustUnwrapInProduction{})
+	reg.RegisterRegex(&RustIgnoredResult{})
+	reg.RegisterRegex(&RustPanicInLib{})
+	reg.RegisterRegex(&RustUnsafeNoComment{})
+	reg.RegisterRegex(&RustTodoInProduction{})
+	reg.RegisterRegex(&RustExpectGeneric{})
+	reg.RegisterRegex(&RustBoxedError{})
+	reg.RegisterRegex(&RustProcessExit{})
+	reg.RegisterRegex(&RustAllowSuppress{})
+	reg.RegisterRegex(&RustEprintlnInLib{})
+
 	return reg
 }
