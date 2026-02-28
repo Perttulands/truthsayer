@@ -55,6 +55,9 @@ func (g *GoroutineNoContext) CheckAST(fset *token.FileSet, file *ast.File, lines
 			}
 			// Named function call without context arg
 			pos := fset.Position(goStmt.Pos())
+			if hasReasonComment(lines, pos.Line) {
+				return true
+			}
 			findings = append(findings, finding.Finding{
 				Rule:       g.Meta().ID,
 				Severity:   g.Meta().Severity,

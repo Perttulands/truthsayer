@@ -89,6 +89,11 @@ func collectDeclarations(ext string, lines []string) map[string]declaration {
 		case ".go":
 			if m := goVarPattern.FindStringSubmatch(line); len(m) == 2 {
 				name := m[1]
+				// Skip package-level var declarations — they're visible across
+				// all files in the package and can't be checked by single-file analysis.
+				if !strings.HasPrefix(line, "\t") && !strings.HasPrefix(line, " ") {
+					continue
+				}
 				if isCandidateVar(name) {
 					decls[name] = declaration{line: i + 1, code: line}
 				}
@@ -209,7 +214,20 @@ func (u *UnreachableCode) checkBraceLang(lines []string, path string) []finding.
 	terminatedDepth := -1
 	var findings []finding.Finding
 
+	// For Go files, pre-compute which lines are inside raw string literals
+	// (backtick-delimited). Go raw strings cannot contain backticks, so
+	// toggling on odd backtick count per line is reliable.
+	var inRawString []bool
+	if filepath.Ext(path) == ".go" {
+		inRawString = goRawStringLines(lines)
+	}
+
 	for i, line := range lines {
+		// Skip lines inside Go raw string literals
+		if inRawString != nil && inRawString[i] {
+			continue
+		}
+
 		code := strings.TrimSpace(stripInlineComment(line))
 		depthBefore := depth
 
@@ -217,11 +235,13 @@ func (u *UnreachableCode) checkBraceLang(lines []string, path string) []finding.
 			if terminatedDepth >= 0 {
 				if depthBefore < terminatedDepth {
 					terminatedDepth = -1
-				} else if depthBefore == terminatedDepth &&
-					!strings.HasPrefix(code, "}") &&
-					!strings.HasPrefix(code, "case ") &&
-					!strings.HasPrefix(code, "default:") &&
-					!strings.HasPrefix(code, "else") {
+				} else if strings.HasPrefix(code, "}") ||
+					strings.HasPrefix(code, "case ") ||
+					strings.HasPrefix(code, "default:") ||
+					strings.HasPrefix(code, "else") {
+					// New branch resets termination — code after case/default/else is reachable
+					terminatedDepth = -1
+				} else if depthBefore == terminatedDepth {
 					findings = append(findings, finding.Finding{
 						Rule:       u.Meta().ID,
 						Severity:   u.Meta().Severity,
@@ -234,7 +254,9 @@ func (u *UnreachableCode) checkBraceLang(lines []string, path string) []finding.
 				}
 			}
 
-			if braceTerminatorPattern.MatchString(code) {
+			if braceTerminatorPattern.MatchString(code) &&
+				!isContinuationLine(code) &&
+				!isContinuationLine(strings.TrimSpace(line)) {
 				terminatedDepth = depthBefore
 			}
 		}
@@ -262,6 +284,34 @@ func leadingIndent(line string) int {
 		}
 	}
 	return count
+}
+
+// goRawStringLines returns a bool slice where true means the line is inside
+// a Go raw string literal (backtick-delimited). The line that opens the
+// backtick string is NOT marked (it contains real code like `return`).
+// Go raw strings cannot contain backticks, so toggling on odd count is exact.
+func goRawStringLines(lines []string) []bool {
+	result := make([]bool, len(lines))
+	inRaw := false
+	for i, line := range lines {
+		result[i] = inRaw
+		if strings.Count(line, "`")%2 == 1 {
+			inRaw = !inRaw
+		}
+	}
+	return result
+}
+
+// isContinuationLine returns true if a trimmed code line ends with an operator
+// that means the expression continues on the next line. A "return x +" or
+// "return a ||" is not a complete terminator.
+func isContinuationLine(code string) bool {
+	for _, suffix := range []string{"+", "-", "||", "&&", ",", "|", "(", ".", "{"} {
+		if strings.HasSuffix(code, suffix) {
+			return true
+		}
+	}
+	return false
 }
 
 // ErrorSwallowing detects empty catch/except blocks that swallow errors.

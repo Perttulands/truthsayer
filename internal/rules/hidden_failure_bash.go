@@ -65,9 +65,9 @@ type bashFunctionBlock struct {
 	annotated bool
 }
 
-// hasReasonComment checks if the line has an inline # REASON: comment justifying the suppression,
+// hasBashReasonComment checks if the line has an inline # REASON: comment justifying the suppression,
 // or if the immediately preceding line is a # REASON: comment.
-func hasReasonComment(line string, lines []string, lineIdx int) bool {
+func hasBashReasonComment(line string, lines []string, lineIdx int) bool {
 	if strings.Contains(line, "# REASON:") {
 		return true
 	}
@@ -102,7 +102,7 @@ func (h *HiddenFailureBash) CheckLines(path string, lines []string) []finding.Fi
 				msg := hiddenFailureMessages[j]
 				suggestion := hiddenFailureSuggestions[j]
 
-				if hasReasonComment(line, lines, i) {
+				if hasBashReasonComment(line, lines, i) {
 					severity = finding.SeverityInfo
 					msg = msg + " (justified with REASON comment)"
 					suggestion = ""

@@ -170,19 +170,19 @@ func parseCIOptions(args []string) (ciOptions, error) {
 func ciChangedLinesByFile(repoDir string) (map[string]map[int]bool, error) {
 	diffBase, err := ciDiffBase(repoDir)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ci diff base: %w", err)
 	}
 
 	files, err := ciChangedFiles(repoDir, diffBase)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ci changed files: %w", err)
 	}
 
 	out := make(map[string]map[int]bool, len(files))
 	for _, file := range files {
 		lines, err := ciChangedLines(repoDir, diffBase, file)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("ci changed lines for %s: %w", file, err)
 		}
 		out[file] = lines
 	}
@@ -278,14 +278,16 @@ func parseHunkHeader(header string) (start int, count int, ok bool) {
 		segs := strings.SplitN(rangePart, ",", 2)
 		startVal, err := strconv.Atoi(segs[0])
 		if err != nil {
-			return 0, 0, false
+			// REASON: parseHunkHeader returns (0,0,false) to signal invalid input — caller checks ok
+		return 0, 0, false
 		}
 
 		countVal := 1
 		if len(segs) == 2 {
 			n, err := strconv.Atoi(segs[1])
 			if err != nil {
-				return 0, 0, false
+				// REASON: parseHunkHeader returns (0,0,false) to signal invalid input — caller checks ok
+			return 0, 0, false
 			}
 			countVal = n
 		}

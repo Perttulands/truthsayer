@@ -112,7 +112,7 @@ func (s *Store) Add(e Entry) error {
 	}
 	entries, err := s.Load()
 	if err != nil {
-		return err
+		return fmt.Errorf("load debt entries: %w", err)
 	}
 	entries = append(entries, e)
 	return s.Save(entries)

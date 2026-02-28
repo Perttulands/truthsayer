@@ -61,7 +61,7 @@ func resolveLanguages(value string) ([]string, error) {
 func parseLangFlag(value string) (*config.LanguageConfig, error) {
 	langs, err := resolveLanguages(value)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parse --lang %q: %w", value, err)
 	}
 
 	enabled := make(map[string]bool, len(langs))
@@ -99,7 +99,7 @@ func parseLangFlag(value string) (*config.LanguageConfig, error) {
 func langFilterExts(value string) (map[string]bool, error) {
 	langs, err := resolveLanguages(value)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("resolve languages %q: %w", value, err)
 	}
 
 	exts := make(map[string]bool)

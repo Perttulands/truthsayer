@@ -65,6 +65,11 @@ func (c *ContextTodo) CheckAST(fset *token.FileSet, file *ast.File, lines []stri
 			}
 
 			pos := fset.Position(call.Pos())
+			// Suppress if a REASON comment or nolint directive is on the same
+			// line or the line immediately above.
+			if hasReasonComment(lines, pos.Line) {
+				return true
+			}
 			what := "context.TODO()"
 			if sel.Sel.Name == "Background" {
 				what = "context.Background()"
@@ -82,4 +87,19 @@ func (c *ContextTodo) CheckAST(fset *token.FileSet, file *ast.File, lines []stri
 		})
 	}
 	return findings
+}
+
+// hasReasonComment checks the line (1-based) and the line above for
+// a "// REASON:" or "//nolint:" comment, indicating documented justification.
+func hasReasonComment(lines []string, line int) bool {
+	for _, i := range []int{line - 1, line - 2} {
+		if i < 0 || i >= len(lines) {
+			continue
+		}
+		lower := strings.ToLower(lines[i])
+		if strings.Contains(lower, "// reason:") || strings.Contains(lower, "//nolint:") {
+			return true
+		}
+	}
+	return false
 }

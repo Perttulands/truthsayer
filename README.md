@@ -1,21 +1,20 @@
-# 🔍 Truthsayer
+# Aletheia the Truthsayer
 
-![Truthsayer](images/truthsayer.jpg)
+![Aletheia](images/truthsayer.jpg)
 
-
-*Bronze monocle. Dark robes. 88 rules stitched in gold thread. He reads your code like a confession.*
+*Bare feet. Linen. The Codex under one arm. She reads your code like a confession.*
 
 ---
 
 Every codebase has a layer of polite lies. Error handlers that handle nothing. Catch blocks that catch and release. Timeouts that were going to be added "later." Somewhere under the clean abstractions, something is swallowing failures and smiling about it.
 
-Truthsayer sees both layers. That's what the cracked mirror is for — beauty on the surface, rot underneath, both visible at once. He wears dark robes with every rule stitched into the fabric in gold thread. Eighty-eight of them. The Codex hangs from his belt on a bronze chain, heavy enough to use as a weapon if the Red Quill doesn't make the point clearly enough. And the monocle — oversized, bronze, always on one eye — you see it across the room and you know exactly what's coming.
+Aletheia sees both layers. She wears undyed linen — plain, undecorated, what's left when everything ornamental is stripped away. A dark stole across one shoulder with every rule stitched in gold thread. Eighty-eight of them. The Codex hangs at her side, heavy enough to use as a weapon if the Red Quill doesn't make the point clearly enough. And the bare feet — Pseudos, the false copy Prometheus's apprentice made, had no feet. Hers are the proof she's real.
 
-He doesn't care about style. He doesn't care about naming conventions. He cares about the specific moment your code decided to lie about what happened. That `catch (e) {}` you wrote at 2am? He found it. He's been waiting.
+She doesn't care about style. She doesn't care about naming conventions. She cares about the specific moment your code decided to lie about what happened. That `catch (e) {}` you wrote at 2am? She found it. She's been waiting.
 
 Development anti-pattern scanner for Go, JavaScript/TypeScript, Python, and bash codebases. Detects hidden failures, swallowed errors, bad defaults, mock leakage, missing traces, and configuration smells.
 
-Truthsayer's niche is *failure-hiding anti-patterns* — the silent fallbacks, swallowed exceptions, missing observability, and production-test boundary violations that generic linters ignore.
+Aletheia's niche is *failure-hiding anti-patterns* — the silent fallbacks, swallowed exceptions, missing observability, and production-test boundary violations that generic linters ignore.
 
 ## Install
 
@@ -200,11 +199,15 @@ _ = err
 | 1 | Error-severity findings present |
 | 2 | Tool error (bad config, invalid path) |
 
+## Dependencies
+
+None. Standalone tool.
+
 ## Part of the Agora
 
-Truthsayer was forged in **[Athena's Agora](https://github.com/Perttulands/athena-workspace)** — an autonomous coding system where AI agents build software and a figure in dark robes makes sure none of it is lying.
+Aletheia was forged in **[Athena's Agora](https://github.com/Perttulands/athena-workspace)** — an autonomous coding system where AI agents build software and a figure in dark robes makes sure none of it is lying.
 
-[Argus](https://github.com/Perttulands/argus) watches the server. [Oathkeeper](https://github.com/Perttulands/oathkeeper) watches the promises. [Relay](https://github.com/Perttulands/relay) carries the messages. Truthsayer watches the code. Between the four of them, your silent failures have nowhere to hide.
+[Argus](https://github.com/Perttulands/argus) watches the server. [Oathkeeper](https://github.com/Perttulands/oathkeeper) watches the promises. [Relay](https://github.com/Perttulands/relay) carries the messages. Aletheia watches the code. Between the four of them, your silent failures have nowhere to hide.
 
 The [mythology](https://github.com/Perttulands/athena-workspace/blob/main/mythology.md) has the full story.
 

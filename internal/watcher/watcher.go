@@ -58,6 +58,7 @@ func New(root string, debounceDur time.Duration) (*Watcher, error) {
 		done:     make(chan struct{}),
 	}
 
+	// REASON: watcher lifecycle is bounded by w.Close() via the done channel; no external context needed.
 	go w.loop()
 	return w, nil
 }

@@ -1,4 +1,4 @@
-# ⚖️ Truthsayer — Improvements from the Agora
+# ⚖️ Aletheia the Truthsayer — Improvements from the Agora
 
 _Five decrees from Athena's council chamber, where marble columns meet neon circuitry._
 
@@ -6,7 +6,7 @@ _Five decrees from Athena's council chamber, where marble columns meet neon circ
 
 ## 1. The Oracle's Memory — Persistent Scan Cache
 
-**Problem:** Truthsayer's `Engine.fileCache` (`internal/engine/engine.go:44-48`) lives only in RAM and dies with the process. Every `truthsayer scan` cold-starts, re-parsing every file with tree-sitter even when nothing changed. On large repos this is pure wasted computation — the Oracle forgets everything between invocations.
+**Problem:** Aletheia's `Engine.fileCache` (`internal/engine/engine.go:44-48`) lives only in RAM and dies with the process. Every `truthsayer scan` cold-starts, re-parsing every file with tree-sitter even when nothing changed. On large repos this is pure wasted computation — the Oracle forgets everything between invocations.
 
 **Implementation Plan:**
 - **Files:** `internal/engine/engine.go`, new `internal/cache/disk.go`
@@ -21,7 +21,7 @@ _Five decrees from Athena's council chamber, where marble columns meet neon circ
 
 ## 2. The Shield of Sarissa — Autofix Engine
 
-**Problem:** Truthsayer identifies 88 anti-patterns but offers only `Suggestion` strings (`internal/finding/finding.go:34`). Developers must manually apply every fix. A scanner that only diagnoses but never heals is a physician without hands.
+**Problem:** Aletheia identifies 88 anti-patterns but offers only `Suggestion` strings (`internal/finding/finding.go:34`). Developers must manually apply every fix. A scanner that only diagnoses but never heals is a physician without hands.
 
 **Implementation Plan:**
 - **Files:** new `internal/autofix/autofix.go`, `internal/finding/finding.go`, rule files (start with 5-10 high-value rules)
@@ -31,13 +31,13 @@ _Five decrees from Athena's council chamber, where marble columns meet neon circ
 - Add `truthsayer fix [--dry-run]` command in `internal/cli/` that scans then applies
 - Dry-run mode shows unified diffs without writing
 
-**Expected Impact:** Transforms Truthsayer from a passive scanner into an active healer. Even 10 auto-fixable rules dramatically reduce friction in CI remediation workflows.
+**Expected Impact:** Transforms Aletheia from a passive scanner into an active healer. Even 10 auto-fixable rules dramatically reduce friction in CI remediation workflows.
 
 ---
 
 ## 3. The Panopticon Protocol — SARIF & IDE Integration
 
-**Problem:** Truthsayer outputs only terminal text or basic JSON (`internal/report/json.go`). Neither format integrates with GitHub Code Scanning, VS Code Problems panel, or any standard toolchain. The Oracle speaks, but no one in the agora can hear.
+**Problem:** Aletheia outputs only terminal text or basic JSON (`internal/report/json.go`). Neither format integrates with GitHub Code Scanning, VS Code Problems panel, or any standard toolchain. The Oracle speaks, but no one in the agora can hear.
 
 **Implementation Plan:**
 - **Files:** new `internal/report/sarif.go`, `internal/cli/scan.go`, `internal/cli/report.go`
@@ -52,7 +52,7 @@ _Five decrees from Athena's council chamber, where marble columns meet neon circ
 
 ## 4. The Loom of Arachne — Custom Rule Plugin System
 
-**Problem:** All 88 rules are hardcoded in `internal/rules/registry.go` (`DefaultRegistry()`). Users cannot add project-specific rules without forking Truthsayer. Every codebase has domain-specific anti-patterns (e.g., "never call `db.Exec` without a transaction in our repo") that the built-in rules can't know about.
+**Problem:** All 88 rules are hardcoded in `internal/rules/registry.go` (`DefaultRegistry()`). Users cannot add project-specific rules without forking Aletheia. Every codebase has domain-specific anti-patterns (e.g., "never call `db.Exec` without a transaction in our repo") that the built-in rules can't know about.
 
 **Implementation Plan:**
 - **Files:** `internal/config/config.go`, new `internal/rules/custom.go`, `internal/rules/registry.go`
@@ -70,7 +70,7 @@ _Five decrees from Athena's council chamber, where marble columns meet neon circ
 - Load custom rules in `internal/cli/scan.go` after `config.Load()`, before engine creation
 - Support `exclude_paths` per custom rule for scoping
 
-**Expected Impact:** Turns Truthsayer from a fixed scanner into an extensible platform. Teams can encode institutional knowledge as rules without Go code or recompilation.
+**Expected Impact:** Turns Aletheia from a fixed scanner into an extensible platform. Teams can encode institutional knowledge as rules without Go code or recompilation.
 
 ---
 

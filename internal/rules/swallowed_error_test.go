@@ -42,6 +42,61 @@ func process() error {
 	}
 }
 
+func TestSwallowedError_SkipsWithIntentionalComment(t *testing.T) {
+	src := `package main
+
+import "log"
+
+func process() error {
+	err := doWork()
+	if err != nil {
+		// intentionally not propagated — caller retries
+		log.Println(err)
+	}
+	return nil
+}`
+	findings := runASTCheckerOnSource(t, &SwallowedError{}, "main.go", src)
+	if len(findings) != 0 {
+		t.Fatalf("expected 0 findings with intentional comment, got %d", len(findings))
+	}
+}
+
+func TestSwallowedError_SkipsWithNolint(t *testing.T) {
+	src := `package main
+
+import "log"
+
+func process() error {
+	err := doWork()
+	if err != nil {
+		log.Println(err) //nolint:swallowed-error
+	}
+	return nil
+}`
+	findings := runASTCheckerOnSource(t, &SwallowedError{}, "main.go", src)
+	if len(findings) != 0 {
+		t.Fatalf("expected 0 findings with nolint, got %d", len(findings))
+	}
+}
+
+func TestSwallowedError_StillFlagsWithoutComment(t *testing.T) {
+	src := `package main
+
+import "log"
+
+func process() error {
+	err := doWork()
+	if err != nil {
+		log.Println(err)
+	}
+	return nil
+}`
+	findings := runASTCheckerOnSource(t, &SwallowedError{}, "main.go", src)
+	if len(findings) != 1 {
+		t.Fatalf("expected 1 finding without comment, got %d", len(findings))
+	}
+}
+
 func TestSwallowedError_SkipsTestFiles(t *testing.T) {
 	src := `package main
 

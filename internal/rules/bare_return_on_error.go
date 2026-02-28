@@ -47,6 +47,9 @@ func (b *BareReturnOnError) CheckAST(fset *token.FileSet, file *ast.File, lines 
 				}
 				if len(ret.Results) == 0 || isAllZeroValueReturn(ret.Results) {
 					pos := fset.Position(ret.Pos())
+					if hasReasonComment(lines, pos.Line) {
+						return true
+					}
 					findings = append(findings, finding.Finding{
 						Rule:       b.Meta().ID,
 						Severity:   b.Meta().Severity,

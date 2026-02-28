@@ -98,6 +98,11 @@ func (t *TestFixtureRef) CheckLines(path string, lines []string) []finding.Findi
 		if strings.Contains(line, "regexp.MustCompile") || strings.Contains(line, "regexp.Compile") {
 			continue
 		}
+		// Skip path-filtering operations (e.g., strings.Contains(path, "/testdata/"))
+		if strings.Contains(line, "strings.Contains") || strings.Contains(line, "strings.HasPrefix") ||
+			strings.Contains(line, "strings.HasSuffix") || strings.Contains(line, "filepath.") {
+			continue
+		}
 		if fixtureRefPattern.MatchString(line) {
 			findings = append(findings, finding.Finding{
 				Rule:       t.Meta().ID,

@@ -42,11 +42,14 @@ type findingJudge interface {
 var newFindingJudge = func() (findingJudge, error) {
 	// REASON: llm.NewClaudeClient validates missing/empty API keys and returns a descriptive error.
 	apiKey := strings.TrimSpace(os.Getenv("ANTHROPIC_API_KEY"))
+	if apiKey == "" {
+		return nil, fmt.Errorf("ANTHROPIC_API_KEY not set")
+	}
 	client, err := llm.NewClaudeClient(llm.ClientOptions{
 		APIKey: apiKey,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create claude client: %w", err)
 	}
 	return judge.NewLLMJudge(client)
 }

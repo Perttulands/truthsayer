@@ -72,7 +72,7 @@ func ParseVerdict(data []byte) (Verdict, error) {
 		return Verdict{}, fmt.Errorf("senate: decode verdict json: %w", err)
 	}
 	if err := verdict.Validate(); err != nil {
-		return Verdict{}, err
+		return Verdict{}, fmt.Errorf("senate: validate verdict: %w", err)
 	}
 	return verdict, nil
 }

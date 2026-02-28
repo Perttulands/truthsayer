@@ -42,13 +42,17 @@ func (s *SwallowedError) CheckAST(fset *token.FileSet, file *ast.File, lines []s
 		}
 		// Check if the body logs but does not return or break flow
 		if hasLogCall(ifStmt.Body) && !hasFlowControl(ifStmt.Body) {
-			pos := fset.Position(ifStmt.Pos())
+			startLine := fset.Position(ifStmt.Pos()).Line
+			endLine := fset.Position(ifStmt.End()).Line
+			if hasSuppressionComment(lines, startLine, endLine) {
+				return true
+			}
 			findings = append(findings, finding.Finding{
 				Rule:       s.Meta().ID,
 				Severity:   s.Meta().Severity,
 				File:       fname,
-				Line:       pos.Line,
-				Code:       sourceLine(lines, pos.Line),
+				Line:       startLine,
+				Code:       sourceLine(lines, startLine),
 				Message:    "Error is logged but not returned — execution continues past the error",
 				Suggestion: "Return the error after logging, or use log.Fatal if the error is truly unrecoverable",
 			})
@@ -64,6 +68,26 @@ func hasFlowControl(block *ast.BlockStmt) bool {
 	for _, stmt := range block.List {
 		switch stmt.(type) {
 		case *ast.ReturnStmt, *ast.BranchStmt:
+			return true
+		}
+	}
+	return false
+}
+
+// hasSuppressionComment checks whether any line in [startLine, endLine] (1-based)
+// contains a comment indicating the error is intentionally not propagated.
+func hasSuppressionComment(lines []string, startLine, endLine int) bool {
+	for i := startLine - 1; i < endLine && i < len(lines); i++ {
+		line := lines[i]
+		idx := strings.Index(line, "//")
+		if idx < 0 {
+			continue
+		}
+		comment := strings.ToLower(line[idx:])
+		if strings.Contains(comment, "intentional") ||
+			strings.Contains(comment, "expected") ||
+			strings.Contains(comment, "nolint") ||
+			strings.Contains(comment, "not propagated") {
 			return true
 		}
 	}

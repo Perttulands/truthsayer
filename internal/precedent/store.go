@@ -328,7 +328,7 @@ func (s *Store) AddOrUpdateJudgment(p Precedent) (Precedent, error) {
 
 	precedents = append(precedents, p)
 	if err := s.Save(precedents); err != nil {
-		return Precedent{}, err
+		return Precedent{}, fmt.Errorf("save precedents: %w", err)
 	}
 	return p, nil
 }

@@ -1,4 +1,4 @@
-# Truthsayer PRD — Ralph Execution Format
+# Aletheia the Truthsayer PRD — Ralph Execution Format
 
 **Tech Stack**: Go, AST scanning, regex patterns, TOML config, JSON reports
 

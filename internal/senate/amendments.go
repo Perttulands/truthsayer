@@ -31,7 +31,7 @@ func (a AppliedAmendment) validate() error {
 		return errors.New("senate: applied_at is required")
 	}
 	if err := a.Amendment.Validate(); err != nil {
-		return err
+		return fmt.Errorf("senate: amendment validation: %w", err)
 	}
 	return nil
 }
@@ -110,7 +110,7 @@ func appliedKey(a AppliedAmendment) string {
 // ApplyVerdict persists approved verdict amendments (idempotent by verdict+amendment key).
 func (s *AmendmentStore) ApplyVerdict(v Verdict, appliedAt time.Time) ([]AppliedAmendment, error) {
 	if err := v.Validate(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("senate: validate verdict: %w", err)
 	}
 	if v.Status != StatusApproved {
 		return []AppliedAmendment{}, nil
@@ -121,7 +121,7 @@ func (s *AmendmentStore) ApplyVerdict(v Verdict, appliedAt time.Time) ([]Applied
 
 	existing, err := s.Load()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("senate: load amendments: %w", err)
 	}
 	seen := make(map[string]struct{}, len(existing))
 	for _, a := range existing {
@@ -144,7 +144,7 @@ func (s *AmendmentStore) ApplyVerdict(v Verdict, appliedAt time.Time) ([]Applied
 		added = append(added, rec)
 	}
 	if err := s.Save(existing); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("senate: save amendments: %w", err)
 	}
 	return added, nil
 }

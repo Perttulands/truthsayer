@@ -1,4 +1,4 @@
-# Truthsayer — Product Requirements Document
+# Aletheia the Truthsayer — Product Requirements Document
 
 > Development anti-pattern scanner. Detects bad practices that mask problems: silent fallbacks, swallowed errors, bad defaults, mocks in production paths, missing traces.
 

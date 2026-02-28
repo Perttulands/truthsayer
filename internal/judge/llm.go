@@ -129,7 +129,7 @@ func (j *LLMJudge) JudgeFinding(ctx context.Context, input PromptInput) (Verdict
 func ParseVerdict(raw string) (Verdict, error) {
 	payload, err := extractJSONObject(raw)
 	if err != nil {
-		return Verdict{}, err
+		return Verdict{}, fmt.Errorf("extract verdict JSON: %w", err)
 	}
 
 	type verdictPayload struct {
@@ -152,7 +152,7 @@ func ParseVerdict(raw string) (Verdict, error) {
 		PrecedentRationale: strings.TrimSpace(parsed.PrecedentRationale),
 	}
 	if err := validateVerdict(v); err != nil {
-		return Verdict{}, err
+		return Verdict{}, fmt.Errorf("validate verdict: %w", err)
 	}
 	return v, nil
 }
