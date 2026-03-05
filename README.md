@@ -1,6 +1,6 @@
 # Aletheia the Truthsayer
 
-![Aletheia](images/truthsayer.jpg)
+![Aletheia Banner](banner.png)
 
 *Bare feet. Linen. The Codex under one arm. She reads your code like a confession.*
 
