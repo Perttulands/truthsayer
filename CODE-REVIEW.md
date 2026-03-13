@@ -24,8 +24,7 @@ Reviewed: 2026-02-20
 
 - **CHANGELOG (before this fix)** was missing the entire v2.0.0 multi-language expansion (28 JS/TS rules + 26 Python rules + cross-language Sprint 4). The `[Unreleased]` section had only 2 entries despite ~50 commits landing since v1.0.0.
 - **README rule count** — README does not list an exact rule count, which avoids becoming stale. However, `docs/PRD.md` still references the original 24-rule scope without acknowledging the multi-language expansion.
-- **`scripts/judge.sh`** uses `claude-haiku` as the default model via `TRUTHSAYER_JUDGE_MODEL`. Claude Haiku is a real model but the judge script assumes a `claude` CLI binary is available and in PATH — this dependency is undocumented (no install step in README or JUDGMENT.md).
-- **`JUDGMENT.md`** describes `truthsayer judge` as a subcommand of the binary, but the prototype is a standalone bash script at `scripts/judge.sh`. The design doc and the implementation are misaligned.
+- **Judgment docs drift (historical)** — the legacy `scripts/judge.sh` prototype used to diverge from the supported `truthsayer judge` CLI path. The shell prototype is now deleted; keep future judgment docs aligned with the Go CLI only.
 
 ## TODO / FIXME / HACK
 
