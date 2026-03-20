@@ -415,9 +415,7 @@ Truthsayer is one tool in a larger system. Here's how the pieces connect:
 | **Argus** | Server watcher | [argus-watcher](https://github.com/Perttulands/argus-watcher) |
 | **Utils** | Shared utilities | [polis-utils](https://github.com/Perttulands/polis-utils) |
 
-## Part of the Agora
-
-Aletheia was forged in **[Athena's Agora](https://github.com/Perttulands/athena-workspace)** — an autonomous coding system where AI agents build software and a figure in dark robes makes sure none of it is lying.
+Aletheia was forged as part of Polis, where AI agents build software and a figure in dark robes makes sure none of it is lying.
 
 [Argus](https://github.com/Perttulands/argus-watcher) watches the server. [Oathkeeper](https://github.com/Perttulands/horkos-oathkeeper) watches the promises. [Relay](https://github.com/Perttulands/hermes-relay) carries the messages. Aletheia watches the code. Between the four of them, your silent failures have nowhere to hide.
 
